@@ -7757,7 +7757,7 @@ p {
 }
 
 .qustion__content .accordion__wrap .accordion-item .accordion-header .accordion-button::after {
-  background: url(../../assets/img/refer/downarrow.png) no-repeat center center;
+  background: url(../../assets/images/refer/downarrow.png) no-repeat center center;
   background-size: 1.4vh;
   background-color: var(--white);
   box-shadow: 0px 4px 30px rgba(54, 54, 54, 0.1);
@@ -7770,7 +7770,7 @@ p {
 .qustion__content .accordion__wrap .accordion-item .accordion-header .accordion-button:not(.collapsed)::after {
   background-image: none;
   transform: none;
-  background: url(../../assets/img/refer/topnarrow.png) no-repeat center center;
+  background: url(../../assets/images/refer/topnarrow.png) no-repeat center center;
   background-size: 1.4vh;
   background-color: var(--base);
   border-radius: 5px;
