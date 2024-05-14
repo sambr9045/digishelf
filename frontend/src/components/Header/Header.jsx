@@ -59,8 +59,8 @@ export default function Header() {
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="d-flex">
-                  Faq{" "}
+                <Link to="/contact" className="d-flex">
+                  Contact{" "}
                 </Link>
               </li>
               <li className="sigup__grp d-lg-none d-flex align-items-center">

@@ -1,5 +1,7 @@
 import React from "react";
 import Header from "./Header/Header";
+import rechargeoffer from "../assets/images/banner/rechargeoffer.jpg";
+
 export default function Banner() {
   return (
     <>
@@ -7,7 +9,7 @@ export default function Banner() {
         <Header />
 
         <div className="container">
-          <div
+          {/* <div
             className="fasilities__wrapper pb__40 wow fadeInUp"
             data-wow-duration="2s"
           >
@@ -85,15 +87,15 @@ export default function Banner() {
                 <span className="fz-18 pratext d-block">Water</span>
               </a>
             </div>
-          </div>
+          </div> */}
 
           <div className="fasilities__body wow fadeInUp" data-wow-duration="3s">
             <div className="row g-4 justify-content-center">
               <div className="col-xxl-8 col-xl-8 col-lg-8 col-md-6">
                 <div className="recharge__paymentbox">
-                  <div className="mobile__recharge text-center">
-                    <h5>Mobile Recharge or Bill Payment</h5>
-                    <div className="prepaid__option">
+                  <div className="mobile__recharge text-left">
+                    <h5 className="mb-4">Airtime Top-Up</h5>
+                    {/* <div className="prepaid__option">
                       <div className="prepaid__check">
                         <input
                           className="form-check-input"
@@ -117,7 +119,7 @@ export default function Banner() {
                           Postpaid
                         </label>
                       </div>
-                    </div>
+                    </div> */}
                     <form action="javascript:void(0)" className="pb__40">
                       <div className="row g-4">
                         <div className="col-lg-6">
@@ -156,13 +158,13 @@ export default function Banner() {
               <div className="col-xxl-4 col-xl-4 col-lg-4 col-md-6">
                 <div className="payment__sponsor owl-theme owl-carousel">
                   <div className="pay__sponsor__item">
-                    <img src="assets/img/banner/recharge-offer.jpg" alt="img" />
+                    <img src={rechargeoffer} alt="img" />
                   </div>
                   <div className="pay__sponsor__item">
-                    <img src="assets/img/banner/recharge-offer.jpg" alt="img" />
+                    <img src={rechargeoffer} alt="img" />
                   </div>
                   <div className="pay__sponsor__item">
-                    <img src="assets/img/banner/recharge-offer.jpg" alt="img" />
+                    <img src={rechargeoffer} alt="img" />
                   </div>
                 </div>
               </div>
