@@ -10,7 +10,7 @@ export default function Signin() {
       <section className="signup__section ">
         <div className="container">
           <div className="row align-items-center justify-content-between">
-            <div className="col-xl-6 col-lg-6">
+            <div className="col-xl-4 col-lg-4 col-md-6">
               <div className="signup__boxes">
                 <h4>Sign in to Digishelf</h4>
                 <p className="head__pra mb__30">

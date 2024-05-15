@@ -1,94 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "./Header/Header";
 import rechargeoffer from "../assets/images/banner/rechargeoffer.jpg";
 
+import Carousel from "react-bootstrap/Carousel";
+
 export default function Banner() {
+  const [index, setIndex] = useState(0);
+
+  const handleSelect = (selectedIndex) => {
+    setIndex(selectedIndex);
+  };
+
   return (
     <>
       <section className="banner__section">
         <Header />
 
         <div className="container">
-          {/* <div
-            className="fasilities__wrapper pb__40 wow fadeInUp"
-            data-wow-duration="2s"
-          >
-            <div className="fasilities__inner d-flex align-items-center">
-              <a
-                href="page1"
-                className="fasilities__item active align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/phone.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">Mobile</span>
-              </a>
-              <a
-                href="card.html"
-                className="fasilities__item align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/card.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">Card</span>
-              </a>
-              <a
-                href="broadband.html"
-                className="fasilities__item align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/broadband.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">Broadband</span>
-              </a>
-              <a
-                href="landline.html"
-                className="fasilities__item align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/landphone.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">Landline</span>
-              </a>
-              <a
-                href="cabletv.html"
-                className="fasilities__item align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/tv.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">CableTv</span>
-              </a>
-              <a
-                href="electricity.html"
-                className="fasilities__item align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/eletricity.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">Electricity</span>
-              </a>
-              <a
-                href="gas.html"
-                className="fasilities__item align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/gas.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">Gas</span>
-              </a>
-              <a
-                href="water.html"
-                className="fasilities__item align-items-center d-flex"
-              >
-                <span className="icon">
-                  <img src="assets/img/svg/water.svg" alt="icon" />
-                </span>
-                <span className="fz-18 pratext d-block">Water</span>
-              </a>
-            </div>
-          </div> */}
-
           <div className="fasilities__body wow fadeInUp" data-wow-duration="3s">
             <div className="row g-4 justify-content-center">
               <div className="col-xxl-8 col-xl-8 col-lg-8 col-md-6">
@@ -156,16 +84,38 @@ export default function Banner() {
                 </div>
               </div>
               <div className="col-xxl-4 col-xl-4 col-lg-4 col-md-6">
-                <div className="payment__sponsor owl-theme owl-carousel">
-                  <div className="pay__sponsor__item">
-                    <img src={rechargeoffer} alt="img" />
-                  </div>
-                  <div className="pay__sponsor__item">
-                    <img src={rechargeoffer} alt="img" />
-                  </div>
-                  <div className="pay__sponsor__item">
-                    <img src={rechargeoffer} alt="img" />
-                  </div>
+                <div
+                  className="payment__sponsor owl-theme owl-carousel"
+                  style={{ zIndex: "344", display: "block" }}
+                >
+                  <>
+                    <Carousel activeIndex={index} onSelect={handleSelect}>
+                      <Carousel.Item>
+                        <img src={rechargeoffer} alt="rechargeoffer" />
+                        <Carousel.Caption>
+                          <h3 className="text-white">Credit Crad Payment</h3>
+                          <p>
+                            Nulla vitae elit libero, a pharetra augue mollis
+                            interdum.
+                          </p>
+                        </Carousel.Caption>
+                      </Carousel.Item>
+                      <Carousel.Item>
+                        <img src={rechargeoffer} alt="rechargeoffer" />
+                        <Carousel.Caption>
+                          <h3>Second slide label</h3>
+                          <p>Paypal Payment</p>
+                        </Carousel.Caption>
+                      </Carousel.Item>
+                      <Carousel.Item>
+                        <img src={rechargeoffer} alt="rechargeoffer" />
+                        <Carousel.Caption>
+                          <h3>Third slide label</h3>
+                          <p>CryptoCurrency</p>
+                        </Carousel.Caption>
+                      </Carousel.Item>
+                    </Carousel>
+                  </>
                 </div>
               </div>
             </div>
