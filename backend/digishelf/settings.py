@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-
+from dotenv import load_dotenv
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv()
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -41,6 +44,7 @@ INSTALLED_APPS = [
     'api',
     'rest_framework_simplejwt',
     'social_django',
+    'corsheaders',
 ]
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
@@ -55,15 +59,30 @@ REST_FRAMEWORK = {
 
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.facebook.FacebookOAuth2',
+    # 'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '<your-google-client-id>'
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '<your-google-client-secret>'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
 
 SOCIAL_AUTH_FACEBOOK_KEY = '<your-facebook-app-id>'
 SOCIAL_AUTH_FACEBOOK_SECRET = '<your-facebook-app-secret>'
+
+AUTH_USER_MODEL = 'api.Account'
+SOCIAL_AUTH_USER_MODEL = 'api.Account'
+
+
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+)
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -73,7 +92,14 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',  # Add this line
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # Update this with the origin of your React application
+]
+CORS_ALLOW_CREDENTIALS = True
+
 
 ROOT_URLCONF = "digishelf.urls"
 

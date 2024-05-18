@@ -1,10 +1,13 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import GoogleLogin, FacebookLogin
+from .views import GoogleLogin, GoogleSignup
 
 urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/social/google/', GoogleLogin.as_view(), name='google_login'),
-    path('api/social/facebook/', FacebookLogin.as_view(), name='facebook_login'),
+    # path('api/social/facebook/', FacebookLogin.as_view(), name='facebook_login'),
+    
+    path('auth/google/', GoogleLogin.as_view(), name='google_login'),
+    path('auth/google/signup/', GoogleSignup.as_view(), name='google-signup'),
 ]
