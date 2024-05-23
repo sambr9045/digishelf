@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import GoogleLogin, GoogleSignup
+from .views import GoogleLogin, GoogleSignup, EmailSignUp
 
 urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -10,4 +10,6 @@ urlpatterns = [
     
     path('auth/google/', GoogleLogin.as_view(), name='google_login'),
     path('auth/google/signup/', GoogleSignup.as_view(), name='google-signup'),
+    path('auth/email/signup/', EmailSignUp.as_view(), name='google-signup'),
+
 ]

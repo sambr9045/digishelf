@@ -38,3 +38,38 @@
     min-width: 18px;
     width: 18px;
 }
+
+.form_error {
+    font-size: 13px !important;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.custom-input:focus {
+    border-color: #2840bf;
+    border: 2px solid #2840bf;
+    color: black;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.custom-input {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    color: black;
+    font-size: 19px;
+    font-weight: bold;
+}
+
+.image-display {
+    display: block;
+    position: absolute;
+    margin-top: 12px;
+    margin-left: 28px;
+}
+
+.image-display img {
+    vertical-align: middle;
+    width: 26px;
+    height: auto;
+}

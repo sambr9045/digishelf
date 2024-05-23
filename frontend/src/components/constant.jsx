@@ -1,0 +1,1 @@
+export const get_country_by_api = "https://api.country.is/"

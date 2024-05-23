@@ -57,6 +57,8 @@ REST_FRAMEWORK = {
         ),
 }
 
+AUTH_USER_MODEL = 'api.Account'
+
 
 AUTHENTICATION_BACKENDS = (
     # 'social_core.backends.facebook.FacebookOAuth2',
@@ -69,7 +71,6 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
 SOCIAL_AUTH_FACEBOOK_KEY = '<your-facebook-app-id>'
 SOCIAL_AUTH_FACEBOOK_SECRET = '<your-facebook-app-secret>'
 
-AUTH_USER_MODEL = 'api.Account'
 SOCIAL_AUTH_USER_MODEL = 'api.Account'
 
 

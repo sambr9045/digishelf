@@ -8,11 +8,10 @@ from social_core.exceptions import MissingBackend
 from rest_framework.permissions import AllowAny  
 from django.conf import settings
 from django.contrib.auth import login
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserRegistrationSerializer
 from .models import Account
 from rest_framework import status
 from django.db.models import Q
-
 # from google.auth.transport import requests
 
 class GoogleLogin(APIView):
@@ -97,3 +96,24 @@ class GoogleSignup(APIView):
             return Response({'error': 'Google OAuth2 backend not configured properly'}, status=400)
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+        
+
+class EmailSignUp(APIView):
+    permission_classes = [AllowAny]  # Use AllowAny permission class for unrestricted access
+
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+        else:
+            # Check for specific validation errors
+            if 'email' in serializer.errors and any(
+                error.code == 'unique' for error in serializer.errors['email']
+            ):
+                return Response(
+                    {"error": "User with this email already exists."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+  
