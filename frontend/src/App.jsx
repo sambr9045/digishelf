@@ -4,6 +4,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Signin from "./pages/Signin";
 import Signup from "./pages/Signup";
+import Giftcards from "./pages/Giftcards";
+import GiftcardType from "./pages/GiftcardType";
 import "./assets/css/index.css";
 
 const router = createBrowserRouter([
@@ -26,6 +28,14 @@ const router = createBrowserRouter([
   {
     path: "/signup",
     element: <Signup />,
+  },
+  {
+    path: "/gift-cards",
+    element: <Giftcards />,
+  },
+  {
+    path: "/gift-card/:type",
+    element: <GiftcardType />,
   },
 ]);
 

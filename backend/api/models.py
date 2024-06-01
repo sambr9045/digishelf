@@ -34,28 +34,28 @@ class Account(AbstractBaseUser, PermissionsMixin):
     phone_number = models.IntegerField(null=True, blank=True)
     country = models.CharField(default=None, max_length=250, null=True , blank=True)
     email_verified = models.BooleanField(default=False)
-    last_login = models.DateTimeField(_('last login'), blank=True, null=True)
+    last_login = models.DateTimeField(verbose_name="last login",auto_now_add=True, blank=True, null=True)
     auth_type = models.CharField(max_length=100, default="email", null=False, blank=False)
     
     
 
-    groups = models.ManyToManyField(
-        Group,
-        related_name='custom_user_set',  # Changed related_name to avoid conflict
-        blank=True,
-        help_text=_(
-            'The groups this user belongs to. A user will get all permissions '
-            'granted to each of their groups.'
-        ),
-        verbose_name=_('groups'),
-    )
-    user_permissions = models.ManyToManyField(
-        Permission,
-        related_name='custom_user_set',  # Changed related_name to avoid conflict
-        blank=True,
-        help_text=_('Specific permissions for this user.'),
-        verbose_name=_('user permissions'),
-    )
+    # groups = models.ManyToManyField(
+    #     Group,
+    #     related_name='Account_set',  # Changed related_name to avoid conflict
+    #     blank=True,
+    #     help_text=_(
+    #         'The groups this user belongs to. A user will get all permissions '
+    #         'granted to each of their groups.'
+    #     ),
+    #     verbose_name=_('groups'),
+    # )
+    # user_permissions = models.ManyToManyField(
+    #     Permission,
+    #     related_name='Account_set',  # Changed related_name to avoid conflict
+    #     blank=True,
+    #     help_text=_('Specific permissions for this user.'),
+    #     verbose_name=_('user permissions'),
+    # )
 
     objects = CustomUserManager()
 
@@ -68,3 +68,36 @@ class Account(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class DigiShelfData(models.Model):
+        profit_percentage = models.DecimalField(max_digits=5, decimal_places=2) 
+        processing_fee = models.DecimalField(max_digits=5, decimal_places=2)
+        
+# class Transaction(models.Model):
+#     user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
+#     reference = models.CharField(max_length=200, default=None, blank=False, null=False)
+#     type = models.CharField(max_length=200, default=None, )
+#     amount_in_usd = models.DecimalField(max_digits=9, decimal_places=2)
+#     amount_local_currency = models.DecimalField(max_digits=9,decimal_places=2)
+#     processing_fee = models.DecimalField(max_digits=9, decimal_places=2)
+#     payment_method = models.CharField(max_length=200, default=None)
+#     phone_number = models.IntegerField(default=None, blank=True, null=True)
+#     operator = models.IntegerField(default=None, blank=True, null=True)
+#     email = models.EmailField(default=None,blank=True, null=True)
+    
+    
+class TopupTransaction(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
+    user_type = models.CharField(max_length=200, default="guest")
+    operator = models.CharField(max_length=200, default=None)
+    amount_in_usd = models.DecimalField(max_digits=9, decimal_places=2)
+    amount_local_currency = models.DecimalField(max_digits=9,decimal_places=2)
+    processing_fee = models.DecimalField(max_digits=9, decimal_places=2)
+    payment_method = models.CharField(max_length=200, default=None)
+    phone_number = models.IntegerField(default=None, blank=True, null=True)
+    email = models.EmailField(default=None,blank=True, null=True)
+    country = models.CharField(max_length=200, default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    

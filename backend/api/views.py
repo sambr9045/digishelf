@@ -9,11 +9,16 @@ from rest_framework.permissions import AllowAny
 from django.conf import settings
 from django.contrib.auth import login
 from .serializers import UserSerializer, UserRegistrationSerializer
-from .models import Account
+from .models import Account, DigiShelfData
 from rest_framework import status
 from django.db.models import Q
+from reloady import reloady, urls
+import os 
+from dotenv import load_dotenv
+import requests
 # from google.auth.transport import requests
 
+load_dotenv()
 class GoogleLogin(APIView):
     
     permission_classes = [AllowAny]  # Use AllowAny permission class for unrestricted access
@@ -44,6 +49,8 @@ class GoogleLogin(APIView):
             return Response({'error': 'Google OAuth2 backend not configured properly'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
@@ -117,3 +124,76 @@ class EmailSignUp(APIView):
                 )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
   
+  
+  
+class GetOperator(APIView):
+    permission_classes = [AllowAny]  # Use AllowAny permission class for unrestricted access
+
+    def post(self, request):
+        phone = request.data.get("phone")
+        country = request.data.get("country")
+        
+        try:
+            reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
+            oparator_urls = urls.auto_detect_oparator(phone, country)
+            audience = "https://topups-sandbox.reloadly.com"
+            result= reloady_object.make_api_request(oparator_urls,"application/com.reloadly.topups-v1+json", audience )
+            return Response({"data":result}, status=200)
+        except Exception as e:
+            print(f"Error:{e}")
+            return Response({"status":"error", "data":None}, status=400)
+            
+    
+class FiatExchangeRate(APIView):
+    permission_classes = [AllowAny]  
+    def get(self, request):
+        try:
+            url = urls.get_exchange_fiat_url(os.getenv("FIA_CURRENCY_EXCHANGE_API_KEY"))
+            data = requests.get(url)
+            # get rate percentages
+            profile_entry = DigiShelfData.objects.first()
+            percentage = profile_entry.profit_percentage
+            processing = profile_entry.processing_fee
+            
+            
+            return Response({"data":data, "percentage":percentage, "processing":processing}, status=200) 
+        except:
+            return Response({"Error":"something went wrong. Try again later"}, status=400)
+        
+        
+class DebiTCreditPayment(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        number  = request.data.get("number")
+        email = request.data.get("email")
+        option_data = request.data.get("option_data")
+        payment_method = request.data.get("payment_method")
+        country = request.data.get("crountry")
+        provider = request.data.get("provider")
+        # paystack payment 
+        # then call a function to send topup airtime 
+        
+        
+        pass
+    
+class GetGistCard(APIView):
+    permission_classes= [AllowAny]
+    def get(self, request):
+        # get reloady data 
+        type = request.GET.get("type", None)
+        if type:
+            try:
+                giftcard_url = urls.get_giftcard_url(type)
+                reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
+                audience = "https://giftcards-sandbox.reloadly.com"
+
+                result = reloady_object.make_api_request(giftcard_url, "application/com.reloadly.giftcards-v1+json", audience)
+                # print(result)
+                return Response({"data":result},status=200 )
+            
+            except Exception as e:
+                print(e)
+                return Response({"data":None }, status=400)
+        else:
+            return Response({"message":"Invalid query parameter"}, status=400)
+        

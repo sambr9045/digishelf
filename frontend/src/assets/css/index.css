@@ -36,9 +36,10 @@ Section css
 @import "src/assets/css/owl.theme.default.css";
 @import "src/assets/css/prism.css";
 
+/* #2840BF */
 :root {
   --body: #ffffff;
-  --base: #2840BF;
+  --base: #551839;
   --darkbase: #1E0702;
   --text: #3F3F3F;
   --darkextra: #5A5A5A;

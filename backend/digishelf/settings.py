@@ -17,6 +17,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 
+from datetime import timedelta
 
 
 # Quick-start development settings - unsuitable for production
@@ -28,7 +29,7 @@ SECRET_KEY = "django-insecure-=r8*1k*4y1au8cw_3n$8j$@-c4m0r0$$g7_=x==$*429w&s5xq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["b3a0-102-176-94-199.ngrok-free.app", "127.0.0.1","localhost:8000", "49ed-102-176-94-252.ngrok-free.app"]
 
 
 # Application definition
@@ -57,7 +58,15 @@ REST_FRAMEWORK = {
         ),
 }
 
-AUTH_USER_MODEL = 'api.Account'
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+}
+
+AUTH_USER_MODEL = "api.Account"
 
 
 AUTHENTICATION_BACKENDS = (
@@ -97,7 +106,9 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  # Update this with the origin of your React application
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:8000'
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -129,7 +140,7 @@ WSGI_APPLICATION = "digishelf.wsgi.application"
 DATABASES = {
    "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "digishelf",
+        "NAME": "digishelf2",
         "USER": "postgres",
         "PASSWORD": "Tonado12",
         "HOST": "localhost",  # Or your PostgreSQL server IP
@@ -178,3 +189,11 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}

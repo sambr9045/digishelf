@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { countries } from "./Countries";
 import { get_country_by_api } from "./constant";
+import { api_endpoint } from "./constant";
+import { json } from "react-router-dom";
 
 const SessionContext = createContext();
 
@@ -15,6 +17,9 @@ const SessionProvider = ({ children }) => {
     country: null,
     country_code: null,
   });
+  const [exchangeRate, setExchangeRate] = useState();
+  const [percentage, setPercentage] = useState();
+  const [pc, setPc] = useState();
 
   // Load session from localStorage when the app starts
   useEffect(() => {
@@ -23,6 +28,40 @@ const SessionProvider = ({ children }) => {
       setSession(JSON.parse(savedSession));
     }
   }, []);
+
+  // call and sace exchange rate
+  const getExchangeRate = async () => {
+    try {
+      const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));
+      const percentage = localStorage.getItem("percentage");
+      const pc = localStorage.getItem("pc");
+      if (pc) {
+        setPc(pc);
+      }
+      if (percentage) {
+        setPercentage(exchangeRate);
+      }
+      if (exchangeRate) {
+        setExchangeRate(exchangeRate);
+      } else {
+        const response = await axios.get(`${api_endpoint}/api/exchange-rate/`);
+        if (response.data) {
+          setPercentage(response.data.percentage);
+          setPc(response.data.processing);
+          localStorage.setItem("percentage", response.data.percentage);
+          localStorage.setItem("pc", response.data.processing);
+          const currency = JSON.parse(
+            response.data.data.join("")
+          ).conversion_rates;
+
+          setExchangeRate(JSON.stringify(currency));
+          localStorage.setItem("exchangeRate", JSON.stringify(currency));
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // get country alpha2code by ipaddress
   const getCountryAlpha2Code = async () => {
@@ -50,6 +89,9 @@ const SessionProvider = ({ children }) => {
 
   // Set up an interval to refresh the access token
   useEffect(() => {
+    if (!exchangeRate) {
+      getExchangeRate();
+    }
     if (country.country === null) {
       handleCountry();
     }
@@ -111,9 +153,13 @@ const SessionProvider = ({ children }) => {
         login,
         logout,
         country,
+        percentage,
+        pc,
+        exchangeRate,
       }}
     >
-      {children}
+      {" "}
+      {children}{" "}
     </SessionContext.Provider>
   );
 };
