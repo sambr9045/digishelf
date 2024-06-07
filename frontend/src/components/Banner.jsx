@@ -261,7 +261,7 @@ export default function Banner() {
 
   return (
     <>
-      <section className="banner__section">
+      <section className="banner__section ">
         <Header />
         <ToastContainer position="bottom-center" theme="colored" />
         {/* {paystackConfig && (

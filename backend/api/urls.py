@@ -13,6 +13,9 @@ urlpatterns = [
     path('auth/email/signup/', EmailSignUp.as_view(), name='google-signup'),
     path('getoparator/',views.GetOperator.as_view(), name="get_oparator" ),
     path('exchange-rate/',views.FiatExchangeRate.as_view(), name="fia_exchange_rate"),
-    path('giftcards/', views.GetGistCard.as_view(), name="giftcard")
+    path('giftcards/', views.GetGistCard.as_view(), name="giftcard"),
+    path('process-payment/', views.ProcessPayment.as_view(), name="process_payment"),
+    path('giftcardorder/', views.GetGiftCardOrder.as_view(), name="giftcardorder")
+    
 
 ]

@@ -2,6 +2,20 @@
     --custombase: #551839;
 }
 
+.basecolor_custom {
+    color: var(--custombase) !important;
+}
+
+.selected {
+    border: 2px solid var(--custombase) !important;
+    /* background-color: red; */
+
+}
+
+.defual-bg::before {
+    background-color: var(--custombase);
+}
+
 .login-display-error {
     font-size: 13px !important;
     font-weight: normal;
@@ -11,6 +25,11 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
+.gift-card-step-2 {
+    position: relative;
+    margin-top: -40vh;
+
+}
 
 .sign-with-google {
     -webkit-border-radius: 4px;
@@ -211,9 +230,10 @@ h2 {
     color: white;
 }
 
-.payment-icone {
+.payment-icon {
     width: 30px;
     height: 30px;
+    margin-left: 5px;
 }
 
 .see-plans-button {
@@ -269,10 +289,52 @@ h2 {
     padding-bottom: 15px;
 }
 
+.div-flex-con {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.list-card-price {
+    padding: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 15px;
+
+}
+
+.giftcard_details_selected .card {
+    background-color: var(--custombase);
+    color: white;
+    font-weight: bold;
+}
+
 .giftcard_img {
     width: 100%;
     height: auto;
     border-radius: 20px;
+}
+
+.giftcard_detail {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.giftcard_detail img {
+    width: 100%;
+    height: auto;
+}
+
+
+.fade-in {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.fade-in.active {
+    opacity: 1;
 }
 
 .giftcard_img:hover {
@@ -348,4 +410,10 @@ h2 {
 
 .stacked-image-container:hover .stacked-image {
     transform: translateY(-10px);
+}
+
+.giftcard_details img {
+    width: 350px;
+    height: auto;
+    border-radius: 10px;
 }

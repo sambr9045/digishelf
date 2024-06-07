@@ -4,6 +4,7 @@ import { countries } from "./Countries";
 import { get_country_by_api } from "./constant";
 import { api_endpoint } from "./constant";
 import { json } from "react-router-dom";
+import Loader from "./includes/Loader";
 
 const SessionContext = createContext();
 
@@ -20,6 +21,8 @@ const SessionProvider = ({ children }) => {
   const [exchangeRate, setExchangeRate] = useState();
   const [percentage, setPercentage] = useState();
   const [pc, setPc] = useState();
+  const [gpc, setGpc] = useState();
+  const [yps, setYps] = useState();
 
   // Load session from localStorage when the app starts
   useEffect(() => {
@@ -35,6 +38,11 @@ const SessionProvider = ({ children }) => {
       const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));
       const percentage = localStorage.getItem("percentage");
       const pc = localStorage.getItem("pc");
+      const gpc = localStorage.getItem("gpc");
+
+      if (gpc) {
+        setGpc(gpc);
+      }
       if (pc) {
         setPc(pc);
       }
@@ -48,8 +56,10 @@ const SessionProvider = ({ children }) => {
         if (response.data) {
           setPercentage(response.data.percentage);
           setPc(response.data.processing);
+          setGpc(response.data.giftcard_processing_fee);
           localStorage.setItem("percentage", response.data.percentage);
           localStorage.setItem("pc", response.data.processing);
+          localStorage.setItem("gpc", response.data.giftcard_processing_fee);
           const currency = JSON.parse(
             response.data.data.join("")
           ).conversion_rates;
@@ -68,11 +78,13 @@ const SessionProvider = ({ children }) => {
     try {
       const response = await axios.get(get_country_by_api);
       if (response.data) {
+        localStorage.setItem("ip", response.data.ip);
         const result = countries.filter((country) =>
           country.alpha2Code
             .toLowerCase()
             .includes(response.data.country.toLowerCase())
         );
+
         setCountry({
           country: response.data.country,
           country_code: result[0].callingCode,
@@ -84,7 +96,8 @@ const SessionProvider = ({ children }) => {
   };
 
   const handleCountry = async () => {
-    await getCountryAlpha2Code();
+    const result = await getCountryAlpha2Code();
+    console.log(result);
   };
 
   // Set up an interval to refresh the access token
@@ -158,8 +171,7 @@ const SessionProvider = ({ children }) => {
         exchangeRate,
       }}
     >
-      {" "}
-      {children}{" "}
+      {children}
     </SessionContext.Provider>
   );
 };

@@ -73,18 +73,67 @@ class Account(AbstractBaseUser, PermissionsMixin):
 class DigiShelfData(models.Model):
         profit_percentage = models.DecimalField(max_digits=5, decimal_places=2) 
         processing_fee = models.DecimalField(max_digits=5, decimal_places=2)
+        giftcard_processing_fee = models.DecimalField(max_digits=5, decimal_places=2, default=5)
         
-# class Transaction(models.Model):
-#     user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
-#     reference = models.CharField(max_length=200, default=None, blank=False, null=False)
-#     type = models.CharField(max_length=200, default=None, )
-#     amount_in_usd = models.DecimalField(max_digits=9, decimal_places=2)
-#     amount_local_currency = models.DecimalField(max_digits=9,decimal_places=2)
-#     processing_fee = models.DecimalField(max_digits=9, decimal_places=2)
-#     payment_method = models.CharField(max_length=200, default=None)
-#     phone_number = models.IntegerField(default=None, blank=True, null=True)
-#     operator = models.IntegerField(default=None, blank=True, null=True)
-#     email = models.EmailField(default=None,blank=True, null=True)
+
+
+class GiftCardTransaction(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='giftcard_transaction', null=True, blank=True)
+    reference = models.TextField(default=None, null=False, blank=False , unique=True)
+    product_name = models.CharField(default=None, max_length=250)
+    product_id = models.CharField(default=None, max_length=250)
+    receiver_currency_code = models.CharField(default=None, max_length=250)
+    recipient_amount =models.DecimalField(max_digits=9, decimal_places=2, default="3.4")
+    amount = models.DecimalField(max_digits=9, decimal_places=2)
+    country = models.CharField(default=None, max_length=250)
+    email =models.EmailField(default=None)
+    user_type = models.CharField(default="guest", max_length=250)
+    payment_method = models.CharField(default="visa", max_length=250)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.product_name} - {self.amount} {self.receiver_currency_code}'
+
+class PaymentDetails(models.Model):
+    GiftCardTransaction = models.ForeignKey(GiftCardTransaction, on_delete=models.CASCADE, related_name='transactions_details')
+    message = models.CharField(max_length=250)
+    status = models.CharField(max_length=250)
+    transaction = models.CharField(max_length=250)
+    trxref=models.CharField(max_length=250)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.status} - {self.transaction}'
+    
+class UserDeviceGiftCardPayment(models.Model):
+    
+    GiftCardTransaction = models.ForeignKey(GiftCardTransaction, on_delete=models.CASCADE, related_name='transactions_details_user_device')
+    ip_address = models.CharField(max_length=250, default=None)
+    
+class TransactionProduct(models.Model):
+    GiftCardTransaction = models.ForeignKey(GiftCardTransaction, on_delete=models.CASCADE, related_name='transactions_details_completed')
+    transactionId = models.IntegerField(default=None)
+    amount = models.DecimalField(max_digits=9,decimal_places=2)
+    discount = models.DecimalField(max_digits=9,decimal_places=2)
+    currencyCode = models.CharField(max_length=250)
+    fee= models.DecimalField(max_digits=9,decimal_places=2)
+    status = models.CharField(default=None)
+    product = models.TextField(default=None)
+    transaction_created_at = models.DateTimeField(default=None)
+    created_at = models.DateTimeField(auto_now_add=True) 
+    
+
+class CardRedeemCode(models.Model):
+    TransactionProduct = models.ForeignKey(TransactionProduct, on_delete=models.CASCADE, related_name='transactions_details_completed')
+    redeem_card_number = models.CharField(max_length=250)
+    redeem_card_pin = models.CharField(max_length=250)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    
+    
+
+
+    
     
     
 class TopupTransaction(models.Model):

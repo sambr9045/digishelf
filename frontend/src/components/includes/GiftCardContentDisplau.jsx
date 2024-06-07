@@ -2,7 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Loader from "./Loader";
 
-export default function GiftCardContentDisplau({ GIFTCARD, isLoading }) {
+export default function GiftCardContentDisplau({
+  GIFTCARD,
+  isLoading,
+  type = "",
+}) {
   return (
     <>
       <div className="col-xxl-9 col-xl-9 col-lg-9">
@@ -20,7 +24,11 @@ export default function GiftCardContentDisplau({ GIFTCARD, isLoading }) {
                 >
                   <div className="carferrari__item flex-wrap d-flex align-items-center bgwhite p__10">
                     <Link
-                      to={`/gift-card/${item.productName}`}
+                      to={
+                        type !== ""
+                          ? `/gift-card/${type}/${item.productId}`
+                          : `/gift-card/${item.productName}`
+                      }
                       className="thumb"
                     >
                       {item.logoUrls && (
@@ -48,7 +56,13 @@ export default function GiftCardContentDisplau({ GIFTCARD, isLoading }) {
                       <div className="d-flex carferari__box justify-content-center">
                         <div className="farrari__left">
                           <div className="d-flex  align-items-center gap-4">
-                            <Link to={`/gift-card/${item.productName}`}>
+                            <Link
+                              to={
+                                type !== ""
+                                  ? `/gift-card/${type}/${item.productId}`
+                                  : `/gift-card/${item.productName}`
+                              }
+                            >
                               <h5 className="dtext">{item.productName}</h5>
                             </Link>
                             {item.country && (

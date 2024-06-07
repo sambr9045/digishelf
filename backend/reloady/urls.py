@@ -4,6 +4,10 @@ oparator_url = "https://topups-sandbox.reloadly.com/operators?includeBundles=tru
 # production
 # gift_card = "https://giftcards.reloadly.com/countries"
 
+gift_card_order = "https://giftcards-sandbox.reloadly.com/orders"
+
+def gift_card_product_id(productId):
+    return f"https://giftcards-sandbox.reloadly.com/products/{productId}" 
 # sandbpx
 gift_card = "https://giftcards-sandbox.reloadly.com/products?size=&page=&productName=playstation&countryCode=&includeRange=true&includeFixed=true&sorted=true"
 
@@ -20,3 +24,7 @@ def get_exchange_fiat_url(api_key):
 
 
 url = "https://giftcards-sandbox.reloadly.com/products?size=&page=&productName=&countryCode=&includeRange=true&includeFixed=true"
+
+
+def get_giftcard_redeem_code(transactionId):
+    return f"https://giftcards-sandbox.reloadly.com/orders/transactions/{transactionId}/cards"

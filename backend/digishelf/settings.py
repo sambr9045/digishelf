@@ -140,7 +140,7 @@ WSGI_APPLICATION = "digishelf.wsgi.application"
 DATABASES = {
    "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "digishelf2",
+        "NAME": "digishelf3",
         "USER": "postgres",
         "PASSWORD": "Tonado12",
         "HOST": "localhost",  # Or your PostgreSQL server IP

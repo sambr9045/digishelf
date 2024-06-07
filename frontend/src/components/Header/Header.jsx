@@ -78,8 +78,13 @@ export default function Header() {
                 <span>Signin</span>
               </Link>
 
-              <Link to="/signup" className="cmn__btn">
-                Signup
+              <Link to="/signup" className="text-black">
+                <span
+                  className="material-symbols-outlined text-black "
+                  style={{ fontSize: "25px" }}
+                >
+                  shopping_cart
+                </span>
               </Link>
             </div>
           </div>

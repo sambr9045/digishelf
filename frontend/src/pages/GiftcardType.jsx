@@ -65,6 +65,7 @@ export default function GiftcardType() {
               <GiftCardContentDisplau
                 GIFTCARD={giftCards}
                 isLoading={isLoading}
+                type={type.type}
               />
             </div>
           </div>

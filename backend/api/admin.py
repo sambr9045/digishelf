@@ -4,3 +4,8 @@ from . import models
 
 admin.site.register(models.Account)
 admin.site.register(models.DigiShelfData)
+admin.site.register(models.UserDeviceGiftCardPayment)
+admin.site.register(models.PaymentDetails)
+admin.site.register(models.GiftCardTransaction)
+admin.site.register(models.TransactionProduct)
+admin.site.register(models.CardRedeemCode)

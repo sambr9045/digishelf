@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Account
+from . import models
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,3 +24,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+    
+    
+class GiftCardTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.GiftCardTransaction
+        fields = '__all__'
+
+class PaymentDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PaymentDetails
+        fields = '__all__'
+
+class UserDeviceGiftCardPaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserDeviceGiftCardPayment
+        fields = '__all__'
+        
+class TransactionProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.TransactionProduct
+        fields = '__all__'
+        
+class CardRedeemCodeSerializer(serializers.ModelSerializer):
+     class Meta:
+        model = models.CardRedeemCode
+        fields = '__all__'
+    

@@ -1,4 +1,6 @@
-import { createBrowserRouter } from "react-router-dom";
+import {
+  createBrowserRouter
+} from "react-router-dom";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -6,36 +8,45 @@ import Signin from "./pages/Signin";
 import Signup from "./pages/Signup";
 import Giftcards from "./pages/Giftcards";
 import GiftcardType from "./pages/GiftcardType";
+import Details from "./pages/Details";
+import PaymentSuccess from "./components/payment/PaymentSuccess";
 import "./assets/css/index.css";
 
-const router = createBrowserRouter([
-  {
+const router = createBrowserRouter([{
     path: "/",
-    element: <Home />,
+    element: < Home / > ,
   },
   {
     path: "/about",
-    element: <About />,
+    element: < About / > ,
   },
   {
     path: "/contact",
-    element: <Contact />,
+    element: < Contact / > ,
   },
   {
     path: "/signin",
-    element: <Signin />,
+    element: < Signin / > ,
   },
   {
     path: "/signup",
-    element: <Signup />,
+    element: < Signup / > ,
   },
   {
     path: "/gift-cards",
-    element: <Giftcards />,
+    element: < Giftcards / > ,
   },
   {
     path: "/gift-card/:type",
-    element: <GiftcardType />,
+    element: < GiftcardType / > ,
+  },
+  {
+    path: "/gift-card/:name/:productId",
+    element: < Details / > ,
+  },
+  {
+    path: "/gift-card/payment-complete/:reference",
+    element: < PaymentSuccess / > ,
   },
 ]);
 

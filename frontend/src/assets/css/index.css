@@ -1467,7 +1467,7 @@ p {
   inset: 0;
   width: 100%;
   height: 55%;
-  background: var(--bgsection);
+  background: var(--base);
   content: "";
   z-index: -1;
 }
@@ -1475,6 +1475,7 @@ p {
 .fasilities__inner {
   gap: 10px;
 }
+
 
 @media (max-width: 1199px) {
   .fasilities__inner {
