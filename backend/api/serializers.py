@@ -30,7 +30,10 @@ class GiftCardTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GiftCardTransaction
         fields = '__all__'
-
+class GiftCardTransactionOrderProductSerialixer(serializers.ModelSerializer):
+    class Meta:
+        model=models.GiftCardTransactionOrderProduct
+        fields='__all__'
 class PaymentDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PaymentDetails

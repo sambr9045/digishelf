@@ -10,6 +10,8 @@ import Giftcards from "./pages/Giftcards";
 import GiftcardType from "./pages/GiftcardType";
 import Details from "./pages/Details";
 import PaymentSuccess from "./components/payment/PaymentSuccess";
+import Checkout from "./components/payment/Checkout";
+
 import "./assets/css/index.css";
 
 const router = createBrowserRouter([{
@@ -48,6 +50,10 @@ const router = createBrowserRouter([{
     path: "/gift-card/payment-complete/:reference",
     element: < PaymentSuccess / > ,
   },
+  {
+    path: "/checkout",
+    element: < Checkout / >
+  }
 ]);
 
 export default router;

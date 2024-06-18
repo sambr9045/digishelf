@@ -10,6 +10,16 @@ import { ToastContainer, toast } from "react-toastify";
 import GiftCardPaymentSteps2 from "../components/includes/steps/GiftCardPaymentSteps2";
 import { SessionContext } from "../components/sessionContext";
 
+// id
+// productName
+// productId
+// quantity
+// recipientAmount
+// recipientCurrency
+// AmountToPay
+// currencyToPayIn
+// img
+
 export default function Details() {
   const { name, productId } = useParams();
   const [productIdData, setProductIdData] = useState();
@@ -18,22 +28,53 @@ export default function Details() {
   const [selectedValue, setSelectedValue] = useState(0);
   const [customAmountError, setCustomAmountError] = useState("");
   const [customAmount, setCustomAmount] = useState("");
-  const [customAmountInGhs, setCustomAmountInGhs] = useState(parseFloat(0));
+  const [customAmountValue, setCustomAmountValue] = useState(parseFloat(0));
   const [steps, setSteps] = useState(1);
   const [stepTwoError, setStepTwoError] = useState();
-  const { country } = useContext(SessionContext);
+  const {
+    country,
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    updateCartItem,
+  } = useContext(SessionContext);
+  const [details_status, setDetails_status] = useState(false);
 
   //
 
   const HandleBuyNow = async (e) => {
     e.preventDefault();
     if (productIdData && productIdData.fixedRecipientToSenderDenominationsMap) {
-      if (selectedValue === 0 || selectedValue === "") {
+      if (selectedValue === 0 || selectedKey === "") {
         toast.error("Please select an amount to continue.");
       } else {
         setSteps(2);
+        setDetails_status(true);
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+    } else {
+      if (customAmount === "") {
+        toast.error("Please receiver amount to continue");
+      } else if (customAmountError !== "") {
+        toast.error(customAmountError);
+      } else {
+        setSteps(2);
+        setDetails_status(true);
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
       }
     }
+  };
+
+  const handleGoBack = async (e) => {
+    setSteps(1);
+    setDetails_status(false);
   };
 
   const handleSelect = (key, value) => {
@@ -46,7 +87,6 @@ export default function Details() {
   const HandleCustomAmount = (e, min, max) => {
     const amount = e.target.value;
     setCustomAmount(amount);
-    console.log(customAmountError);
 
     // Check if the amount is not a number or is empty
 
@@ -63,12 +103,19 @@ export default function Details() {
     }
 
     if (numericAmount <= max && numericAmount >= min) {
-      setCustomAmountInGhs(
-        get_amount_in_local_currency(
-          productIdData.minRecipientDenomination,
-          productIdData.minSenderDenomination
-        ) * parseFloat(amount)
-      );
+      let amount_in_local = 0;
+      if (country.country == "GH") {
+        amount_in_local =
+          get_amount_in_local_currency(
+            productIdData.minRecipientDenomination,
+            productIdData.minSenderDenomination
+          ) *
+            parseFloat(amount) +
+          parseFloat(productIdData.senderFee);
+      } else {
+        amount_in_local = parseFloat(amount);
+      }
+      setCustomAmountValue(amount_in_local);
     }
   };
 
@@ -94,6 +141,8 @@ export default function Details() {
     }
   };
 
+  const HandleAddtoCard = async () => {};
+
   const Handledata = async () => {
     const data = await getProductById();
     console.log(data);
@@ -104,6 +153,7 @@ export default function Details() {
   useEffect(() => {
     Handledata();
     if (productIdData && productIdData.fixedRecipientToSenderDenominationsMap) {
+      console.log(productIdData);
       const firstKey = Object.keys(
         productIdData.fixedRecipientToSenderDenominationsMap
       )[0];
@@ -120,8 +170,8 @@ export default function Details() {
   }, []);
   return (
     <div>
-      <GiftCardBanner type={name} details={true} />
-      <ToastContainer position="bottom-center" theme="colored" />
+      <GiftCardBanner type={name} details={details_status} />
+      <ToastContainer position="top-center" theme="colored" />
 
       <section className="flight__onewaysection pb__60">
         <div className="container">
@@ -258,11 +308,71 @@ export default function Details() {
                                     </>
                                   ) : (
                                     <>
-                                      {customAmountInGhs.toFixed(2)}&nbsp;
+                                      {customAmountValue.toFixed(2)}&nbsp;
                                       {productIdData.senderCurrencyCode}
                                     </>
                                   )}
                                 </h3>
+                                <a
+                                  href="#"
+                                  className="cmn__btn mb-5 mt-5 outline__btn "
+                                  style={{
+                                    opacity: isloading ? 0.5 : 1,
+                                    cursor: isloading
+                                      ? "not-allowed"
+                                      : "pointer",
+                                  }}
+                                  onClick={() =>
+                                    addToCart({
+                                      id: productIdData.productId,
+                                      productName: productIdData.productName,
+                                      productId: productIdData.productId,
+                                      quantity: 1,
+                                      recipientAmount: selectedKey
+                                        ? selectedKey
+                                        : customAmount,
+                                      recipientCurrency:
+                                        productIdData.recipientCurrencyCode,
+                                      AmountToPay: selectedValue
+                                        ? selectedValue
+                                        : customAmountValue,
+                                      currencyToPayIn:
+                                        country.country === "GH"
+                                          ? "GHS"
+                                          : "USD",
+                                      img: productIdData.logoUrls,
+                                    })
+                                  }
+                                >
+                                  {!isloading && (
+                                    <>
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="21"
+                                        height="21"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <circle cx="10" cy="20.5" r="1" />
+                                        <circle cx="18" cy="20.5" r="1" />
+                                        <path d="M2.5 2.5h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6l1.6-8.4H7.1" />
+                                      </svg>
+                                      &nbsp;
+                                      <span>Add to cart</span>
+                                    </>
+                                  )}
+
+                                  {isloading && (
+                                    <>
+                                      <span>Processing...</span>
+                                    </>
+                                  )}
+                                </a>
+                                &nbsp;
                                 <a
                                   href="#"
                                   className="cmn__btn mb-5 mt-5"
@@ -299,45 +409,6 @@ export default function Details() {
                                     </>
                                   )}
                                 </a>
-                                &nbsp;
-                                <a
-                                  href="#"
-                                  className="cmn__btn mb-5 mt-5 outline__btn "
-                                  style={{
-                                    opacity: isloading ? 0.5 : 1,
-                                    cursor: isloading
-                                      ? "not-allowed"
-                                      : "pointer",
-                                  }}
-                                >
-                                  {!isloading && (
-                                    <>
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="21"
-                                        height="21"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <circle cx="10" cy="20.5" r="1" />
-                                        <circle cx="18" cy="20.5" r="1" />
-                                        <path d="M2.5 2.5h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6l1.6-8.4H7.1" />
-                                      </svg>
-                                      &nbsp;
-                                      <span>Add to cart</span>
-                                    </>
-                                  )}
-
-                                  {isloading && (
-                                    <>
-                                      <span>Processing...</span>
-                                    </>
-                                  )}
-                                </a>
                               </div>
                             </div>
                           </div>
@@ -361,10 +432,14 @@ export default function Details() {
                     <>
                       {country && country.country === "GH" ? (
                         <>
-                          <GiftCardPaymentSteps2
+                          {/* <GiftCardPaymentSteps2
                             productName={productIdData.productName}
-                            amountToreceive={selectedKey}
-                            amount={selectedValue}
+                            amountToreceive={
+                              selectedKey ? selectedKey : customAmount
+                            }
+                            amount={
+                              selectedValue ? selectedValue : customAmountValue
+                            }
                             currencyInUsd={selectedKey}
                             LocalCurrency={productIdData.senderCurrencyCode}
                             receiverCurrencyCode={
@@ -373,11 +448,30 @@ export default function Details() {
                             country={country.country}
                             fees={productIdData.senderFee}
                             productId={productIdData.productId}
-                            GoBack={() => setSteps(1)}
-                          />
+                            GoBack={handleGoBack}
+                          /> */}
                         </>
                       ) : (
-                        <></>
+                        <>
+                          {/* <GiftCardPaymentSteps2
+                            productName={productIdData.productName}
+                            amountToreceive={
+                              selectedKey ? selectedKey : customAmount
+                            }
+                            amount={
+                              selectedKey ? selectedKey : customAmountValue
+                            }
+                            currencyInUsd={selectedKey}
+                            LocalCurrency={productIdData.senderCurrencyCode}
+                            receiverCurrencyCode={
+                              productIdData.recipientCurrencyCode
+                            }
+                            country={country.country}
+                            fees={productIdData.senderFee}
+                            productId={productIdData.productId}
+                            GoBack={handleGoBack}
+                          /> */}
+                        </>
                       )}
                     </>
                   )}

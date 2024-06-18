@@ -28,3 +28,9 @@ url = "https://giftcards-sandbox.reloadly.com/products?size=&page=&productName=&
 
 def get_giftcard_redeem_code(transactionId):
     return f"https://giftcards-sandbox.reloadly.com/orders/transactions/{transactionId}/cards"
+
+
+
+def search_giftcar(country, name=None):
+   if country:
+       return f" https://giftcards-sandbox.reloadly.com/countries/{country}/products"

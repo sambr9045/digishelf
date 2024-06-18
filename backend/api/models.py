@@ -80,10 +80,10 @@ class DigiShelfData(models.Model):
 class GiftCardTransaction(models.Model):
     user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='giftcard_transaction', null=True, blank=True)
     reference = models.TextField(default=None, null=False, blank=False , unique=True)
-    product_name = models.CharField(default=None, max_length=250)
-    product_id = models.CharField(default=None, max_length=250)
-    receiver_currency_code = models.CharField(default=None, max_length=250)
-    recipient_amount =models.DecimalField(max_digits=9, decimal_places=2, default="3.4")
+    # product_name = models.CharField(default=None, max_length=250)
+    # product_id = models.CharField(default=None, max_length=250)
+    # receiver_currency_code = models.CharField(default=None, max_length=250)
+    # recipient_amount =models.DecimalField(max_digits=9, decimal_places=2, default="3.4")
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     country = models.CharField(default=None, max_length=250)
     email =models.EmailField(default=None)
@@ -92,7 +92,20 @@ class GiftCardTransaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f'{self.product_name} - {self.amount} {self.receiver_currency_code}'
+        return f'{self.reference} - {self.amount} {self.payment_method}'
+    
+class GiftCardTransactionOrderProduct(models.Model):
+    GiftCardTransaction = models.ForeignKey(GiftCardTransaction, on_delete=models.CASCADE, related_name='transactions_order_product')
+    productName = models.CharField(max_length=250, default=None)
+    productId = models.IntegerField(default=None)
+    quantity = models.IntegerField(default=None)
+    recipientAmount = models.DecimalField(max_digits=9, decimal_places=2)
+    recipientCurrency = models.CharField(default=None)
+    AmountToPay = models.DecimalField(max_digits=9, decimal_places=2)
+    currencyToPayIn = models.CharField(default=None, max_length=10)
+    img = models.CharField(max_length=250, default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 class PaymentDetails(models.Model):
     GiftCardTransaction = models.ForeignKey(GiftCardTransaction, on_delete=models.CASCADE, related_name='transactions_details')
@@ -120,6 +133,9 @@ class TransactionProduct(models.Model):
     status = models.CharField(default=None)
     product = models.TextField(default=None)
     transaction_created_at = models.DateTimeField(default=None)
+    redeem_card_number = models.CharField(max_length=250, default=None, blank=True, null=True)
+    redeem_card_pin = models.CharField(max_length=250, blank=True, null=True, default=None)
+    
     created_at = models.DateTimeField(auto_now_add=True) 
     
 
@@ -130,11 +146,14 @@ class CardRedeemCode(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     
-    
+class ErrorLog(models.Model):
+    reference = models.CharField(default=None, max_length=250)
+    email = models.EmailField(default=None)
+    error_message = models.TextField()
+    error_details = models.TextField()
+    resolve = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-
-    
-    
     
 class TopupTransaction(models.Model):
     user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)

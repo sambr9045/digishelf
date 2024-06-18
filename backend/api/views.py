@@ -6,6 +6,8 @@ from social_django.utils import load_backend
 from social_core.backends.google import GoogleOAuth2
 from social_core.exceptions import MissingBackend
 from rest_framework.permissions import AllowAny  
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from django.conf import settings
 from django.contrib.auth import login
 from .serializers import UserSerializer, UserRegistrationSerializer
@@ -19,8 +21,11 @@ import requests
 # from google.auth.transport import requests
 from . import serializers
 from . import models
-import json
-
+import json, time
+from django.db import transaction
+import asyncio
+import aiohttp
+from . import tasks
 load_dotenv()
 class GoogleLogin(APIView):
     
@@ -205,153 +210,318 @@ class GetGistCard(APIView):
                 print(e)
                 return Response({"message":e }, status=400)
         
-class ProcessPayment(APIView):
-    permission_classes= [AllowAny]
-    def post(self, request, *args, **kwargs):
-            transaction_data = request.data.get('transaction')
-            payment_details_data = request.data.get('payment_details')
-            user_device_data = request.data.get('user_device')
+# class ProcessPayment(APIView):
+#     permission_classes = [AllowAny]
 
-            # Create GiftCardTransaction
-            transaction_serializer = serializers.GiftCardTransactionSerializer(data=transaction_data)
-            if transaction_serializer.is_valid():
-                transaction = transaction_serializer.save()
+#     def post(self, request, *args, **kwargs):
+#         start_time = time.time()
+#         print("Starting executing code: ", start_time)
+#         transaction_data = request.data.get('transaction')
+#         payment_details_data = request.data.get('payment_details')
+#         user_device_data = request.data.get('user_device')
+#         order_product = transaction_data.get("products")
+        
+
+#         try:
+#             with transaction.atomic():  # Start an atomic transaction
+#                 # Create GiftCardTransaction
+#                 transaction_serializer = serializers.GiftCardTransactionSerializer(data=transaction_data)
+#                 transaction_serializer.is_valid(raise_exception=True)
+#                 transaction_ = transaction_serializer.save()
+                
+                
+#                 # create products
+#                 order_product_serializers = []
+#                 for product_data in order_product:
+#                     product_data["GiftCardTransaction"]= transaction_.id
+#                     del product_data["id"]
+#                     product_data["img"] = str(product_data["img"])
+#                     product_data['transaction'] = transaction_.id
+#                     product_serializer = serializers.GiftCardTransactionOrderProductSerialixer(data=product_data)
+#                     product_serializer.is_valid(raise_exception=True)
+#                     product_serializer.save()
+#                     order_product_serializers.append(product_serializer)
+                
+                
+
+#                 # Create PaymentDetails
+#                 payment_details_data['GiftCardTransaction'] = transaction_.id
+#                 payment_details_serializer = serializers.PaymentDetailsSerializer(data=payment_details_data)
+#                 payment_details_serializer.is_valid(raise_exception=True)
+#                 payment_details = payment_details_serializer.save()
+
+#                 # Create UserDeviceGiftCardPayment
+#                 user_device_data['GiftCardTransaction'] = transaction_.id
+#                 user_device_serializer = serializers.UserDeviceGiftCardPaymentSerializer(data=user_device_data)
+#                 user_device_serializer.is_valid(raise_exception=True)
+#                 user_device = user_device_serializer.save()
+                
+                
+                
+                
+
+#                 # Make API request to external service
+#                 multiple_api_request = []
+#                 for index, product_data_request in enumerate(order_product):
+#                     reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
+#                     audience = "https://giftcards-sandbox.reloadly.com"
+
+#                     data = {
+#                         "productId": product_data_request["productId"],
+#                         "quantity": product_data_request["quantity"],
+#                         "unitPrice": product_data_request["recipientAmount"],
+#                         "customIdentifier": f"{transaction_data.get('reference')}_{index}",
+#                         "senderName": "DigiShelf",
+#                         "preOrder": False
+#                     }
+#                     result = reloady_object.make_api_request(urls.gift_card_order, "application/com.reloadly.giftcards-v1+json", audience, "POST", data)
+#                     multiple_api_request.append(result)
+
+#                     if result:
+#                         transaction_product = models.TransactionProduct.objects.create(
+#                             GiftCardTransaction=transaction_,
+#                             transactionId=result.get("transactionId"),
+#                             amount=result.get("amount"),
+#                             discount=result.get("discount"),
+#                             currencyCode=result.get('currencyCode'),
+#                             fee=result.get('fee'),
+#                             status=result.get("status"),
+#                             product=json.dumps(result.get("product")),
+#                             transaction_created_at=result.get("transactionCreatedTime")
+#                         )
+
+#                     if result.get("status") == "SUCCESSFUL":
+#                         # Get redeem code
+#                         response = reloady_object.make_api_request(
+#                             urls.get_giftcard_redeem_code(result.get("transactionId")),
+#                             "application/com.reloadly.giftcards-v1+json",
+#                             audience
+#                         )
+                        
+
+#                         if response:
+#                             models.CardRedeemCode.objects.create(
+#                                 TransactionProduct=transaction_product,
+#                                 redeem_card_number=response[0].get("cardNumber"),
+#                                 redeem_card_pin=response[0].get("pinCode")
+#                             )
+#                         multiple_api_request.append(response)
+                    
+#                 end_time =time.time()
+#                 elapsed_time = end_time - start_time
+#                 print(f"End time: {end_time} \n")
+#                 print("How many seconds it took: ",elapsed_time, " s \n")
+#                 return Response({
+#                         "reference": transaction_data.get("reference"),
+#                         "status": "success"
+#                     }, status=status.HTTP_201_CREATED)
+#                 # else:
+#                     #     raise Exception("External API request failed")
+        
+#         except Exception as e:
+#             # Log the error for debugging
+#             log_error(transaction_data, e)
+#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+
+
+
+class ProcessPayment(APIView):
+    permission_classes = [AllowAny]
+
+    # def make_api_requests(self,product_data_request,index, transaction_data, transaction_):
+    #     print(transaction_)
+    #     reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
+    #     audience = "https://giftcards-sandbox.reloadly.com"
+
+    #     data = {
+    #         "productId": product_data_request["productId"],
+    #         "quantity": product_data_request["quantity"],
+    #         "unitPrice": product_data_request["recipientAmount"],
+    #         "customIdentifier": f"{transaction_data.get('reference')}_{index}",
+    #         "senderName": "DigiShelf",
+    #         "preOrder": False
+    #     }
+    #     result = reloady_object.make_api_request(urls.gift_card_order, "application/com.reloadly.giftcards-v1+json", audience, "POST", data)
+        
+    #     if result:
+    #         transaction_product, created = models.TransactionProduct.objects.update_or_create(
+    #             transactionId=result.get("transactionId"),
+    #             defaults={
+    #                 'GiftCardTransaction': transaction_,
+    #                 'transactionId':result.get("transactionId"),
+    #                 'amount': result.get("amount"),
+    #                 'discount': result.get("discount"),
+    #                 'currencyCode': result.get('currencyCode'),
+    #                 'fee': result.get('fee'),
+    #                 'status': result.get("status"),
+    #                 'product': json.dumps(result.get("product")),
+    #                 'transaction_created_at': result.get("transactionCreatedTime")
+    #             }
+    #         )
+
+    #         if result.get("status") == "SUCCESSFUL":
+    #             # Get redeem code
+    #             response = reloady_object.make_api_request(
+    #                 urls.get_giftcard_redeem_code(result.get("transactionId")),
+    #                 "application/com.reloadly.giftcards-v1+json",
+    #                 audience
+    #             )                    
+    #             if response:
+    #                 models.TransactionProduct.objects.filter(transaction_id=result.get("transactionId")).update(redeem_card_number=response[0].get("cardNumber"), redeem_card_pin=response[0].get("pinCode"))
+                    
+    #             return response
+    #     return result
+    
+    
+    def post(self, request, *args, **kwargs):
+        start_time = time.time()
+        print("Starting executing code: ", start_time)
+        transaction_data = request.data.get('transaction')
+        payment_details_data = request.data.get('payment_details')
+        user_device_data = request.data.get('user_device')
+        order_product = transaction_data.get("products")
+        
+
+        try:
+            with transaction.atomic():  # Start an atomic transaction
+                # Create GiftCardTransaction
+                # threads = []
+                transaction_serializer = serializers.GiftCardTransactionSerializer(data=transaction_data)
+                transaction_serializer.is_valid(raise_exception=True)
+                transaction_ = transaction_serializer.save()
+                
+                
+                # Ensure the transaction is committed before proceeding
+                transaction_.refresh_from_db()
+                
+                # create products
+                order_product_serializers = []
+                for product_data in order_product:
+                    product_data["GiftCardTransaction"] = transaction_.id
+                    del product_data["id"]
+                    product_data["img"] = str(product_data["img"])
+                    product_data['transaction'] = transaction_.id
+                    product_serializer = serializers.GiftCardTransactionOrderProductSerialixer(data=product_data)
+                    product_serializer.is_valid(raise_exception=True)
+                    product_serializer.save()
+                    order_product_serializers.append(product_serializer)
                 
                 # Create PaymentDetails
-                payment_details_data['GiftCardTransaction'] = transaction.id
+                payment_details_data['GiftCardTransaction'] = transaction_.id
                 payment_details_serializer = serializers.PaymentDetailsSerializer(data=payment_details_data)
-                if payment_details_serializer.is_valid():
-                    payment_details_serializer.save()
-                    
-                    # Create UserDeviceGiftCardPayment
-                    user_device_data['GiftCardTransaction'] = transaction.id
-                    user_device_serializer =serializers.UserDeviceGiftCardPaymentSerializer(data=user_device_data)
-                    if user_device_serializer.is_valid():
-                        user_device_serializer.save()
-                        
-                        
-                        # make api request here if possibly two request to make and order then get the order reponse id 
-                        reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
-                        audience = "https://giftcards-sandbox.reloadly.com"
-                        
-                        data ={
-                            "productId":transaction_data.get("product_id"),
-                            "quantity":1,
-                            "unitPrice":transaction_data.get("recipient_amount"),
-                            "customIdentifier":transaction_data.get("reference"),
-                            "senderName":"DigiShelf",
-                            "preOrder": False
-                        }
-                        result = reloady_object.make_api_request(urls.gift_card_order, "application/com.reloadly.giftcards-v1+json", audience, "POST", data)
-                        print(result)
-                        if result :
-                            TransactionProduct = models.TransactionProduct.objects.create(
-                                GiftCardTransaction=transaction,
-                                transactionId=result.get("transactionId"),
-                                amount=result.get("amount"),
-                                discount=result.get("discount"),
-                                currencyCode=result.get('currencyCode'),
-                                fee=result.get('fee'),
-                                status=result.get("status"),
-                                product =json.dumps(result.get("product")),
-                                transaction_created_at=result.get("transactionCreatedTime")
-                                )
-                            
-                            if result.get("status") == "SUCCESSFUL":
-                                # get redeem code
-                                reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
-                                audience = "https://giftcards-sandbox.reloadly.com"
-                                
-                                response = reloady_object.make_api_request(urls.get_giftcard_redeem_code(result.get("transactionId")), "application/com.reloadly.giftcards-v1+json", audience)
-                                
-                                if response:
-                                    
-                                    models.CardRedeemCode.objects.create(
-                                        TransactionProduct=TransactionProduct,
-                                        redeem_card_number=response[0].get("cardNumber"),
-                                        redeem_card_pin= response[0].get("pinCode")   
-                                    )
-                                
-                        
-                            return Response({
-                                "reference":transaction_data.get("reference"),
-                                "status":"success"
-                                # 'ree': transaction_serializer.data,
-                                # 'payment_details': payment_details_serializer.data,
-                                # 'user_device': user_device_serializer.data,
-                                # 'status':result.get("status"),
-                                # 'redeem_data':response,
-                            }, status=status.HTTP_201_CREATED)
-                        else:
-                            transaction.delete()  # Rollback transaction if user device creation fails
-                            return Response(user_device_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            
-                    else:
-                        transaction.delete()  # Rollback transaction if user device creation fails
-                        return Response(user_device_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    transaction.delete()  # Rollback transaction if payment details creation fails
-                    return Response(payment_details_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response(transaction_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                payment_details_serializer.is_valid(raise_exception=True)
+                payment_details = payment_details_serializer.save()
 
+                # Create UserDeviceGiftCardPayment
+                user_device_data['GiftCardTransaction'] = transaction_.id
+                user_device_serializer = serializers.UserDeviceGiftCardPaymentSerializer(data=user_device_data)
+                user_device_serializer.is_valid(raise_exception=True)
+                user_device = user_device_serializer.save()
+                
+                # Make API request to external service using ThreadPoolExecutor
+                # multiple_api_request = []
+                for index, prduct_data_request in enumerate(order_product):
+                    tasks.make_api_requests.delay(prduct_data_request, index,transaction_data, transaction_.id)
+                   
+                
+                end_time = time.time()
+                elapsed_time = end_time - start_time
+                print(f"End time: {end_time} \n")
+                print("How many seconds it took: ", elapsed_time, " s \n")
+                return Response({
+                        "reference": transaction_data.get("reference"),
+                        "status": "success"
+                    }, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            # Log the error for debugging
+            log_error(transaction_data, e)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+def log_error(transaction_data, error):
+    # Log the error details for further analysis
+    try:
+        models.ErrorLog.objects.create(
+            reference=transaction_data.get("reference"),
+            email=transaction_data.get("email"),
+            error_message=str(error),
+            error_details=json.dumps(transaction_data)
+        )
+    except Exception as log_error:
+        print(f"Failed to log error: {log_error}")
 
-class GetGiftCardOrder(APIView):
-    permission_classes= [AllowAny]
-    
-    def get(self, request):
-        reference = request.GET.get("reference")
-        product_data = models.GiftCardTransaction.objects.filter(reference=reference).first()
-        TransactionP = models.TransactionProduct.objects.get(GiftCardTransaction=product_data)
-        redeem_code = models.CardRedeemCode.objects.get(TransactionProduct=redeem_code)
-        
-        response_object ={
-            "product_data":product_data,
-            "transactionData":TransactionP,
-            "redeem_code":redeem_code
-        }
-        
-        return Response({"data":response_object}, status=200)
-        
+ 
 
 class GetGiftCardOrder(APIView):
     permission_classes = [AllowAny]  # Example: Change permission if needed
 
-    def get(self, request):
-        reference = request.GET.get("reference")
-        if not reference:
+    def post(self, request):
+        order_reference = request.data.get("reference")
+        print(order_reference)
+        if not order_reference:
             return Response({"error": "Reference is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            product_data = models.GiftCardTransaction.objects.get(reference=reference)
+            product_data = models.GiftCardTransaction.objects.filter(reference=order_reference).first()
         except models.GiftCardTransaction.DoesNotExist:
-            return Response({"error": "Gift card transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            return Response({"error": "Gift card transaction not found"}, status=400)
 
         try:
-            transaction_product = models.TransactionProduct.objects.get(GiftCardTransaction=product_data)
-            redeem_code = models.CardRedeemCode.objects.get(TransactionProduct=transaction_product)
-        except (models.TransactionProduct.DoesNotExist, models.CardRedeemCode.DoesNotExist) as e:
-            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+            transaction_product = models.TransactionProduct.objects.filter(GiftCardTransaction=product_data)
+        except (models.TransactionProduct.DoesNotExist) as e:
+            return Response({"error": str(e)}, status=400)
+        
+        
+        print(product_data, transaction_product)
 
         # Using serializers to return model data
         product_serializer = serializers.GiftCardTransactionSerializer(product_data)
-        transaction_serializer = serializers.TransactionProductSerializer(transaction_product)
-        redeem_code_serializer = serializers.CardRedeemCodeSerializer(redeem_code)
+        # print(product_serializer)
+        transaction_serializer = serializers.TransactionProductSerializer(transaction_product, many=True)
+        # redeem_code_serializer = serializers.CardRedeemCodeSerializer(redeem_code)
 
         response_object = {
-            "product_data": product_serializer.data,
-            "transactionData": transaction_serializer.data,
-            "redeem_code": redeem_code_serializer.data
+            "product_data":product_serializer.data,
+            "transactionData":transaction_serializer.data,
+            # "redeem_code": redeem_code_serializer.data
         }
 
         return Response({"data": response_object}, status=status.HTTP_200_OK)
     
 
-# {
+class GetSearchResult(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(sefl, request):
+        country = request.GET.get("country")
+        gift_card_name = request.GET.get("giftcardname")
+        
+        urls_ = None
+        if country and country != "":
+            urls_ =urls.search_giftcar(country, gift_card_name)
+        if gift_card_name and gift_card_name !="":
+            urls_ =urls.search_giftcar(country, gift_card_name)
+
+        reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
+        
+        audience = "https://giftcards-sandbox.reloadly.com"
+        
+        result = reloady_object.make_api_request(urls_, "application/com.reloadly.giftcards-v1+json", audience)
+        
+        if result:
+            return Response({"data":result}, status=200)
+        else:
+            return Response({"data":None}, status=400)
+        
+
+            
+        # {
 #     "transactionId": 1,
 #     "amount": 34536.21,
-#     "discount": 1709.72,
+#     "discifount": 1709.72,
 #     "currencyCode": "NGN",
 #     "fee": 285,
 #     "recipientEmail": "anyone@email.com",

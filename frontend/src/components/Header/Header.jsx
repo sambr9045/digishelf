@@ -1,8 +1,16 @@
-import React from "react";
+import React, { useContext } from "react";
 import logo from "../../assets/images/logo.png";
 import { Link } from "react-router-dom";
+import Stack from "@mui/material/Stack";
+import Badge from "@mui/material/Badge";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import Cart from "../includes/Cart";
+import { SessionContext } from "../sessionContext";
 
 export default function Header() {
+  const { cart } = useContext(SessionContext);
+
   return (
     <>
       <header className="header-section">
@@ -35,32 +43,32 @@ export default function Header() {
             <ul className="main-menu">
               <li className="grid__style">
                 <Link to="/" className="d-flex">
-                  Home{" "}
+                  Home
                 </Link>
               </li>
               <li className="grid__style">
                 <Link to="/top-up" className="d-flex">
-                  Top-up{" "}
+                  Top-up
                 </Link>
               </li>
               <li>
                 <Link to="/gift-cards" className="d-flex">
-                  Gift cards{" "}
+                  Gift cards
                 </Link>
               </li>
               <li className="grid__style">
                 <Link to="/pay-bills" className="d-flex">
-                  Pay Bills{" "}
+                  Pay Bills
                 </Link>
               </li>
               <li className="grid__style">
                 <Link to="/about" className="d-flex">
-                  About{" "}
+                  About
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="d-flex">
-                  Contact{" "}
+                  Contact
                 </Link>
               </li>
               <li className="sigup__grp d-lg-none d-flex align-items-center">
@@ -78,14 +86,59 @@ export default function Header() {
                 <span>Signin</span>
               </Link>
 
-              <Link to="/signup" className="text-black">
-                <span
+              <Link
+                to=""
+                className="text-black"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasRight"
+                aria-controls="offcanvasRight"
+              >
+                {/* <span
                   className="material-symbols-outlined text-black "
                   style={{ fontSize: "25px" }}
                 >
                   shopping_cart
-                </span>
+                </span> */}
+                <Stack
+                  spacing={4}
+                  direction="row"
+                  sx={{ color: "action.active" }}
+                >
+                  <Badge
+                    color="secondary"
+                    badgeContent={cart ? cart.length : 0}
+                    showZero
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        backgroundColor: "#551839",
+                        color: "white",
+                      },
+                    }}
+                  >
+                    <ShoppingCartOutlinedIcon color="white" />
+                  </Badge>
+                </Stack>
               </Link>
+
+              <div
+                className="offcanvas offcanvas-end"
+                tabIndex="-1"
+                id="offcanvasRight"
+                aria-labelledby="offcanvasRightLabel"
+              >
+                <div className="offcanvas-header">
+                  <h5 id="offcanvasRightLabel">My Cart</h5>
+                  <button
+                    type="button"
+                    className="btn-close text-reset"
+                    data-bs-dismiss="offcanvas"
+                    aria-label="Close"
+                  ></button>
+                </div>
+                <div className="offcanvas-body empty-cart">
+                  <Cart />
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -13,6 +13,25 @@ export default function GiftcardType() {
   const [isLoading, setIsLoading] = useState(true);
 
   const type = useParams();
+
+  const HandelSeach = async (country, giftcardname) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${api_endpoint}/api/giftcard-search/`, {
+        params: {
+          country: country,
+          giftcardname: giftcardname,
+        },
+      });
+      if (response.data) {
+        setGiftCards(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    setIsLoading(false);
+  };
+
   // creat funtion to featch by type
   const getGiftCardData = async () => {
     try {
@@ -34,7 +53,6 @@ export default function GiftcardType() {
 
   const handleGiftCardData = async () => {
     const GiftCardData = localStorage.getItem("giftcards");
-    console.log(JSON.parse(GiftCardData)[type.type]);
     if (GiftCardData && JSON.parse(GiftCardData)[type.type]) {
       setGiftCards(JSON.parse(GiftCardData)[type.type]);
       setIsLoading(false);
@@ -55,7 +73,7 @@ export default function GiftcardType() {
 
   return (
     <>
-      <GiftCardBanner type={type.type} />
+      <GiftCardBanner type={type.type} Search={HandelSeach} />
 
       <section className="flight__onewaysection pb__60">
         <div className="container">

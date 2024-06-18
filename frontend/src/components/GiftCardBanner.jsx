@@ -2,11 +2,20 @@ import React, { useState } from "react";
 import Header from "./Header/Header";
 import { Link } from "react-router-dom";
 import { countries } from "./Countries";
-export default function GiftCardBanner({ type = "", details = false }) {
+export default function GiftCardBanner({ Search, type = "", details = false }) {
   const [selectedCountry, setSelectedCountry] = useState("");
+  const [giftcardname, setGiftcardname] = useState("");
+
+  const handleNameChange = (e) => {
+    setGiftcardname(e.target.value);
+  };
 
   const handleCountryChange = (e) => {
     setSelectedCountry(e.target.value);
+  };
+
+  const HandleSeachClik = async () => {
+    Search(selectedCountry, giftcardname);
   };
 
   return (
@@ -77,7 +86,10 @@ export default function GiftCardBanner({ type = "", details = false }) {
                                 Select a country
                               </option>
                               {countries.map((country) => (
-                                <option key={country.code} value={country.code}>
+                                <option
+                                  key={country.code}
+                                  value={country.alpha2Code}
+                                >
                                   {country.name}
                                 </option>
                               ))}
@@ -88,30 +100,38 @@ export default function GiftCardBanner({ type = "", details = false }) {
                           </div>
                         </div>
                         <div className="dating__item dating__hidden">
-                          <input type="text" placeholder="Gift Card Name" />
+                          <input
+                            type="text"
+                            placeholder="Gift Card Name"
+                            onChange={handleNameChange}
+                          />
                           <span className="calendaricon">
                             <i className="material-symbols-outlined">redeem</i>
                           </span>
                         </div>
 
                         <div className="dating__item">
-                          <button type="submit" className="cmn__btn">
+                          <button
+                            type="submit"
+                            className="cmn__btn"
+                            onClick={HandleSeachClik}
+                          >
                             <span>Search Gift Cards</span>
                           </button>
                         </div>
                       </div>
                     </div>
                     {/* <div className="boock__check mt__30">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    value=""
-                    id="bcheckbok"
-                  />
-                  <label className="form-check-label" htmlFor="bcheckbok">
-                    Driver aged 25 - 70
-                  </label>
-                </div> */}
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        value=""
+                        id="bcheckbok"
+                      />
+                      <label className="form-check-label" htmlFor="bcheckbok">
+                        Driver aged 25 - 70
+                      </label>
+                    </div> */}
                   </div>
                 </div>
               </div>

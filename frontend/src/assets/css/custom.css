@@ -25,10 +25,28 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
+.empty-cart img {
+    width: 160px;
+    height: auto;
+}
+
+
+
+
+.empty-cart p {
+    font-weight: bold;
+    font-size: 20px;
+}
+
 .gift-card-step-2 {
     position: relative;
     margin-top: -40vh;
 
+}
+
+
+.cart-checkout {
+    text-align: center;
 }
 
 .sign-with-google {

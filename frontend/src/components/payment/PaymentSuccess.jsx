@@ -6,7 +6,8 @@ import { api_endpoint } from "../constant";
 import GiftCardBanner from "../GiftCardBanner";
 import { useParams } from "react-router-dom";
 import Loader from "../includes/Loader";
-// import Footer from "../Footer/Footer";
+import orde_success from "../../assets/images/orde_success.svg";
+import order_completed from "../../assets/images/order_completed.svg";
 
 function formatDate(datetimeString) {
   const date = new Date(datetimeString);
@@ -20,8 +21,8 @@ export default function PaymentSuccess() {
   const [orderData, setOrderData] = useState([]);
 
   const fetchOrderData = async () => {
-    const response = await axios.get(`${api_endpoint}/api/giftcardorder/`, {
-      params: { reference: reference },
+    const response = await axios.post(`${api_endpoint}/api/giftcardorder/`, {
+      reference: reference,
     });
     if (response.data) {
       setOrderData(response.data.data);
@@ -31,7 +32,7 @@ export default function PaymentSuccess() {
   };
 
   const handleRequest = async () => {
-    fetchOrderData();
+    await fetchOrderData();
   };
   useEffect(() => {
     handleRequest();
@@ -51,29 +52,33 @@ export default function PaymentSuccess() {
               <div className="container gift-card-step-2 ">
                 <div className="row justify-content-center">
                   <div className="col-lg-6 ">
-                    {/* Stage 1: Gift Card Details */}
                     <div className=" p-2 mb-3 border-0">
                       <div className="payment__success__inner">
                         {!isLoading && (
                           <>
                             <div className="payment__success__header">
-                              <div className="icon">
-                                <i className="material-symbols-outlined">
+                              <div className="">
+                                {/* <i className="material-symbols-outlined">
                                   done
-                                </i>
+                                </i> */}
+                                <img
+                                  src={order_completed}
+                                  alt="success"
+                                  style={{ width: "150px", height: "auto" }}
+                                  className="mt-5 mb-5"
+                                />
                               </div>
-                              <h3 className="">Payment Successful</h3>
-                              <p
-                                className="primary-text fs-7"
-                                style={{ fontSize: "11px!important" }}
-                              >
+                              <h4 className="basecolor_custom mb-2">
+                                Payment completed
+                              </h4>
+                              <div>
                                 Your payment has been successfully processed,
                                 and a confirmation email will be sent to you
                                 shortly.
-                              </p>
+                              </div>
                             </div>
-                            <div className="payment__success__body">
-                              <ul>
+                            <div className="payment__success__body shadow-sm p-1">
+                              <ul className="p-0">
                                 <li>
                                   <span>Transactions ID</span>
                                   <span className="textbo">
@@ -89,86 +94,69 @@ export default function PaymentSuccess() {
                                   </span>
                                 </li>
                                 <li>
-                                  <span>Mode of Payment</span>
-                                  {orderData.product_data.payment_method ===
-                                    "cbc" && (
-                                    <>
-                                      <span className="textbo">
-                                        Credit/Visa - MoMo
-                                      </span>
-                                    </>
-                                  )}
-                                  {orderData.product_data.payment_method ===
-                                    "crypto" && (
-                                    <>
-                                      <span className="textbo">
-                                        Credit/Visa - MoMo
-                                      </span>
-                                    </>
-                                  )}
-                                </li>
-                                <li>
-                                  <span>Transaction Status</span>
-                                  <span className="textbo text-success">
-                                    {orderData.transactionData.status}
+                                  <span>Email</span>
+                                  <span className="textbo">
+                                    {" "}
+                                    {orderData.product_data.email}
                                   </span>
                                 </li>
-                                <li>
-                                  <span>Customer Name</span>
-                                  <span className="textbo">Wade Warren</span>
-                                </li>
-                                <li>
-                                  <span>Redeem Code</span>
-                                  <span className="textbo">
-                                    {orderData.redeem_code.redeem_card_number}
-                                    <br />
 
-                                    {orderData.redeem_code.redeem_card_pin && (
-                                      <>
-                                        <span className="textbo">
-                                          PIN:&nbsp;
-                                          {
-                                            orderData.redeem_code
-                                              .redeem_card_pin
-                                          }
-                                        </span>
-                                      </>
-                                    )}
-                                  </span>
-                                </li>
                                 <li>
-                                  <span>Product</span>
+                                  <span>Amount Paid</span>
                                   <span className="textbo">
-                                    {orderData.product_data.product_name}&nbsp;
-                                    <span className="fs-8">
-                                      ({orderData.product_data.recipient_amount}
-                                      &nbsp;
-                                      {
-                                        orderData.product_data
-                                          .receiver_currency_code
-                                      }
-                                      )
-                                    </span>
-                                  </span>
-                                </li>
-                                <li>
-                                  <span>Payment Amount</span>
-                                  <span className="textbo">
-                                    {orderData.product_data.country === "GH" ? (
-                                      <>
-                                        GHS&nbsp;{orderData.product_data.amount}
-                                      </>
-                                    ) : (
-                                      <>
-                                        $&nbsp;{orderData.product_data.amount}
-                                      </>
-                                    )}
+                                    <b>
+                                      {" "}
+                                      {orderData.product_data.country ===
+                                      "GH" ? (
+                                        <>
+                                          GHS&nbsp;
+                                          {orderData.product_data.amount}
+                                        </>
+                                      ) : (
+                                        <></>
+                                      )}
+                                    </b>
                                   </span>
                                 </li>
                               </ul>
                             </div>
+
+                            <div className="payment__success__body shadow-sm table-responsive p-1">
+                              <table className="table table-borderless ">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">Product</th>
+                                    <th scope="col">Card</th>
+                                    <th scope="col">Pin</th>
+                                  </tr>
+                                </thead>
+                                {orderData.transactionData.map((item) => (
+                                  <>
+                                    <tbody key={item.id}>
+                                      <tr>
+                                        <td className="fs-8">
+                                          {JSON.parse(item.product).productName}
+                                          &nbsp; (
+                                          <b className="fs-8">
+                                            {JSON.parse(item.product).unitPrice}
+                                            &nbsp;
+                                            {
+                                              JSON.parse(item.product)
+                                                .currencyCode
+                                            }
+                                          </b>
+                                          ) &nbsp;
+                                        </td>
+                                        <td>{item.redeem_card_number}</td>
+                                        <td>{item.redeem_card_pin}</td>
+                                      </tr>
+                                    </tbody>
+                                  </>
+                                ))}
+                              </table>
+                            </div>
                             <div className="payment__success__footer">
-                              {/* <div className="payment-success__footer-inner">
+                              <div className="payment-success__footer-inner">
                                 <a href="javascript:void(0)">
                                   <span className="icon">
                                     <i className="material-symbols-outlined">
@@ -193,7 +181,7 @@ export default function PaymentSuccess() {
                                   </span>
                                   <span>Email Receipt</span>
                                 </a>
-                              </div> */}
+                              </div>
                               <div className="dbutton">
                                 <a href="/gift-cards" className="cmn__btn">
                                   <span> Keep Shoping</span>

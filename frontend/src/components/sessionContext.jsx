@@ -5,6 +5,7 @@ import { get_country_by_api } from "./constant";
 import { api_endpoint } from "./constant";
 import { json } from "react-router-dom";
 import Loader from "./includes/Loader";
+import { ToastContainer, toast } from "react-toastify";
 
 const SessionContext = createContext();
 
@@ -20,6 +21,7 @@ const SessionProvider = ({ children }) => {
   });
   const [exchangeRate, setExchangeRate] = useState();
   const [percentage, setPercentage] = useState();
+  const [cart, setCart] = useState([]);
   const [pc, setPc] = useState();
   const [gpc, setGpc] = useState();
   const [yps, setYps] = useState();
@@ -30,7 +32,85 @@ const SessionProvider = ({ children }) => {
     if (savedSession) {
       setSession(JSON.parse(savedSession));
     }
-  }, []);
+
+    const loadCart = async () => {
+      if (session.user) {
+        // Load cart from the database for logged-in user
+        // const savedCart = await fetchCartFromDatabase(user.username);
+        // setCart(savedCart);
+        // get card from backend
+      } else {
+        // Load cart from localStorage for guests
+        const savedCart = localStorage.getItem("cart");
+        setCart(savedCart ? JSON.parse(savedCart) : []);
+      }
+    };
+
+    loadCart();
+  }, [session.user]);
+
+  const getNextId = (cart) => {
+    return cart.length > 0 ? Math.max(cart.map((item) => item.id)) + 1 : 1;
+  };
+
+  const addToCart = (item) => {
+    if (session.user) {
+      // make api request to the backend
+      console.log("User is not login");
+    } else {
+      setCart((prevCart) => {
+        if (!Array.isArray(prevCart)) {
+          return prevCart;
+        }
+        const existingItem = prevCart.find(
+          (cartItem) =>
+            cartItem.productId === item.productId &&
+            cartItem.AmountToPay === item.AmountToPay
+        );
+
+        if (item.recipientAmount === 0 || item.recipientAmount === "") {
+          toast.error("Invalide Amount !!!");
+          return;
+        }
+
+        if (existingItem) {
+          toast.error("Item already in cart!!");
+          return prevCart;
+        }
+
+        const newItem = {
+          ...item,
+          id: getNextId(prevCart),
+        };
+
+        const updatedCart = [...prevCart, newItem];
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+        toast.success("Item added to cart successfully !");
+        return updatedCart;
+      });
+    }
+  };
+
+  const removeFromCart = (itemId) => {
+    setCart((prevCart) => {
+      const updatedCart = prevCart.filter((item) => item.id !== itemId);
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
+      return updatedCart;
+    });
+  };
+  const updateCartItem = (itemId, quantity) => {
+    setCart((prevCart) => {
+      const updatedCart = prevCart.map((item) =>
+        item.id === itemId ? { ...item, quantity: quantity } : item
+      );
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
+      return updatedCart;
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
 
   // call and sace exchange rate
   const getExchangeRate = async () => {
@@ -169,6 +249,11 @@ const SessionProvider = ({ children }) => {
         percentage,
         pc,
         exchangeRate,
+        addToCart,
+        removeFromCart,
+        updateCartItem,
+        clearCart,
+        cart,
       }}
     >
       {children}

@@ -15,7 +15,8 @@ urlpatterns = [
     path('exchange-rate/',views.FiatExchangeRate.as_view(), name="fia_exchange_rate"),
     path('giftcards/', views.GetGistCard.as_view(), name="giftcard"),
     path('process-payment/', views.ProcessPayment.as_view(), name="process_payment"),
-    path('giftcardorder/', views.GetGiftCardOrder.as_view(), name="giftcardorder")
+    path('giftcardorder/', views.GetGiftCardOrder.as_view(), name="giftcardorder"),
+    path('giftcard-search/', views.GetSearchResult.as_view(), name="giftcardseach")
     
 
 ]
