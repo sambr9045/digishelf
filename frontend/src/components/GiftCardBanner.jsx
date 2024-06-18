@@ -11,6 +11,8 @@ export default function GiftCardBanner({ Search, type = "", details = false }) {
   };
 
   const handleCountryChange = (e) => {
+    // Search(selectedCountry, giftcardname);
+
     setSelectedCountry(e.target.value);
   };
 
