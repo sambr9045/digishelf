@@ -497,7 +497,9 @@ class GetSearchResult(APIView):
     
     def get(sefl, request):
         country = request.GET.get("country")
-        gift_card_name = request.GET.get("giftcardname")
+        gift_card_name = request.GET.get("name")
+        page = request.GET.get("page")
+        print(country, gift_card_name, page)
         # urls_ = None
         # if country and country != "":
         #     urls_ =urls.search_giftcar(country, gift_card_name)
@@ -508,10 +510,11 @@ class GetSearchResult(APIView):
         
         audience = "https://giftcards-sandbox.reloadly.com"
         
-        result = reloady_object.make_api_request(urls.get_giftcard_url(gift_card_name, country), "application/com.reloadly.giftcards-v1+json", audience)
+        result = reloady_object.make_api_request(urls.get_giftcard_url_two(gift_card_name, country, page), "application/com.reloadly.giftcards-v1+json", audience)
+        print(result)
         
         if result:
-            return Response({"data":result.content}, status=200)
+            return Response({"data":result["content"]}, status=200)
         
         return Response({"data":None}, status=400)
         

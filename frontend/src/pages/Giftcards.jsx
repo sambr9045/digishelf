@@ -81,6 +81,26 @@ export default function Giftcards() {
   const [giftCards, setGiftCards] = useState([]);
   const { country } = useContext(SessionContext);
   const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState(false);
+
+  // const HandelSeach = async (country, giftcardname) => {
+  //   setIsLoading(true);
+  //   try {
+  //     const response = await axios.get(`${api_endpoint}/api/giftcard-search/`, {
+  //       params: {
+  //         country: country,
+  //         giftcardname: giftcardname,
+  //       },
+  //     });
+  //     if (response.data) {
+  //       setFilter(true);
+  //       setGiftCards(response.data.data);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  //   setIsLoading(false);
+  // };
 
   const getGistCard = async () => {
     const response = await axios.get(`${api_endpoint}/api/giftcards/`);
@@ -98,9 +118,8 @@ export default function Giftcards() {
 
   const handleGiftCard = async () => {
     const giftcard = localStorage.getItem("giftcards");
-    console.log(JSON.parse(giftcard));
     setIsLoading(false);
-    if (giftcard) {
+    if (giftcard && filter === false) {
       setGiftCards(JSON.parse(giftcard));
     } else {
       const result = await getGistCard();

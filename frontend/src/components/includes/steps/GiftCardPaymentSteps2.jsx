@@ -39,6 +39,7 @@ export default function GiftCardPaymentSteps2() {
   const { cart, country } = useContext(SessionContext);
   const [cartTotal, setCartTotal] = useState(0);
   const [CurrencyToPay, setCurrencyToPay] = useState("USD");
+  const [steps, setSteps] = useState(1);
   const navigate = useNavigate();
   // const history = useHistory();
 
@@ -170,7 +171,7 @@ export default function GiftCardPaymentSteps2() {
         (acc, item) => acc + item.AmountToPay * item.quantity,
         0
       );
-      setCartTotal(total.toFixed(2));
+      setCartTotal(total);
     }
   }, [cart]);
 
@@ -189,194 +190,187 @@ export default function GiftCardPaymentSteps2() {
               <div className="row justify-content-center">
                 <div className="col-lg-6 shadow-lg p-0">
                   {/* Stage 1: Gift Card Details */}
-                  <div className="card p-2 mb-3 border-0">
-                    <div className="card-body">
-                      <h5 className="card-title mb-4">Product</h5>
-                      {cart.map((item) => (
-                        <>
-                          <div
-                            key={item.id}
-                            className="d-flex justify-content-between mb-2"
-                          >
+                  {steps === 1 && (
+                    <>
+                      <div className="card p-2 mb-3 border-0">
+                        <div className="card-body">
+                          <h5 className="card-title mb-4">Product</h5>
+                          {console.log(cart.length)}
+                          {Number(cart.length) < 2 && (
+                            <>
+                              <div className="d-flex justify-content-between mb-2">
+                                <span className="fs-6 text-muted">Product</span>
+                                <span className="fs-6">
+                                  <b>{cart[0].productName}</b>
+                                </span>
+                              </div>
+                              <div className="d-flex justify-content-between mb-2">
+                                <span className="fs-6 text-muted b">
+                                  Amount to receive
+                                </span>
+                                <span className="fs-6">
+                                  <b>
+                                    {cart[0].recipientAmount}&nbsp;
+                                    {cart[0].recipientCurrency}
+                                  </b>
+                                </span>
+                              </div>
+                              <div className="d-flex justify-content-between mb-2">
+                                <span className="fs-6 text-muted ">
+                                  Quantity
+                                </span>
+                                <span className="fs-6">
+                                  <b>{cart[0].quantity}</b>
+                                </span>
+                              </div>
+                              {/* <div className="d-flex justify-content-between mb-2">
+                            <span className="fs-6 text-muted b">
+                              Proccessing fee
+                            </span>
                             <span className="fs-6">
-                              {item.productName}&nbsp;
                               <b>
-                                {item.recipientAmount}&nbsp;
-                                {item.recipientCurrency}
+                                {cart[0].processing_fee}&nbsp;
+                                {cart[0].currencyToPayIn}
                               </b>
                             </span>
-                            <span className="fs-6">
-                              {parseFloat(item.AmountToPay).toFixed(2)}&nbsp;
-                              {item.currencyToPayIn}
+                          </div> */}
+                              <div className="d-flex justify-content-between mb-2">
+                                <span className="fs-6 text-muted ">
+                                  Amount to Pay
+                                </span>
+                                <span className="fs-6">
+                                  <b>
+                                    {cart[0].AmountToPay}&nbsp;
+                                    {cart[0].currencyToPayIn}
+                                  </b>
+                                </span>
+                              </div>
+                            </>
+                          )}
+
+                          {cart.length > 1 && (
+                            <>
+                              <div className="accordion" id="accordionExample">
+                                {cart.map((item, index) => {
+                                  const headingId = `heading${index}`;
+                                  const collapseId = `collapse${index}`;
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="accordion-item"
+                                    >
+                                      <h2
+                                        className="accordion-header"
+                                        id={headingId}
+                                      >
+                                        <button
+                                          className="accordion-button collapsed"
+                                          type="button"
+                                          data-bs-toggle="collapse"
+                                          data-bs-target={`#${collapseId}`}
+                                          aria-expanded="true"
+                                          aria-controls={collapseId}
+                                        >
+                                          <div className="d-flex justify-content-between mb-2">
+                                            <span className="fs-6 ">
+                                              {item.productName}&nbsp;
+                                              <b>
+                                                {item.recipientAmount}&nbsp;
+                                                {item.recipientCurrency}
+                                              </b>
+                                            </span>
+                                          </div>
+                                        </button>
+                                      </h2>
+                                      <div
+                                        id={collapseId}
+                                        className={
+                                          index === 0
+                                            ? "accordion-collapse collapse show"
+                                            : "accordion-collapse collapse"
+                                        }
+                                        aria-labelledby={headingId}
+                                        data-bs-parent="#accordionExample"
+                                      >
+                                        <div className="accordion-body">
+                                          <div
+                                            key={item.id}
+                                            className="d-flex justify-content-between mb-2"
+                                          >
+                                            <span className="fs-6 text-muted">
+                                              Product
+                                            </span>
+                                            <span className="fs-6">
+                                              <b>{item.productName}</b>
+                                            </span>
+                                          </div>
+                                          <div className="d-flex justify-content-between mb-2">
+                                            <span className="fs-6 text-muted b">
+                                              Amount to receive
+                                            </span>
+                                            <span className="fs-6">
+                                              <b>
+                                                {item.recipientAmount}&nbsp;
+                                                {item.recipientCurrency}
+                                              </b>
+                                            </span>
+                                          </div>
+                                          <div className="d-flex justify-content-between mb-2">
+                                            <span className="fs-6 text-muted ">
+                                              Quantity
+                                            </span>
+                                            <span className="fs-6">
+                                              <b>{item.quantity}</b>
+                                            </span>
+                                          </div>
+
+                                          <div className="d-flex justify-content-between mb-2">
+                                            <span className="fs-6 text-muted ">
+                                              Amount to Pay
+                                            </span>
+                                            <span className="fs-6">
+                                              <b>
+                                                {parseFloat(
+                                                  item.AmountToPay
+                                                ).toFixed(2)}
+                                                &nbsp;
+                                                {item.currencyToPayIn}
+                                              </b>
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+
+                          <div className="d-flex justify-content-between ">
+                            <span className="mt-4 fs-3">Total:</span>
+                            <span className="mt-4 fs-3">
+                              <b>
+                                {cartTotal}&nbsp;{CurrencyToPay}
+                              </b>
                             </span>
                           </div>
-                        </>
-                      ))}
-                      {/* <div className="d-flex justify-content-between  border p-2 mb-2">
-                        <span>
-                          PLayStation US&nbsp;
-                          <b>10&nbsp;USD</b>
-                        </span>
-                        <span className="text-right">34 GHS</span>
-                      </div>
-                      <div className="d-flex justify-content-between  border p-2 mb-2">
-                        <span>
-                          {" "}
-                          PLayStation US&nbsp;
-                          <b>10&nbsp;USD</b>
-                        </span>
-                        <span>34 GHS</span>
-                      </div> */}
-                      {/* <div className="d-flex justify-content-between  border p-2 m-2"> */}
-                      {/* {country === "GH" ? (
-                          <>
-                            <span>Amount to Pay:</span>
-                            <span>
-                              {amount}&nbsp;{LocalCurrency}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Amount to Pay:</span>
-                            <span>80 USD</span>
-                          </>
-                        )} */}
-                      {/* <span>Amount to Pay:</span>
-                        <span>80 USD</span> */}
-                      {/* </div> */}
-
-                      <div className="d-flex justify-content-between ">
-                        <span className="mt-4 fs-3">Total:</span>
-                        <span className="mt-4 fs-3">
-                          <b>
-                            {cartTotal}&nbsp;{CurrencyToPay}
-                          </b>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* <hr className="mt-3 mb-2 w-70" /> */}
-                  {/* Stage 2: Email */}
-                  <div className="card p-2 border-0">
-                    <div className="card-body">
-                      <h5 className="card-title mb-4">Email address</h5>
-                      <form>
-                        <div className="mb-3 col-lg-12 col-md-12 col-sm-12">
-                          <input
-                            type="email"
-                            className="form-control form-control-lg"
-                            id="email"
-                            aria-describedby="emailHelp"
-                            placeholder="Enter email address"
-                            style={{ width: "100%!important" }}
-                            value={userEmail}
-                            onChange={handleEmailChange}
-                          />
-                          {emailError && (
-                            <div
-                              id="emailHelp"
-                              className="form-text text-danger"
-                            >
-                              {emailError}
-                            </div>
-                          )}
                         </div>
-                      </form>
-                    </div>
-                  </div>
 
-                  {/* Stage 3: Payment */}
-                  <div className="card border-0 p-4">
-                    <div className="card-body p-0 mt-0">
-                      <h5 className="card-title mb-4">Choose Payment</h5>
-                      {country.country === "GH" && (
-                        <div
-                          className={`form-check border pt-3 pb-3 pl-5 mb-2 d-flex justify-content-between align-items-center ${
-                            paymentMethodSelect === "cbc"
-                              ? "selected shadow-sm"
-                              : ""
-                          }`}
-                          onClick={() => handlePaymentChange("cbc")}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="d-flex align-items-center">
-                            <label
-                              className="form-check-label"
-                              htmlFor="flexRadioDefault1"
-                            >
-                              Debit/Credit cards
-                            </label>
-                            <img
-                              src={visa}
-                              alt="visa"
-                              className="ml-2 payment-icon"
-                            />
-                            <img
-                              src={mastercard}
-                              alt="mastercard"
-                              className="ml-2 payment-icon"
-                            />
-                            <img
-                              src={discover}
-                              alt="discover"
-                              className="ml-2 payment-icon"
-                            />
-                            <img
-                              src={ae}
-                              alt="ae"
-                              className="ml-2 payment-icon"
-                            />
-                          </div>
-                          {paymentMethodSelect === "cbc" && (
-                            <span className="pr-2">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="21"
-                                height="21"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                              </svg>
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <div
-                        className={`form-check border pt-3 pb-3 pl-3 mb-2 d-flex justify-content-between align-items-center ${
-                          paymentMethodSelect === "crypto" ? "selected" : ""
-                        }`}
-                        onClick={() => handlePaymentChange("crypto")}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <div className="d-flex align-items-center">
-                          <label
-                            className="form-check-label"
-                            htmlFor="flexRadioDefault2"
+                        <div className="text-center">
+                          <a
+                            href="#"
+                            className="cmn__btn mb-2 mt-5 "
+                            style={{ width: "95%" }}
+                            onClick={() => {
+                              setSteps(2);
+                            }}
                           >
-                            Crypto Currency
-                          </label>
-                          <img
-                            src={bitcoin}
-                            alt="bitcoin"
-                            className="ml-2 payment-icon"
-                          />
-                          <img
-                            src={coins}
-                            alt="ethereum"
-                            className="ml-2 payment-icon"
-                          />
-                        </div>
-                        {paymentMethodSelect === "crypto" && (
-                          <span>
+                            <span>Next</span>
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              width="21"
-                              height="21"
+                              width="19"
+                              height="19"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -384,43 +378,204 @@ export default function GiftCardPaymentSteps2() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                             >
-                              <polyline points="20 6 9 17 4 12"></polyline>
+                              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
                             </svg>
-                          </span>
-                        )}
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-center">
-                      <a
-                        href="#"
-                        className="cmn__btn mb-2 mt-5 form-control"
-                        onClick={HandlePayment}
-                      >
-                        <span>Pay</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="19"
-                          height="19"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-                        </svg>
-                      </a>
+                    </>
+                  )}
+                  {/* <hr className="mt-3 mb-2 w-70" /> */}
+                  {/* Stage 2: Email */}
+                  {steps === 2 && (
+                    <>
+                      <div className="card p-2 border-0">
+                        <div className=" justify-content-center p-3 pt-4 pb-4 text-center">
+                          {/* <span className="mt-4 fs-3">Total:</span> */}
+                          {/* <p className="text-muted">Total</p> */}
+                          <span
+                            className="mt-4 mb-4 fs-1 text-center"
+                            style={{ fontFamily: "Sans-serif" }}
+                          >
+                            <b>
+                              {cartTotal}&nbsp;{CurrencyToPay}
+                            </b>
+                          </span>
+                        </div>
+                        <div className="card-body">
+                          <h5 className="card-title mb-2 fs-6">
+                            Email address
+                          </h5>
+                          <form>
+                            <div className="mb-0 col-lg-12 col-md-12 col-sm-12">
+                              <input
+                                type="email"
+                                className="form-control form-control-lg"
+                                id="email"
+                                aria-describedby="emailHelp"
+                                placeholder="Enter email address"
+                                style={{
+                                  width: "100%!important",
+                                  fontSize: "14px",
+                                }}
+                                value={userEmail}
+                                onChange={handleEmailChange}
+                              />
+                              {emailError && (
+                                <div
+                                  id="emailHelp"
+                                  className="form-text text-danger"
+                                >
+                                  {emailError}
+                                </div>
+                              )}
+                            </div>
+                          </form>
+                        </div>
+                      </div>
 
-                      {/* <button
-                        className="form-control btn btn-secondary  mb-4 pt-3 pb-3"
-                        style={{ border: "1px solid lightgray!important" }}
-                        // onClick={GoBack}
-                      >
-                        Cancel
-                      </button> */}
-                    </div>
-                  </div>
+                      {/* Stage 3: Payment */}
+                      <div className="card border-0 p-4 pt-0 mt-0">
+                        <div className="card-body p-0 mt-0">
+                          <h5 className="card-title mb-2 fs-6">
+                            Choose Payment
+                          </h5>
+                          {country.country === "GH" && (
+                            <div
+                              className={`form-check border pt-2 pb-2 pl-5 mb-2 d-flex justify-content-between align-items-center ${
+                                paymentMethodSelect === "cbc"
+                                  ? "selected shadow-sm"
+                                  : ""
+                              }`}
+                              onClick={() => handlePaymentChange("cbc")}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <div className="d-flex align-items-center">
+                                <label
+                                  className="form-check-label"
+                                  htmlFor="flexRadioDefault1"
+                                >
+                                  Debit/Credit cards
+                                </label>
+                                <img
+                                  src={visa}
+                                  alt="visa"
+                                  className="ml-2 payment-icon"
+                                />
+                                <img
+                                  src={mastercard}
+                                  alt="mastercard"
+                                  className="ml-2 payment-icon"
+                                />
+                                <img
+                                  src={discover}
+                                  alt="discover"
+                                  className="ml-2 payment-icon"
+                                />
+                                <img
+                                  src={ae}
+                                  alt="ae"
+                                  className="ml-2 payment-icon"
+                                />
+                              </div>
+                              {paymentMethodSelect === "cbc" && (
+                                <span className="pr-2">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="21"
+                                    height="21"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div
+                            className={`form-check border pt-2 pb-2 pl-3 mb-2 d-flex justify-content-between align-items-center ${
+                              paymentMethodSelect === "crypto" ? "selected" : ""
+                            }`}
+                            onClick={() => handlePaymentChange("crypto")}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <div className="d-flex align-items-center">
+                              <label
+                                className="form-check-label"
+                                htmlFor="flexRadioDefault2"
+                              >
+                                Crypto Currency
+                              </label>
+                              <img
+                                src={bitcoin}
+                                alt="bitcoin"
+                                className="ml-2 payment-icon"
+                              />
+                              <img
+                                src={coins}
+                                alt="ethereum"
+                                className="ml-2 payment-icon"
+                              />
+                            </div>
+                            {paymentMethodSelect === "crypto" && (
+                              <span>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="21"
+                                  height="21"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <a
+                            href="#"
+                            className="cmn__btn mb-2 mt-5 form-control"
+                            onClick={HandlePayment}
+                          >
+                            <span>Pay</span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="19"
+                              height="19"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+                            </svg>
+                          </a>
+
+                          <button
+                            className="form-control btn btn-secondary btn-outline mb-4 pt-3 pb-3"
+                            style={{ border: "1px solid lightgray!important" }}
+                            onClick={() => {
+                              setSteps(1);
+                            }}
+                          >
+                            Back
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

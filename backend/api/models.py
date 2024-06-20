@@ -133,8 +133,7 @@ class TransactionProduct(models.Model):
     status = models.CharField(default=None)
     product = models.TextField(default=None)
     transaction_created_at = models.DateTimeField(default=None)
-    redeem_card_number = models.CharField(max_length=250, default=None, blank=True, null=True)
-    redeem_card_pin = models.CharField(max_length=250, blank=True, null=True, default=None)
+    redeem_data = models.TextField(default=None, null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True) 
     

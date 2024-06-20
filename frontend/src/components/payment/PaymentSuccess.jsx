@@ -19,6 +19,7 @@ export default function PaymentSuccess() {
   const { reference } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [orderData, setOrderData] = useState([]);
+  const [redeemLoading, setRedeemLoading] = useState(false);
 
   const fetchOrderData = async () => {
     const response = await axios.post(`${api_endpoint}/api/giftcardorder/`, {
@@ -27,6 +28,11 @@ export default function PaymentSuccess() {
     if (response.data) {
       setOrderData(response.data.data);
       console.log(response.data.data);
+      if (response.data.data.transactionData.length === 0) {
+        setRedeemLoading(true);
+      } else {
+        setRedeemLoading(false);
+      }
       setIsLoading(false);
     }
   };
@@ -34,6 +40,7 @@ export default function PaymentSuccess() {
   const handleRequest = async () => {
     await fetchOrderData();
   };
+
   useEffect(() => {
     handleRequest();
   }, []);
@@ -72,9 +79,8 @@ export default function PaymentSuccess() {
                                 Payment completed
                               </h4>
                               <div>
-                                Your payment has been successfully processed,
-                                and a confirmation email will be sent to you
-                                shortly.
+                                Your payment has been successfully processed, a
+                                confirmation email will be sent to you shortly.
                               </div>
                             </div>
                             <div className="payment__success__body shadow-sm p-1">
@@ -105,7 +111,6 @@ export default function PaymentSuccess() {
                                   <span>Amount Paid</span>
                                   <span className="textbo">
                                     <b>
-                                      {" "}
                                       {orderData.product_data.country ===
                                       "GH" ? (
                                         <>
@@ -122,38 +127,80 @@ export default function PaymentSuccess() {
                             </div>
 
                             <div className="payment__success__body shadow-sm table-responsive p-1">
-                              <table className="table table-borderless ">
-                                <thead>
-                                  <tr>
-                                    <th scope="col">Product</th>
-                                    <th scope="col">Card</th>
-                                    <th scope="col">Pin</th>
-                                  </tr>
-                                </thead>
-                                {orderData.transactionData.map((item) => (
-                                  <>
-                                    <tbody key={item.id}>
+                              {redeemLoading ? (
+                                <>
+                                  <div className="loading text-center pt-4 pb-4">
+                                    <h6> Processing card...</h6>
+                                    <div className="fs-6 text-muted">
+                                      <p className="fs-6">
+                                        Please wait while we process your
+                                        transaction.
+                                      </p>
+                                      <p className="fs-6">
+                                        Refreshing in a few seconds...
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-secondary mt-4"
+                                      onClick={handleRequest}
+                                    >
+                                      Refresh
+                                    </button>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <table className="table table-borderless ">
+                                    <thead>
                                       <tr>
-                                        <td className="fs-8">
-                                          {JSON.parse(item.product).productName}
-                                          &nbsp; (
-                                          <b className="fs-8">
-                                            {JSON.parse(item.product).unitPrice}
-                                            &nbsp;
-                                            {
-                                              JSON.parse(item.product)
-                                                .currencyCode
-                                            }
-                                          </b>
-                                          ) &nbsp;
-                                        </td>
-                                        <td>{item.redeem_card_number}</td>
-                                        <td>{item.redeem_card_pin}</td>
+                                        <th scope="col">Product</th>
+                                        <th scope="col">Card</th>
+                                        <th scope="col">Pin</th>
                                       </tr>
-                                    </tbody>
-                                  </>
-                                ))}
-                              </table>
+                                    </thead>
+                                    {orderData.transactionData.map((item) => (
+                                      <>
+                                        <tbody key={item.id}>
+                                          {item.redeem_data &&
+                                            JSON.parse(item.redeem_data).map(
+                                              (redeem) => (
+                                                <>
+                                                  <tr>
+                                                    <td className="fs-8">
+                                                      {
+                                                        JSON.parse(item.product)
+                                                          .productName
+                                                      }
+                                                      &nbsp; (
+                                                      <b className="fs-8">
+                                                        {
+                                                          JSON.parse(
+                                                            item.product
+                                                          ).unitPrice
+                                                        }
+                                                        &nbsp;
+                                                        {
+                                                          JSON.parse(
+                                                            item.product
+                                                          ).currencyCode
+                                                        }
+                                                      </b>
+                                                      ) &nbsp;
+                                                    </td>
+
+                                                    <td>{redeem.cardNumber}</td>
+                                                    <td>{redeem.pinCode}</td>
+                                                  </tr>
+                                                </>
+                                              )
+                                            )}
+                                        </tbody>
+                                      </>
+                                    ))}
+                                  </table>
+                                </>
+                              )}
                             </div>
                             <div className="payment__success__footer">
                               <div className="payment-success__footer-inner">

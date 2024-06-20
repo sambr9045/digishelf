@@ -46,7 +46,7 @@ def make_api_requests(product_data_request,index, transaction_data, transaction_
                 audience
             )       
             if response:
-                models.TransactionProduct.objects.filter(transactionId=result.get("transactionId")).update(redeem_card_number=response[0].get("cardNumber"), redeem_card_pin=response[0].get("pinCode"))
+                models.TransactionProduct.objects.filter(transactionId=result.get("transactionId")).update(redeem_data=json.dumps(response))
                 
     return "done"
     

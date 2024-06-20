@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import CheckoutBanner from "../CheckoutBanner";
 import Footer from "../Footer/Footer";
 import GiftCardPaymentSteps2 from "../includes/steps/GiftCardPaymentSteps2";
 
 export default function Checkout() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <div>
       <CheckoutBanner />

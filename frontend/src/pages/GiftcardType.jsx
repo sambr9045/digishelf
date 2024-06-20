@@ -73,7 +73,7 @@ export default function GiftcardType() {
 
   return (
     <>
-      <GiftCardBanner type={type.type} Search={HandelSeach} />
+      <GiftCardBanner type={type.type} />
 
       <section className="flight__onewaysection pb__60">
         <div className="container">

@@ -7,6 +7,7 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import Cart from "../includes/Cart";
 import { SessionContext } from "../sessionContext";
+import { NavLink } from "react-router-dom";
 
 export default function Header() {
   const { cart } = useContext(SessionContext);
@@ -26,13 +27,13 @@ export default function Header() {
             </div>
             <div className="menu__right__components d-flex align-items-center">
               <div className="sigup__grp d-lg-none">
-                <Link to="/signin" className="cmn__btn outline__btn">
+                <NavLink to="/signin" className="cmn__btn outline__btn">
                   <span>Signin</span>
-                </Link>
+                </NavLink>
 
-                <Link to="/signup" className="cmn__btn">
+                <NavLink to="/signup" className="cmn__btn">
                   Signup
-                </Link>
+                </NavLink>
               </div>
               <div className="header-bar d-lg-none">
                 <span></span>
@@ -42,51 +43,98 @@ export default function Header() {
             </div>
             <ul className="main-menu">
               <li className="grid__style">
-                <Link to="/" className="d-flex">
+                <NavLink
+                  to="/"
+                  // className="d-flex"
+                  className={({ isActive, isPending }) =>
+                    isPending
+                      ? "pending d-flex"
+                      : isActive
+                      ? "menu-active d-flex"
+                      : "d-flex"
+                  }
+                >
                   Home
-                </Link>
+                </NavLink>
               </li>
               <li className="grid__style">
-                <Link to="/top-up" className="d-flex">
+                <NavLink
+                  to="/top-up"
+                  className={({ isActive, isPending }) =>
+                    isPending
+                      ? "pending d-flex"
+                      : isActive
+                      ? "menu-active d-flex"
+                      : "d-flex"
+                  }
+                >
                   Top-up
-                </Link>
+                </NavLink>
               </li>
               <li>
-                <Link to="/gift-cards" className="d-flex">
+                <NavLink
+                  to="/gift-cards"
+                  className={({ isActive, isPending }) =>
+                    isPending
+                      ? "pending d-flex"
+                      : isActive
+                      ? "menu-active d-flex"
+                      : "d-flex"
+                  }
+                >
                   Gift cards
-                </Link>
+                </NavLink>
               </li>
               <li className="grid__style">
-                <Link to="/pay-bills" className="d-flex">
+                <NavLink
+                  to="/pay-bills"
+                  className={({ isActive, isPending }) =>
+                    isPending
+                      ? "pending d-flex"
+                      : isActive
+                      ? "menu-active d-flex"
+                      : "d-flex"
+                  }
+                >
                   Pay Bills
-                </Link>
+                </NavLink>
               </li>
               <li className="grid__style">
-                <Link to="/about" className="d-flex">
+                <NavLink
+                  to="/about"
+                  className={({ isActive, isPending }) =>
+                    isPending
+                      ? "pending d-flex"
+                      : isActive
+                      ? "menu-active d-flex"
+                      : "d-flex"
+                  }
+                >
                   About
-                </Link>
+                </NavLink>
               </li>
               <li>
-                <Link to="/contact" className="d-flex">
+                <NavLink
+                  to="/contact"
+                  className={({ isActive, isPending }) =>
+                    isPending ? "pending" : isActive ? "menu-active" : ""
+                  }
+                >
                   Contact
-                </Link>
+                </NavLink>
               </li>
               <li className="sigup__grp d-lg-none d-flex align-items-center">
-                <Link to="/signin" className="cmn__btn outline__btn">
+                <NavLink to="/signin" className="cmn__btn outline__btn">
                   <span>Signin</span>
-                </Link>
+                </NavLink>
 
-                <Link to="/signup" className="cmn__btn">
+                <NavLink to="/signup" className="cmn__btn">
                   Signup
-                </Link>
+                </NavLink>
               </li>
             </ul>
             <div className="sigin__grp d-flex align-items-center">
-              <Link to="/signin" className="cmn__btn outline__btn">
-                <span>Signin</span>
-              </Link>
-
-              <Link
+              <NavLink
                 to=""
                 className="text-black"
                 data-bs-toggle="offcanvas"
@@ -118,7 +166,11 @@ export default function Header() {
                     <ShoppingCartOutlinedIcon color="white" />
                   </Badge>
                 </Stack>
-              </Link>
+              </NavLink>
+
+              <NavLink to="/signin" className="cmn__btn outline__btn ml-3">
+                <span>Signin</span>
+              </NavLink>
 
               <div
                 className="offcanvas offcanvas-end"

@@ -2,9 +2,17 @@ import React, { useState } from "react";
 import Header from "./Header/Header";
 import { Link } from "react-router-dom";
 import { countries } from "./Countries";
+import { useLocation, useNavigate } from "react-router-dom";
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 export default function GiftCardBanner({ Search, type = "", details = false }) {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [giftcardname, setGiftcardname] = useState("");
+  const navigate = useNavigate();
+  const query = useQuery();
 
   const handleNameChange = (e) => {
     setGiftcardname(e.target.value);
@@ -16,8 +24,20 @@ export default function GiftCardBanner({ Search, type = "", details = false }) {
     setSelectedCountry(e.target.value);
   };
 
-  const HandleSeachClik = async () => {
-    Search(selectedCountry, giftcardname);
+  const HandleSeachClik = async (e) => {
+    e.preventDefault();
+
+    if (selectedCountry !== "" || giftcardname !== "") {
+      navigate(
+        `/giftcard/search?country=${selectedCountry}&name=${giftcardname}`
+      );
+    }
+
+    if (Search) {
+      Search(selectedCountry, giftcardname);
+    }
+
+    // Search(selectedCountry, giftcardname);
   };
 
   return (

@@ -9,6 +9,7 @@ import Loader from "../components/includes/Loader";
 import { ToastContainer, toast } from "react-toastify";
 import GiftCardPaymentSteps2 from "../components/includes/steps/GiftCardPaymentSteps2";
 import { SessionContext } from "../components/sessionContext";
+import { useNavigate } from "react-router-dom";
 
 // id
 // productName
@@ -40,36 +41,26 @@ export default function Details() {
     updateCartItem,
   } = useContext(SessionContext);
   const [details_status, setDetails_status] = useState(false);
+  const navigate = useNavigate();
 
   //
 
   const HandleBuyNow = async (e) => {
     e.preventDefault();
-    if (productIdData && productIdData.fixedRecipientToSenderDenominationsMap) {
-      if (selectedValue === 0 || selectedKey === "") {
-        toast.error("Please select an amount to continue.");
-      } else {
-        setSteps(2);
-        setDetails_status(true);
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      }
-    } else {
-      if (customAmount === "") {
-        toast.error("Please receiver amount to continue");
-      } else if (customAmountError !== "") {
-        toast.error(customAmountError);
-      } else {
-        setSteps(2);
-        setDetails_status(true);
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      }
-    }
+    addToCart({
+      id: productIdData.productId,
+      productName: productIdData.productName,
+      productId: productIdData.productId,
+      quantity: 1,
+      recipientAmount: selectedKey ? selectedKey : customAmount,
+      recipientCurrency: productIdData.recipientCurrencyCode,
+      AmountToPay: selectedValue ? selectedValue : customAmountValue,
+      currencyToPayIn: country.country === "GH" ? "GHS" : "USD",
+      img: productIdData.logoUrls,
+      processing_fee: country.country === "GH" ? productIdData.senderFee : 2,
+    });
+
+    navigate("/checkout");
   };
 
   const handleGoBack = async (e) => {
@@ -341,6 +332,10 @@ export default function Details() {
                                           ? "GHS"
                                           : "USD",
                                       img: productIdData.logoUrls,
+                                      processing_fee:
+                                        country.country === "GH"
+                                          ? productIdData.senderFee
+                                          : 2,
                                     })
                                   }
                                 >
@@ -372,12 +367,13 @@ export default function Details() {
                                     </>
                                   )}
                                 </a>
-                                &nbsp;
+                                &nbsp; &nbsp; &nbsp; &nbsp;
                                 <a
                                   href="#"
-                                  className="cmn__btn mb-5 mt-5"
+                                  className="cmn__btn mb-5 mt-5 "
                                   onClick={HandleBuyNow}
                                   style={{
+                                    marginLeft: "10px!important",
                                     opacity: isloading ? 0.5 : 1,
                                     cursor: isloading
                                       ? "not-allowed"

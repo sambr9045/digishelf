@@ -1,11 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Loader from "./Loader";
+import loader from "../../assets/images/loader.svg";
+import empty_search from "../../assets/images/empty_search.svg";
 
 export default function GiftCardContentDisplau({
   GIFTCARD,
   isLoading,
   type = "",
+  paginationLoading = false,
 }) {
   return (
     <>
@@ -17,68 +20,108 @@ export default function GiftCardContentDisplau({
             </>
           ) : (
             <>
-              {GIFTCARD.map((item) => (
-                <div
-                  key={item.productId}
-                  className="col-xl-4 col-lg-4 col-md-4 giftcard"
-                >
-                  <div className="carferrari__item flex-wrap d-flex align-items-center bgwhite p__10">
-                    <Link
-                      to={
-                        type !== ""
-                          ? `/gift-card/${type}/${item.productId}`
-                          : `/gift-card/${item.productName}`
-                      }
-                      className="thumb"
+              {GIFTCARD.length > 0 ? (
+                GIFTCARD.map((item) => (
+                  <>
+                    <div
+                      key={item.productId}
+                      className="col-xl-4 col-lg-6 col-md-6 giftcard"
                     >
-                      {item.logoUrls && (
-                        <>
-                          <img
-                            src={item.logoUrls[0]}
-                            alt="giftcard"
-                            className="giftcard_img"
-                          />
-                        </>
-                      )}
+                      <div className="carferrari__item flex-wrap d-flex align-items-center bgwhite p__10">
+                        <Link
+                          to={
+                            type === "search"
+                              ? `/gift-card/${item.productName}/${item.productId}`
+                              : type !== ""
+                              ? `/gift-card/${type}/${item.productId}`
+                              : `/gift-card/${item.productName}`
+                          }
+                          className="thumb"
+                        >
+                          {item.logoUrls && (
+                            <>
+                              <img
+                                src={item.logoUrls[0]}
+                                alt="giftcard"
+                                className="giftcard_img big_image shadow-lg"
+                              />
+                            </>
+                          )}
 
-                      {item.img && (
-                        <>
-                          <img
-                            src={item.img}
-                            alt="giftcard"
-                            className="giftcard_img"
-                          />
-                        </>
-                      )}
-                    </Link>
+                          {item.img && (
+                            <>
+                              <img
+                                src={item.img}
+                                alt="giftcard"
+                                className="giftcard_img"
+                              />
+                            </>
+                          )}
+                        </Link>
 
-                    <div className="carferrari__content">
-                      <div className="d-flex carferari__box justify-content-center">
-                        <div className="farrari__left">
-                          <div className="d-flex  align-items-center gap-4">
-                            <Link
-                              to={
-                                type !== ""
-                                  ? `/gift-card/${type}/${item.productId}`
-                                  : `/gift-card/${item.productName}`
-                              }
-                            >
-                              <h5 className="dtext">{item.productName}</h5>
-                            </Link>
-                            {item.country && (
-                              <>
-                                <span className="suv fz-16 fw-400 lato d-block countryflag">
-                                  <img src={item.country.flagUrl} alt="flag" />
-                                </span>
-                              </>
-                            )}
+                        <div className="carferrari__content">
+                          <div className="d-flex carferari__box justify-content-center">
+                            <div className="farrari__left">
+                              <div className="d-flex  align-items-center gap-4">
+                                <Link
+                                  to={
+                                    type !== ""
+                                      ? `/gift-card/${type}/${item.productId}`
+                                      : `/gift-card/${item.productName}`
+                                  }
+                                >
+                                  <h5 className="dtext">{item.productName}</h5>
+                                </Link>
+                                {item.country && (
+                                  <>
+                                    <span className="suv fz-16 fw-400 lato d-block countryflag">
+                                      <img
+                                        src={item.country.flagUrl}
+                                        alt="flag"
+                                      />
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </>
+                ))
+              ) : (
+                <>
+                  <div className="mt-5 mb-5 pb__60 text-center">
+                    <img
+                      src={empty_search}
+                      alt="empty search"
+                      width={"250px"}
+                    />
+                    <h5 className="mt-5">
+                      <b className="text-muted">No results found</b>
+                    </h5>
                   </div>
-                </div>
-              ))}
+                </>
+              )}
+
+              {paginationLoading && (
+                <>
+                  <div
+                    className="mt-5 mb-5 justify-content-center text-center"
+                    style={{ margin: "0 auto" }}
+                  >
+                    <img
+                      src={loader}
+                      alt="loading"
+                      className="text-center loader"
+                    />
+                    <p>
+                      <b>Loading...</b>
+                    </p>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
