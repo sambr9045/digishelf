@@ -388,6 +388,9 @@ class ProcessPayment(APIView):
             with transaction.atomic():  # Start an atomic transaction
                 # Create GiftCardTransaction
                 # threads = []
+                
+                # Check if my balance i hihgter then process with payment 
+                
                 transaction_serializer = serializers.GiftCardTransactionSerializer(data=transaction_data)
                 transaction_serializer.is_valid(raise_exception=True)
                 transaction_ = transaction_serializer.save()
@@ -496,22 +499,18 @@ class GetSearchResult(APIView):
     permission_classes = [AllowAny]
     
     def get(sefl, request):
-        country = request.GET.get("country")
-        gift_card_name = request.GET.get("name")
-        page = request.GET.get("page")
+        country = request.GET.get("country", "")
+        gift_card_name = request.GET.get("name", "")
+        
+        page = request.GET.get("page", "")
         print(country, gift_card_name, page)
-        # urls_ = None
-        # if country and country != "":
-        #     urls_ =urls.search_giftcar(country, gift_card_name)
-        # if gift_card_name and gift_card_name !="":
-        #     urls_ =urls.search_giftcar(country, gift_card_name)
+       
 
         reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
         
         audience = "https://giftcards-sandbox.reloadly.com"
         
         result = reloady_object.make_api_request(urls.get_giftcard_url_two(gift_card_name, country, page), "application/com.reloadly.giftcards-v1+json", audience)
-        print(result)
         
         if result:
             return Response({"data":result["content"]}, status=200)
