@@ -137,7 +137,7 @@ export default function PaymentSuccess() {
                                         transaction.
                                       </p>
                                       <p className="fs-6">
-                                        Refreshing in a few seconds...
+                                        Refreshe in a few seconds...
                                       </p>
                                     </div>
                                     <button

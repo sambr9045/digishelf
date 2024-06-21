@@ -42,3 +42,26 @@ export const exchangeRateConverter = (currency, amount) => {
     // Return the result formatted to 2 decimal places
     return sellAmountUsd.toFixed(2);
 }
+
+
+export const ProcessingFeeCalculation = (amount, currency, giftcardFee) => {
+    const processingFeePercentage = localStorage.getItem("gpc");
+    const PayStackCharginFees = 1.9;
+    if (currency === "GHS") {
+
+        let proccessingFeeAmount = 0;
+        if (amount < 500) {
+
+            proccessingFeeAmount = parseFloat(((processingFeePercentage / 100) * amount) + giftcardFee).toFixed(2)
+        } else {
+            proccessingFeeAmount = parseFloat(((processingFeePercentage / 100) * amount) - giftcardFee).toFixed(2)
+        }
+        // console.log(amount, currency, giftcardFee, proccessingFeeAmount, processingFeePercentage)
+        return proccessingFeeAmount;
+
+        // const processingFeeAmount = (amount * processingFeePercentage) / 100;
+        // const PaymentFees = (amount * PayStackCharginFees) / 100;
+
+        // const Fees = giftcardFee + PaymentFees
+    }
+}

@@ -356,6 +356,11 @@ h2 {
     overflow: hidden;
 }
 
+.search_img {
+    width: 100%;
+    max-height: 140px !important;
+}
+
 /* .big_image {
     object-fit: cover;
     object-position: center;
@@ -471,6 +476,17 @@ h2 {
 
 }
 
+/* .countryflag_search {
+    position: absolute;
+    margin-top: -100px;
+    margin-right: -200px !important;
+    width: 46px !important;
+    height: auto;
+    padding: 6px;
+    background-color: gray;
+    border-radius: 5px;
+
+} */
 
 @media only screen and (max-width: 1350px) {
 
@@ -480,6 +496,11 @@ h2 {
         border-radius: 10px;
         object-fit: cover;
         overflow: hidden;
+    }
+
+    .search_img {
+        width: 100%;
+        max-height: 100px !important;
     }
 }
 
@@ -492,9 +513,14 @@ h2 {
         object-fit: cover;
         overflow: hidden;
     }
+
+    .search_img {
+        width: 100%;
+        max-height: 140px !important;
+    }
 }
 
-@media only screen and (max-width: 1350px) {
+@media only screen and (max-width: 700px) {
 
     .giftcard_img {
         width: 100%;
@@ -502,5 +528,10 @@ h2 {
         border-radius: 10px;
         object-fit: cover;
         overflow: hidden;
+    }
+
+    .search_img {
+        width: 100%;
+        max-height: 200px !important;
     }
 }

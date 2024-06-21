@@ -12,13 +12,14 @@ import { Link } from "react-router-dom";
 
 import { usePaystackPayment } from "react-paystack";
 import { PaystackConsumer } from "react-paystack";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer, toast, useToast } from "react-toastify";
 import Loader from "../Loader";
 import { api_endpoint } from "../../constant";
 import { nanoid } from "nanoid";
 // import { useHistory } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { SessionContext } from "../../sessionContext";
+import { ProcessingFeeCalculation } from "../Functions";
 
 // id
 // productName
@@ -36,10 +37,11 @@ export default function GiftCardPaymentSteps2() {
   const [emailError, setEmailError] = useState("");
   const [reference, setReference] = useState("reference");
   const [isLading, setIsLoading] = useState(false);
-  const { cart, country } = useContext(SessionContext);
+  const { cart, country, clearCart } = useContext(SessionContext);
   const [cartTotal, setCartTotal] = useState(0);
-  const [CurrencyToPay, setCurrencyToPay] = useState("USD");
+  const [CurrencyToPay, setCurrencyToPay] = useState("");
   const [steps, setSteps] = useState(1);
+  const [processingFee, setProcessinFee] = useState(0);
   const navigate = useNavigate();
   // const history = useHistory();
 
@@ -72,6 +74,10 @@ export default function GiftCardPaymentSteps2() {
   const handleCall = async (data) => {
     const result = await HandleRelease(data);
     console.log(result);
+    // clear cart before redirecting
+    if (result) {
+      clearCart();
+    }
     const url = `/gift-card/payment-complete/${result.reference}`;
     navigate(url);
     // window.location.href = ;
@@ -100,7 +106,6 @@ export default function GiftCardPaymentSteps2() {
       },
     };
 
-    console.log(data);
     handleCall(data);
   };
 
@@ -110,7 +115,7 @@ export default function GiftCardPaymentSteps2() {
   };
 
   const config = {
-    reference: nanoid(10),
+    reference: `DSB-${nanoid(14)}`,
     email: userEmail,
     amount: Math.round(cartTotal * 100), // Amount in kobo
     currency: "GHS",
@@ -167,13 +172,29 @@ export default function GiftCardPaymentSteps2() {
       setCurrencyToPay("GHS");
     }
     if (cart && cart.length > 0) {
+      // const processing fee =
+      const processing_fee = cart.reduce(
+        (acc, item) =>
+          acc +
+          ProcessingFeeCalculation(
+            item.AmountToPay,
+            item.currencyToPayIn,
+            item.processing_fee
+          ) *
+            item.quantity,
+        0
+      );
+
+      setProcessinFee(processing_fee);
+
       const total = cart.reduce(
         (acc, item) => acc + item.AmountToPay * item.quantity,
         0
       );
-      setCartTotal(total);
+
+      setCartTotal((total + processing_fee).toFixed(2));
     }
-  }, [cart]);
+  }, [cart, country]);
 
   return (
     <div>
@@ -188,7 +209,7 @@ export default function GiftCardPaymentSteps2() {
           <section className="flight__onewaysection pb__60">
             <div className="container gift-card-step-2 ">
               <div className="row justify-content-center">
-                <div className="col-lg-6 shadow-lg p-0">
+                <div className="col-lg-5 col-md-7 shadow-lg p-0">
                   {/* Stage 1: Gift Card Details */}
                   {steps === 1 && (
                     <>
@@ -223,17 +244,21 @@ export default function GiftCardPaymentSteps2() {
                                   <b>{cart[0].quantity}</b>
                                 </span>
                               </div>
-                              {/* <div className="d-flex justify-content-between mb-2">
-                            <span className="fs-6 text-muted b">
-                              Proccessing fee
-                            </span>
-                            <span className="fs-6">
-                              <b>
-                                {cart[0].processing_fee}&nbsp;
-                                {cart[0].currencyToPayIn}
-                              </b>
-                            </span>
-                          </div> */}
+
+                              <div className="d-flex justify-content-between mb-2">
+                                <span className="fs-6 text-muted b">
+                                  Gift card Fee
+                                </span>
+                                <span className="fs-6">
+                                  <b>
+                                    {ProcessingFeeCalculation(
+                                      cart[0].AmountToPay,
+                                      cart[0].currencyToPayIn,
+                                      cart[0].processing_fee
+                                    ) * cart[0].quantity}
+                                  </b>
+                                </span>
+                              </div>
                               <div className="d-flex justify-content-between mb-2">
                                 <span className="fs-6 text-muted ">
                                   Amount to Pay
@@ -338,6 +363,21 @@ export default function GiftCardPaymentSteps2() {
                                               </b>
                                             </span>
                                           </div>
+
+                                          <div className="d-flex justify-content-between mb-2">
+                                            <span className="fs-6 text-muted b">
+                                              Gift card Fee
+                                            </span>
+                                            <span className="fs-6">
+                                              <b>
+                                                {ProcessingFeeCalculation(
+                                                  item.AmountToPay,
+                                                  item.currencyToPayIn,
+                                                  item.processing_fee
+                                                ) * item.quantity}
+                                              </b>
+                                            </span>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
@@ -391,10 +431,8 @@ export default function GiftCardPaymentSteps2() {
                     <>
                       <div className="card p-2 border-0">
                         <div className=" justify-content-center p-3 pt-4 pb-4 text-center">
-                          {/* <span className="mt-4 fs-3">Total:</span> */}
-                          {/* <p className="text-muted">Total</p> */}
                           <span
-                            className="mt-4 mb-4 fs-1 text-center"
+                            className="mt-4 mb-4 fs-1 text-center basecolor_custom"
                             style={{ fontFamily: "Sans-serif" }}
                           >
                             <b>
@@ -402,6 +440,14 @@ export default function GiftCardPaymentSteps2() {
                             </b>
                           </span>
                         </div>
+                        {/* <div className="d-flex justify-content-between mb-2 p-3 pt-4 pb-4">
+                          <span className="fs-1 text-muted ">Total</span>
+                          <span className="fs-1 basecolor_custom">
+                            <b>
+                              {cartTotal}&nbsp;{CurrencyToPay}
+                            </b>
+                          </span>
+                        </div> */}
                         <div className="card-body">
                           <h5 className="card-title mb-2 fs-6">
                             Email address

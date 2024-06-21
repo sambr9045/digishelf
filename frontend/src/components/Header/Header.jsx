@@ -11,6 +11,12 @@ import { NavLink } from "react-router-dom";
 
 export default function Header() {
   const { cart } = useContext(SessionContext);
+  // const location = useLocation();
+  // const checkActive = (match, location) => {
+  //   return (
+  //     location.pathname === "/checkout" || location.pathname === "/gift-cards"
+  //   );
+  // };
 
   return (
     <>
@@ -43,7 +49,7 @@ export default function Header() {
             </div>
             <ul className="main-menu">
               <li className="grid__style">
-                <NavLink
+                {/* <NavLink
                   to="/"
                   // className="d-flex"
                   className={({ isActive, isPending }) =>
@@ -55,11 +61,11 @@ export default function Header() {
                   }
                 >
                   Home
-                </NavLink>
+                </NavLink> */}
               </li>
               <li className="grid__style">
                 <NavLink
-                  to="/top-up"
+                  to="/"
                   className={({ isActive, isPending }) =>
                     isPending
                       ? "pending d-flex"

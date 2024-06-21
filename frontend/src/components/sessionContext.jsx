@@ -101,8 +101,14 @@ const SessionProvider = ({ children }) => {
   const updateCartItem = (itemId, quantity) => {
     setCart((prevCart) => {
       const updatedCart = prevCart.map((item) =>
-        item.id === itemId ? { ...item, quantity: quantity } : item
+        item.id === itemId
+          ? {
+              ...item,
+              quantity: quantity,
+            }
+          : item
       );
+      console.log(cart);
       localStorage.setItem("cart", JSON.stringify(updatedCart));
       return updatedCart;
     });
@@ -110,10 +116,12 @@ const SessionProvider = ({ children }) => {
 
   const clearCart = () => {
     setCart([]);
+    localStorage.removeItem("cart");
   };
 
   // call and sace exchange rate
   const getExchangeRate = async () => {
+    console.log("calling this");
     try {
       const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));
       const percentage = localStorage.getItem("percentage");
@@ -256,7 +264,8 @@ const SessionProvider = ({ children }) => {
         cart,
       }}
     >
-      {children}
+      {" "}
+      {children}{" "}
     </SessionContext.Provider>
   );
 };

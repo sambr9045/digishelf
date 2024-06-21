@@ -58,6 +58,10 @@ const router = createBrowserRouter([{
   {
     path: "/giftcard/search",
     element: < Search / >
+  },
+  {
+    path: "/top-up",
+    element: < Home / >
   }
 ]);
 

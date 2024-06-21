@@ -85,7 +85,7 @@ export default function Search() {
       <section className="flight__onewaysection pb__60">
         <div className="container">
           <div className="cars__gridwrapper">
-            <div className="row g-4 justify-content-center">
+            <div className="row g-4 justify-content-center pb__60">
               <GiftCardContentDisplau
                 GIFTCARD={giftCards}
                 isLoading={paginationLoading ? false : isLoading}

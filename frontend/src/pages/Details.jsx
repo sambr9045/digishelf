@@ -70,9 +70,8 @@ export default function Details() {
 
   const handleSelect = (key, value) => {
     setSelectedKey(key);
-    setSelectedValue(
-      (parseFloat(value) + parseFloat(productIdData.senderFee)).toFixed(2)
-    );
+    setSelectedValue(parseFloat(value).toFixed(2));
+    // add or remove sender fees here
   };
 
   const HandleCustomAmount = (e, min, max) => {
@@ -100,9 +99,8 @@ export default function Details() {
           get_amount_in_local_currency(
             productIdData.minRecipientDenomination,
             productIdData.minSenderDenomination
-          ) *
-            parseFloat(amount) +
-          parseFloat(productIdData.senderFee);
+          ) * parseFloat(amount);
+        // parseFloat(productIdData.senderFee);
       } else {
         amount_in_local = parseFloat(amount);
       }
@@ -151,7 +149,7 @@ export default function Details() {
       if (firstKey) {
         setSelectedKey(firstKey);
         const select_value =
-          parseFloat(productIdData.senderFee) +
+          // parseFloat(productIdData.senderFee) +
           parseFloat(
             productIdData.fixedRecipientToSenderDenominationsMap[firstKey]
           );

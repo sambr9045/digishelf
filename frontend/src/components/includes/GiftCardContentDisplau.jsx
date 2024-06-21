@@ -25,7 +25,11 @@ export default function GiftCardContentDisplau({
                   <>
                     <div
                       key={item.productId}
-                      className="col-xl-4 col-lg-6 col-md-6 giftcard"
+                      className={
+                        type !== "search"
+                          ? "col-xl-4 col-lg-4 col-md-4  giftcard search"
+                          : "col-xl-3 col-lg-4 col-md-4 col-sm-9 giftcard"
+                      }
                     >
                       <div className="carferrari__item flex-wrap d-flex align-items-center bgwhite p__10">
                         <Link
@@ -43,7 +47,7 @@ export default function GiftCardContentDisplau({
                               <img
                                 src={item.logoUrls[0]}
                                 alt="giftcard"
-                                className="giftcard_img big_image shadow-lg"
+                                className={`giftcard_img big_image shadow-lg ${type}_img`}
                               />
                             </>
                           )}
@@ -70,16 +74,37 @@ export default function GiftCardContentDisplau({
                                       : `/gift-card/${item.productName}`
                                   }
                                 >
-                                  <h5 className="dtext">{item.productName}</h5>
+                                  <h5
+                                    className={
+                                      type === "search"
+                                        ? "dtext fs-6 text-lowercase"
+                                        : "dtext"
+                                    }
+                                  >
+                                    {item.productName}
+                                  </h5>
                                 </Link>
                                 {item.country && (
                                   <>
-                                    <span className="suv fz-16 fw-400 lato d-block countryflag">
-                                      <img
-                                        src={item.country.flagUrl}
-                                        alt="flag"
-                                      />
-                                    </span>
+                                    {type === "search" ? (
+                                      <>
+                                        <span className="suv fz-16 fw-400 lato d-block countryflag countryflag_search shadow-lg">
+                                          <img
+                                            src={item.country.flagUrl}
+                                            alt="flag"
+                                          />
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="suv fz-16 fw-400 lato d-block countryflag">
+                                          <img
+                                            src={item.country.flagUrl}
+                                            alt="flag"
+                                          />
+                                        </span>
+                                      </>
+                                    )}
                                   </>
                                 )}
                               </div>
