@@ -54,3 +54,25 @@ class CardRedeemCodeSerializer(serializers.ModelSerializer):
         model = models.CardRedeemCode
         fields = '__all__'
     
+
+
+class CartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Cart
+        fields = '__all__'
+        
+    def validate(self, data):
+        productId = data.get('productId')
+        recipientAmount = data.get('recipientAmount')
+        user = self.context['request'].user 
+        
+        # Check if productId, amount, and user combination already exists
+        if models.Cart.objects.filter(productId=productId, recipientAmount=recipientAmount, user=user).exists():
+            raise serializers.ValidationError("This productId, recipientAmount, and user combination already exists.")
+
+        return data
+
+    def create(self, validated_data):
+        user = self.context['request'].user  # Get user from request context
+        validated_data['user'] = user  # Assign the current user to the instance before saving
+        return super().create(validated_data)

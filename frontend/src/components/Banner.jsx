@@ -261,7 +261,7 @@ export default function Banner() {
 
   return (
     <>
-      <section className="banner__section ">
+      <section className="banner__section Home__banner_section">
         <Header />
         <ToastContainer position="bottom-center" theme="colored" />
         {/* {paystackConfig && (
@@ -275,8 +275,28 @@ export default function Banner() {
             className="fasilities__body wow fadeInUp justify-content-center"
             data-wow-duration="3s"
           >
-            <div className="row g-4 justify-content-center">
-              <div className="col-xxl-6 col-xl-6 col-lg-6 col-md-6">
+            <div className="row g-4 justify-content-center pt-120">
+              <div className="col-lg-7">
+                <div className="home-page-details" style={{ zIndex: "1000" }}>
+                  <span className="top-message">Airtime top-up</span>
+                  <br /> <br />
+                  <h1 className="">
+                    Instant Airtime <span>top-Ups</span> Anytime
+                  </h1>
+                  <br />
+                  <div className="">
+                    <ul className="">
+                      <li>Instant top-up</li>
+                      <li>Secure & safe</li>
+                      <li>Crypto & Debit/Credit Card</li>
+                    </ul>
+                  </div>
+                  {/* <div>
+                    butoo
+                  </div> */}
+                </div>
+              </div>
+              <div className="col-xxl-5 col-xl-5 col-lg-5 col-md-5">
                 <div className="recharge__paymentbox">
                   {steps === 1 && (
                     <>

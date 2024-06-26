@@ -167,4 +167,16 @@ class TopupTransaction(models.Model):
     country = models.CharField(max_length=200, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     
+class Cart(models.Model):
+    user= models.ForeignKey(Account, on_delete=models.CASCADE, related_name='cart')
+    productName = models.CharField(max_length=250, default=None)
+    productId = models.IntegerField(default=None)
+    quantity = models.IntegerField(default=None)
+    recipientAmount = models.DecimalField(max_digits=9, decimal_places=2)
+    recipientCurrency = models.CharField(default=None)
+    AmountToPay = models.DecimalField(max_digits=9, decimal_places=2)
+    currencyToPayIn = models.CharField(default=None, max_length=10)
+    img = models.CharField(max_length=250, default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
     

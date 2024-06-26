@@ -25,10 +25,15 @@ export default function Home() {
   return (
     <>
       <Banner />
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
 
       <section className="working__section__three bgsection pt-120 pb-120">
         <div className="container">
-          <div className="row justify-content-center ">
+          <div className="row justify-content-center">
             <div className="col-lg-6">
               <div className="section__header section__center pb__40">
                 <h2>How It’s Work</h2>

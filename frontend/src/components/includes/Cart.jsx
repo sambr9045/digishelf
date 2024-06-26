@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 
 export default function Cart() {
   const { cart, removeFromCart, updateCartItem } = useContext(SessionContext);
+  console.log(cart);
 
   const HandleCardOnCahnge = async (e, id) => {
     const cartValue = e.target.value;
@@ -31,9 +32,9 @@ export default function Cart() {
                       }}
                     />
                     <div className="ms-3">
-                      <h5 className="mb-0">{item.productName}</h5>
+                      <h5 className="mb-0"> {item.productName} </h5>
                       <p className="text-muted mb-0">
-                        {item.recipientAmount}&nbsp;{item.recipientCurrency}
+                        {item.recipientAmount} &nbsp; {item.recipientCurrency}
                       </p>
                     </div>
                   </div>
@@ -44,13 +45,14 @@ export default function Cart() {
                       {(parseFloat(item.AmountToPay) * item.quantity).toFixed(
                         2
                       )}
-                      &nbsp;
-                      {item.currencyToPayIn}
+                      &nbsp; {item.currencyToPayIn}
                     </div>
                     <input
                       type="number"
                       className="form-control"
-                      style={{ width: "100px" }}
+                      style={{
+                        width: "100px",
+                      }}
                       min="1"
                       max="100"
                       value={item.quantity}
@@ -59,7 +61,9 @@ export default function Cart() {
                     <span
                       className="material-symbols-outlined fs-5 text-danger"
                       onClick={() => removeFromCart(item.id)}
-                      style={{ cursor: "pointer" }}
+                      style={{
+                        cursor: "pointer",
+                      }}
                     >
                       delete
                     </span>
@@ -68,7 +72,6 @@ export default function Cart() {
               </div>
             </>
           ))}
-
           <div className="terms-and-condition mt-5">
             <div className="form-check">
               <input
@@ -101,14 +104,13 @@ export default function Cart() {
               </label>
             </div>
           </div>
-
           <div className="cart-checkout mt-4">
             <Link
               to="/checkout"
               className="cmn__btn mb-5  form-control"
               onClick=""
             >
-              <span>Checkout</span>
+              <span> Checkout </span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="19"
@@ -129,11 +131,10 @@ export default function Cart() {
         <>
           <div className="justify-content-center mt-5 mb-5 text-center">
             <img src={emptycart} alt="empty cart" />
-            <p className="text-muted mt-5">Your cart is currently empty </p>
+            <p className="text-muted mt-5">Your cart is currently empty</p>
           </div>
         </>
       )}
-
       {/* <hr className="mt-5" /> */}
     </div>
   );

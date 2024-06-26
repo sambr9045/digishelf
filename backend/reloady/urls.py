@@ -14,7 +14,7 @@ gift_card = "https://giftcards-sandbox.reloadly.com/products?size=&page=&product
 token_url = "https://auth.reloadly.com/oauth/token"
 
 def get_giftcard_url(productName, countryCode=""):
-    return f"https://giftcards-sandbox.reloadly.com/products?size=30&page=2&productName={productName}&countryCode={countryCode}&includeRange=true&includeFixed=true&sorted=false"
+    return f"https://giftcards-sandbox.reloadly.com/products?size=&page=&productName={productName}&countryCode={countryCode}&includeRange=true&includeFixed=true&sorted=false"
 
 def auto_detect_oparator(phone, country_code):
     return f"https://topups-sandbox.reloadly.com/operators/auto-detect/phone/{phone}/countries/{country_code}?suggestedAmountsMap=true"

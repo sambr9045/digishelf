@@ -13180,7 +13180,7 @@ form .cmn__btn span i {
   content: "";
   top: 0;
   left: 50%;
-  background: #415fe2;
+  background: var(--base);
   transition: all 0.5s;
   width: 0px;
   height: 100%;

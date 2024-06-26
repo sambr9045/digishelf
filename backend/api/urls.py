@@ -16,7 +16,8 @@ urlpatterns = [
     path('giftcards/', views.GetGistCard.as_view(), name="giftcard"),
     path('process-payment/', views.ProcessPayment.as_view(), name="process_payment"),
     path('giftcardorder/', views.GetGiftCardOrder.as_view(), name="giftcardorder"),
-    path('giftcard-search/', views.GetSearchResult.as_view(), name="giftcardseach")
+    path('giftcard-search/', views.GetSearchResult.as_view(), name="giftcardseach"),
+    path('cart/', views.CartView.as_view(), name="cart")
     
 
 ]

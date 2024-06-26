@@ -14,24 +14,6 @@ export default function GiftcardType() {
 
   const type = useParams();
 
-  const HandelSeach = async (country, giftcardname) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(`${api_endpoint}/api/giftcard-search/`, {
-        params: {
-          country: country,
-          giftcardname: giftcardname,
-        },
-      });
-      if (response.data) {
-        setGiftCards(response.data.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-    setIsLoading(false);
-  };
-
   // creat funtion to featch by type
   const getGiftCardData = async () => {
     try {
@@ -53,7 +35,11 @@ export default function GiftcardType() {
 
   const handleGiftCardData = async () => {
     const GiftCardData = localStorage.getItem("giftcards");
-    if (GiftCardData && JSON.parse(GiftCardData)[type.type]) {
+    if (
+      GiftCardData &&
+      JSON.parse(GiftCardData)[type.type] &&
+      JSON.parse(GiftCardData)[type.type].length > 0
+    ) {
       setGiftCards(JSON.parse(GiftCardData)[type.type]);
       setIsLoading(false);
     } else {

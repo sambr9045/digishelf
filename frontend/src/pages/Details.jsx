@@ -160,7 +160,6 @@ export default function Details() {
   return (
     <div>
       <GiftCardBanner type={name} details={details_status} />
-      <ToastContainer position="top-center" theme="colored" />
 
       <section className="flight__onewaysection pb__60">
         <div className="container">
@@ -173,7 +172,7 @@ export default function Details() {
 
               {isloading ? (
                 <>
-                  <Loader />
+                  <Loader beforeLoaderContent={true} />
                 </>
               ) : (
                 <>

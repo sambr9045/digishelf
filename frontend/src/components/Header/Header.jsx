@@ -1,16 +1,28 @@
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import logo from "../../assets/images/logo.png";
 import { Link } from "react-router-dom";
 import Stack from "@mui/material/Stack";
 import Badge from "@mui/material/Badge";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import Offcanvas from "react-bootstrap/Offcanvas";
 import Cart from "../includes/Cart";
 import { SessionContext } from "../sessionContext";
 import { NavLink } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+// import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Header() {
   const { cart } = useContext(SessionContext);
+  const [pathActive, setPathActive] = useState(false);
+  const { session } = useContext(SessionContext);
+  const pathname = window.location.pathname;
+  console.log(pathname);
+
+  const [showCart, setShowCart] = useState(false);
+
+  const toggleCart = () => {
+    setShowCart(!showCart);
+  };
   // const location = useLocation();
   // const checkActive = (match, location) => {
   //   return (
@@ -18,9 +30,17 @@ export default function Header() {
   //   );
   // };
 
+  useEffect(() => {
+    if (pathname.includes("gift-card") || pathname.includes("giftcard")) {
+      setPathActive(true);
+    }
+  }, []);
+
   return (
     <>
-      <header className="header-section">
+      <ToastContainer position="top-center" theme="colored" />
+
+      <header className="header-section shadow-sm">
         <div className="container">
           <div className="header-wrapper">
             <div className="logo-menu">
@@ -74,7 +94,7 @@ export default function Header() {
                       : "d-flex"
                   }
                 >
-                  Top-up
+                  Top-<span className="text-lowercase">up</span>
                 </NavLink>
               </li>
               <li>
@@ -83,12 +103,12 @@ export default function Header() {
                   className={({ isActive, isPending }) =>
                     isPending
                       ? "pending d-flex"
-                      : isActive
+                      : isActive || pathActive
                       ? "menu-active d-flex"
                       : "d-flex"
                   }
                 >
-                  Gift cards
+                  Gift&nbsp;<span className="text-lowercase">cards</span>
                 </NavLink>
               </li>
               <li className="grid__style">
@@ -96,13 +116,13 @@ export default function Header() {
                   to="/pay-bills"
                   className={({ isActive, isPending }) =>
                     isPending
-                      ? "pending d-flex"
+                      ? "pending d-flex "
                       : isActive
                       ? "menu-active d-flex"
                       : "d-flex"
                   }
                 >
-                  Pay Bills
+                  Pay&nbsp;<span className="text-lowercase">bills</span>
                 </NavLink>
               </li>
               <li className="grid__style">
@@ -119,7 +139,7 @@ export default function Header() {
                   About
                 </NavLink>
               </li>
-              <li>
+              <li className="grid__style">
                 <NavLink
                   to="/contact"
                   className={({ isActive, isPending }) =>
@@ -140,13 +160,7 @@ export default function Header() {
               </li>
             </ul>
             <div className="sigin__grp d-flex align-items-center">
-              <NavLink
-                to=""
-                className="text-black"
-                data-bs-toggle="offcanvas"
-                data-bs-target="#offcanvasRight"
-                aria-controls="offcanvasRight"
-              >
+              <NavLink to="" className="text-black" onClick={toggleCart}>
                 {/* <span
                   className="material-symbols-outlined text-black "
                   style={{ fontSize: "25px" }}
@@ -174,29 +188,124 @@ export default function Header() {
                 </Stack>
               </NavLink>
 
-              <NavLink to="/signin" className="cmn__btn outline__btn ml-3">
-                <span>Signin</span>
-              </NavLink>
+              {session && session.user ? (
+                <>
+                  <div className="user-account ">
+                    <div className="container d-flex align-items-center text-center">
+                      <div
+                        className="rounded-circle text-white d-flex align-items-center justify-content-center"
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          backgroundColor: "#551839",
+                        }}
+                      >
+                        {session.user.email.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="me-2">
+                        <b className="pl-2">&nbsp;My account</b>
+                        <span
+                          className="material-symbols-outlined text-black"
+                          style={{
+                            fontSize: "18px",
+                            verticalAlign: "middle",
+                            marginTop: "0px",
+                            paddingLeft: "3px",
+                          }}
+                        >
+                          keyboard_arrow_down
+                        </span>
+                      </div>
 
-              <div
-                className="offcanvas offcanvas-end"
-                tabIndex="-1"
-                id="offcanvasRight"
-                aria-labelledby="offcanvasRightLabel"
+                      <div className="popover-custom">
+                        {/* <button className="btn">Hover me to see</button> */}
+
+                        <div className="popover">
+                          {/* <div className="arrow"></div> */}
+                          <h6 className="popover-custom-header">
+                            <span className="text-muted mt-3">Hello</span>{" "}
+                            <span className="basecolor_custom">Shamsu</span>
+                          </h6>
+                          <div className="popover-body p-0">
+                            <ul className="list-group p-0 bg-white">
+                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
+                                <span className="material-symbols-outlined user-account-icon">
+                                  person
+                                </span>
+                                <span className="user-account-icon-name">
+                                  account
+                                </span>
+                              </li>
+                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
+                                <span className="material-symbols-outlined user-account-icon">
+                                  history
+                                </span>
+                                <span className="user-account-icon-name">
+                                  profile
+                                </span>
+                              </li>
+                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
+                                <span className="material-symbols-outlined user-account-icon">
+                                  history
+                                </span>
+                                <span className="user-account-icon-name">
+                                  History
+                                </span>
+                              </li>
+
+                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
+                                <span className="material-symbols-outlined user-account-icon">
+                                  settings
+                                </span>
+                                <span className="user-account-icon-name">
+                                  Settings
+                                </span>
+                              </li>
+
+                              <hr />
+
+                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center flex-row">
+                                <span className="material-symbols-outlined user-account-icon">
+                                  logout
+                                </span>
+                                <span className="user-account-icon-name">
+                                  Logout
+                                </span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                      {/* <div className="pop ">Hello world crazy world</div> */}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <NavLink to="/signin" className="cmn__btn outline__btn ml-3">
+                    <span>Signin</span>
+                  </NavLink>
+                </>
+              )}
+
+              {/* Button to toggle Offcanvas */}
+
+              {/* Offcanvas component */}
+              <Offcanvas
+                show={showCart}
+                onHide={() => setShowCart(false)}
+                placement="end"
               >
-                <div className="offcanvas-header">
-                  <h5 id="offcanvasRightLabel">My Cart</h5>
-                  <button
-                    type="button"
-                    className="btn-close text-reset"
-                    data-bs-dismiss="offcanvas"
-                    aria-label="Close"
-                  ></button>
-                </div>
-                <div className="offcanvas-body empty-cart">
-                  <Cart />
-                </div>
-              </div>
+                <Offcanvas.Header closeButton>
+                  <Offcanvas.Title>My Cart</Offcanvas.Title>
+                </Offcanvas.Header>
+                <Offcanvas.Body>
+                  {/* Your Cart component or content */}
+                  <div className="empty-cart">
+                    <Cart />
+                  </div>
+                </Offcanvas.Body>
+              </Offcanvas>
             </div>
           </div>
         </div>

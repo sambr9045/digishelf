@@ -5,7 +5,8 @@ from social_django.utils import load_strategy
 from social_django.utils import load_backend
 from social_core.backends.google import GoogleOAuth2
 from social_core.exceptions import MissingBackend
-from rest_framework.permissions import AllowAny  
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from django.conf import settings
@@ -33,6 +34,9 @@ class GoogleLogin(APIView):
     
     def post(self, request):
         token = request.data.get('token')
+        if not token:
+            return Response({'error':'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         strategy = load_strategy(request)
         
         try:
@@ -40,14 +44,14 @@ class GoogleLogin(APIView):
             user_details = backend.user_data(token)
             email = user_details.get("email")
             if(email):
-                user = Account.objects.filter(email=email, auth_type ="google")
+                user = Account.objects.get(email=email, auth_type ="google")
                 if user:
                     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                     refresh = RefreshToken.for_user(user)
                     return Response({
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
-                        # 'user': UserSerializer(user).data,
+                        'user': UserSerializer(user).data,
                     })
                     
             else:
@@ -67,6 +71,15 @@ class GoogleSignup(APIView):
 
     def post(self, request):
         token = request.data.get('token')
+        if not token:
+            return Response({'error':'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verify the token with Google's API
+        # response = requests.get(f'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={token}')
+        # if response.status_code != 200:
+        #     return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+
         strategy = load_strategy(request)
         backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
         
@@ -78,28 +91,37 @@ class GoogleSignup(APIView):
             email= details.get("email")
             email_verified = details.get('email_verified')
             email = details.get('email')
-            # check if user already existe
             
-            user = Account.objects.filter(email=email, auth_type ="google")
+            if not email_verified:
+                return Response({'error': 'Email not verified by Google'}, status=status.HTTP_400_BAD_REQUEST)
+        
+            # check if user already existe 
+            user = Account.objects.filter(email=email, auth_type ="google").first()
             if user:
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 refresh = RefreshToken.for_user(user)
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
-                    # 'user': UserSerializer(user).data,
+                    'user': UserSerializer(user).data,
                 })
             
             # check if the same email already exist 
+            if Account.objects.filter(email=email).exclude(auth_type="google").exists():
+                print("it is here")
+                return Response(
+                    {'error': 'This email address is already registered. Please log in using this email or use a different Google account.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            users = Account.objects.filter(( Q(auth_type="email") | Q(auth_type="facebook")), email=email)
-            if users:
-                return Response({'error': 'This email address is already registered. Please log in using this email or use a different Google account.'}, status=status.HTTP_400_BAD_REQUEST)            
+            # users = Account.objects.filter(( Q(auth_type="email") | Q(auth_type="facebook")), email=email)
+            # if users:
+            #     return Response({'error': 'This email address is already registered. Please log in using this email or use a different Google account.'}, status=status.HTTP_400_BAD_REQUEST)            
             if email:
                 user = Account.objects.create_user( email=email,first_name =first_name, last_name=last_name, email_verified=email_verified, auth_type="google")
                 user.set_unusable_password()
                 user.save()
-                login(request, user)
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 refresh = RefreshToken.for_user(user)
                 return Response({
                     'refresh': str(refresh),
@@ -108,13 +130,14 @@ class GoogleSignup(APIView):
                 })
             return Response({'error': 'Failed to sign up user'}, status=400)
         except MissingBackend:
-            return Response({'error': 'Google OAuth2 backend not configured properly'}, status=400)
+            return Response({'error': 'Google OAuth2 backend not configured properly'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            print(e)
+            return Response({'error': 'An error occurred'}, status=status.HTTP_400_BAD_REQUEST)
         
 
 class EmailSignUp(APIView):
-    permission_classes = [AllowAny]  # Use AllowAny permission class for unrestricted access
+    permission_classes = [AllowAny]  
 
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
@@ -189,6 +212,7 @@ class GetGistCard(APIView):
     permission_classes= [AllowAny]
     def get(self, request):
         # get reloady data 
+
         type = request.GET.get("type", None)
         productId = request.GET.get("productId", None)
         
@@ -198,6 +222,8 @@ class GetGistCard(APIView):
                     giftcard_url = urls.gift_card_product_id(productId)
                 if type:
                     giftcard_url = urls.get_giftcard_url(type)
+                
+                print(giftcard_url)
                     
                 reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
                 audience = "https://giftcards-sandbox.reloadly.com"
@@ -209,170 +235,9 @@ class GetGistCard(APIView):
             except Exception as e:
                 print(e)
                 return Response({"message":e }, status=400)
-        
-# class ProcessPayment(APIView):
-#     permission_classes = [AllowAny]
-
-#     def post(self, request, *args, **kwargs):
-#         start_time = time.time()
-#         print("Starting executing code: ", start_time)
-#         transaction_data = request.data.get('transaction')
-#         payment_details_data = request.data.get('payment_details')
-#         user_device_data = request.data.get('user_device')
-#         order_product = transaction_data.get("products")
-        
-
-#         try:
-#             with transaction.atomic():  # Start an atomic transaction
-#                 # Create GiftCardTransaction
-#                 transaction_serializer = serializers.GiftCardTransactionSerializer(data=transaction_data)
-#                 transaction_serializer.is_valid(raise_exception=True)
-#                 transaction_ = transaction_serializer.save()
-                
-                
-#                 # create products
-#                 order_product_serializers = []
-#                 for product_data in order_product:
-#                     product_data["GiftCardTransaction"]= transaction_.id
-#                     del product_data["id"]
-#                     product_data["img"] = str(product_data["img"])
-#                     product_data['transaction'] = transaction_.id
-#                     product_serializer = serializers.GiftCardTransactionOrderProductSerialixer(data=product_data)
-#                     product_serializer.is_valid(raise_exception=True)
-#                     product_serializer.save()
-#                     order_product_serializers.append(product_serializer)
-                
-                
-
-#                 # Create PaymentDetails
-#                 payment_details_data['GiftCardTransaction'] = transaction_.id
-#                 payment_details_serializer = serializers.PaymentDetailsSerializer(data=payment_details_data)
-#                 payment_details_serializer.is_valid(raise_exception=True)
-#                 payment_details = payment_details_serializer.save()
-
-#                 # Create UserDeviceGiftCardPayment
-#                 user_device_data['GiftCardTransaction'] = transaction_.id
-#                 user_device_serializer = serializers.UserDeviceGiftCardPaymentSerializer(data=user_device_data)
-#                 user_device_serializer.is_valid(raise_exception=True)
-#                 user_device = user_device_serializer.save()
-                
-                
-                
-                
-
-#                 # Make API request to external service
-#                 multiple_api_request = []
-#                 for index, product_data_request in enumerate(order_product):
-#                     reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
-#                     audience = "https://giftcards-sandbox.reloadly.com"
-
-#                     data = {
-#                         "productId": product_data_request["productId"],
-#                         "quantity": product_data_request["quantity"],
-#                         "unitPrice": product_data_request["recipientAmount"],
-#                         "customIdentifier": f"{transaction_data.get('reference')}_{index}",
-#                         "senderName": "DigiShelf",
-#                         "preOrder": False
-#                     }
-#                     result = reloady_object.make_api_request(urls.gift_card_order, "application/com.reloadly.giftcards-v1+json", audience, "POST", data)
-#                     multiple_api_request.append(result)
-
-#                     if result:
-#                         transaction_product = models.TransactionProduct.objects.create(
-#                             GiftCardTransaction=transaction_,
-#                             transactionId=result.get("transactionId"),
-#                             amount=result.get("amount"),
-#                             discount=result.get("discount"),
-#                             currencyCode=result.get('currencyCode'),
-#                             fee=result.get('fee'),
-#                             status=result.get("status"),
-#                             product=json.dumps(result.get("product")),
-#                             transaction_created_at=result.get("transactionCreatedTime")
-#                         )
-
-#                     if result.get("status") == "SUCCESSFUL":
-#                         # Get redeem code
-#                         response = reloady_object.make_api_request(
-#                             urls.get_giftcard_redeem_code(result.get("transactionId")),
-#                             "application/com.reloadly.giftcards-v1+json",
-#                             audience
-#                         )
-                        
-
-#                         if response:
-#                             models.CardRedeemCode.objects.create(
-#                                 TransactionProduct=transaction_product,
-#                                 redeem_card_number=response[0].get("cardNumber"),
-#                                 redeem_card_pin=response[0].get("pinCode")
-#                             )
-#                         multiple_api_request.append(response)
-                    
-#                 end_time =time.time()
-#                 elapsed_time = end_time - start_time
-#                 print(f"End time: {end_time} \n")
-#                 print("How many seconds it took: ",elapsed_time, " s \n")
-#                 return Response({
-#                         "reference": transaction_data.get("reference"),
-#                         "status": "success"
-#                     }, status=status.HTTP_201_CREATED)
-#                 # else:
-#                     #     raise Exception("External API request failed")
-        
-#         except Exception as e:
-#             # Log the error for debugging
-#             log_error(transaction_data, e)
-#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
-
-
 
 class ProcessPayment(APIView):
     permission_classes = [AllowAny]
-
-    # def make_api_requests(self,product_data_request,index, transaction_data, transaction_):
-    #     print(transaction_)
-    #     reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
-    #     audience = "https://giftcards-sandbox.reloadly.com"
-
-    #     data = {
-    #         "productId": product_data_request["productId"],
-    #         "quantity": product_data_request["quantity"],
-    #         "unitPrice": product_data_request["recipientAmount"],
-    #         "customIdentifier": f"{transaction_data.get('reference')}_{index}",
-    #         "senderName": "DigiShelf",
-    #         "preOrder": False
-    #     }
-    #     result = reloady_object.make_api_request(urls.gift_card_order, "application/com.reloadly.giftcards-v1+json", audience, "POST", data)
-        
-    #     if result:
-    #         transaction_product, created = models.TransactionProduct.objects.update_or_create(
-    #             transactionId=result.get("transactionId"),
-    #             defaults={
-    #                 'GiftCardTransaction': transaction_,
-    #                 'transactionId':result.get("transactionId"),
-    #                 'amount': result.get("amount"),
-    #                 'discount': result.get("discount"),
-    #                 'currencyCode': result.get('currencyCode'),
-    #                 'fee': result.get('fee'),
-    #                 'status': result.get("status"),
-    #                 'product': json.dumps(result.get("product")),
-    #                 'transaction_created_at': result.get("transactionCreatedTime")
-    #             }
-    #         )
-
-    #         if result.get("status") == "SUCCESSFUL":
-    #             # Get redeem code
-    #             response = reloady_object.make_api_request(
-    #                 urls.get_giftcard_redeem_code(result.get("transactionId")),
-    #                 "application/com.reloadly.giftcards-v1+json",
-    #                 audience
-    #             )                    
-    #             if response:
-    #                 models.TransactionProduct.objects.filter(transaction_id=result.get("transactionId")).update(redeem_card_number=response[0].get("cardNumber"), redeem_card_pin=response[0].get("pinCode"))
-                    
-    #             return response
-    #     return result
     
     
     def post(self, request, *args, **kwargs):
@@ -546,3 +411,44 @@ class GetSearchResult(APIView):
 #     "transactionCreatedTime": "2022-02-28 13:46:00",
 #     "preOrdered": false
 # }
+
+
+class CartView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, format=None):
+        data = request.data
+        data["img"] = str(data.get("img")[0])  # Example modification to data
+        if 'user' not in data:
+            data['user'] = request.user.pk  # Assign current user
+        
+        serializer = serializers.CartSerializer(data=data, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response({"data":"success"}, status=status.HTTP_201_CREATED)
+        
+        
+        return Response({"data":"This item already exist"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get(self, request, format=None):
+        user = request.user
+        cart = models.Cart.objects.filter(user=user).order_by("-id")
+        serializer = serializers.CartSerializer(cart , many=True)
+        return Response(serializer.data, status=200)
+
+    def put(self, request, format=None):
+        cartid = request.GET.get("id")
+        cart_quantity = request.data.get("quantity")
+        object_ = models.Cart.objects.filter(
+            pk=cartid
+        ).update(quantity=cart_quantity)
+        return Response({"data":"success"}, status=200)
+        
+        
+    def delete(self, request, format=None):
+        cartid = request.GET.get("id")
+        object_ = models.Cart.objects.filter(pk=cartid).delete()
+        return Response({"data":"success"}, status=200)
+        

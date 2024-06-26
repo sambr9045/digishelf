@@ -22,41 +22,78 @@ const SessionProvider = ({ children }) => {
   const [exchangeRate, setExchangeRate] = useState();
   const [percentage, setPercentage] = useState();
   const [cart, setCart] = useState([]);
+  const [cartUpdated, setCartUpdated] = useState(false);
   const [pc, setPc] = useState();
   const [gpc, setGpc] = useState();
   const [yps, setYps] = useState();
 
   // Load session from localStorage when the app starts
+  const GetCart = async (session) => {
+    const response = await axios.get(`${api_endpoint}/api/cart/`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    });
+    if (response.data) {
+      console.log(response.data);
+      setCart(response.data);
+    }
+  };
   useEffect(() => {
     const savedSession = localStorage.getItem("session");
     if (savedSession) {
-      setSession(JSON.parse(savedSession));
+      console.log("save sessiong is runing");
+      const localSession = JSON.parse(savedSession);
+      setSession(localSession);
+      GetCart(localSession);
+    } else {
+      const savedCart = localStorage.getItem("cart");
+      setCart(savedCart ? JSON.parse(savedCart) : []);
     }
+  }, []);
 
-    const loadCart = async () => {
-      if (session.user) {
-        // Load cart from the database for logged-in user
-        // const savedCart = await fetchCartFromDatabase(user.username);
-        // setCart(savedCart);
-        // get card from backend
-      } else {
-        // Load cart from localStorage for guests
-        const savedCart = localStorage.getItem("cart");
-        setCart(savedCart ? JSON.parse(savedCart) : []);
-      }
-    };
-
-    loadCart();
-  }, [session.user]);
+  useEffect(() => {
+    if (session.accessToken && cartUpdated) {
+      GetCart(session);
+      setCartUpdated(false); // Reset the flag after updating
+    }
+  }, [cartUpdated, session]);
 
   const getNextId = (cart) => {
     return cart.length > 0 ? Math.max(cart.map((item) => item.id)) + 1 : 1;
   };
 
-  const addToCart = (item) => {
+  const addToCart = async (item) => {
     if (session.user) {
-      // make api request to the backend
-      console.log("User is not login");
+      const loading = toast.loading("Adding to cart");
+
+      try {
+        // make api request to the backend
+        const response = await axios.post(`${api_endpoint}/api/cart/`, item, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        });
+        if (response.data) {
+          toast.update(loading, {
+            render: "Item added to card successfully",
+            type: "success",
+            isLoading: false,
+            autoClose: 5000,
+          });
+          setCartUpdated(true);
+        }
+      } catch (error) {
+        console.log(error.message);
+        toast.update(loading, {
+          render: "Item already exist !",
+          type: "error",
+          isLoading: false,
+          autoClose: 5000,
+        });
+      }
     } else {
       setCart((prevCart) => {
         if (!Array.isArray(prevCart)) {
@@ -91,27 +128,58 @@ const SessionProvider = ({ children }) => {
     }
   };
 
-  const removeFromCart = (itemId) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart.filter((item) => item.id !== itemId);
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-      return updatedCart;
-    });
+  const removeFromCart = async (itemId) => {
+    if (session && session.user) {
+      const response = await axios.delete(`${api_endpoint}/api/cart/`, {
+        params: { id: itemId },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+      if (response.data) {
+        setCartUpdated(true);
+      }
+    } else {
+      setCart((prevCart) => {
+        const updatedCart = prevCart.filter((item) => item.id !== itemId);
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+        return updatedCart;
+      });
+    }
   };
-  const updateCartItem = (itemId, quantity) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              quantity: quantity,
-            }
-          : item
+  const updateCartItem = async (itemId, quantity) => {
+    if (session && session.accessToken) {
+      const response = await axios.put(
+        `${api_endpoint}/api/cart/`,
+        { quantity: quantity },
+        {
+          params: { id: itemId },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        }
       );
-      console.log(cart);
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-      return updatedCart;
-    });
+
+      if (response.data) {
+        setCartUpdated(true);
+      }
+    } else {
+      setCart((prevCart) => {
+        const updatedCart = prevCart.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                quantity: quantity,
+              }
+            : item
+        );
+        console.log(cart);
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+        return updatedCart;
+      });
+    }
   };
 
   const clearCart = () => {
@@ -251,6 +319,7 @@ const SessionProvider = ({ children }) => {
     <SessionContext.Provider
       value={{
         session,
+        setSession,
         login,
         logout,
         country,

@@ -2,8 +2,136 @@
     --custombase: #551839;
 }
 
+/* body li {
+    font-family: 'Poppins', sans-serif !important;
+} */
 
 
+.roboto-thin {
+    font-family: "Roboto", sans-serif;
+    font-weight: 100;
+    font-style: normal;
+}
+
+.roboto-light {
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+    font-style: normal;
+}
+
+.roboto-regular {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.roboto-medium {
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+
+.roboto-bold {
+    font-family: "Roboto", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.roboto-black {
+    font-family: "Roboto", sans-serif;
+    font-weight: 900;
+    font-style: normal;
+}
+
+.roboto-thin-italic {
+    font-family: "Roboto", sans-serif;
+    font-weight: 100;
+    font-style: italic;
+}
+
+.roboto-light-italic {
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+    font-style: italic;
+}
+
+.roboto-regular-italic {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.roboto-medium-italic {
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.roboto-bold-italic {
+    font-family: "Roboto", sans-serif;
+    font-weight: 700;
+    font-style: italic;
+}
+
+.roboto-black-italic {
+    font-family: "Roboto", sans-serif;
+    font-weight: 900;
+    font-style: italic;
+}
+
+
+
+.user-account .icon {
+    font-size: 24px;
+    color: white;
+    padding: 6px;
+    background-color: var(--custombase);
+    vertical-align: middle;
+    padding-right: 5px !important;
+    border-radius: 25px;
+    margin-top: 0px;
+
+}
+
+.user-account .name {
+    padding-left: 5px;
+    /* padding-top: 130px; */
+    font-weight: bolder;
+}
+
+
+
+.user-account {
+    padding-left: 10px !important;
+    cursor: pointer;
+}
+
+.signup__section {
+    background-color: var(--custombase) !important;
+    height: 100vh !important;
+    overflow: auto;
+}
+
+.LgbsSe-Bz112c {
+    text-align: left;
+    margin-right: 10px !important;
+    z-index: 0;
+    display: block;
+    margin-left: 110px;
+}
+
+.sign-with-google {
+    height: 50px !important;
+    font-family: 'Roboto', sans-serif !important;
+    color: gray !important;
+}
+
+.domain_base {
+    text-transform: uppercase;
+    color: var(--custombase);
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
 .basecolor_custom {
     color: var(--custombase) !important;
@@ -24,12 +152,31 @@
     font-weight: normal;
 }
 
+.grid__style a {
+    text-transform: capitalize !important;
+}
+
 body {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Roboto', sans-serif;
     height: 100%;
     margin: 0;
     padding: 0;
     overflow: auto !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
+}
+
+.btn {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
 }
 
 .empty-cart img {
@@ -104,7 +251,7 @@ body {
 
 .form_error {
     font-size: 13px !important;
-    margin-top: 10px;
+    margin-top: 5px;
     margin-bottom: 10px;
 }
 
@@ -115,6 +262,138 @@ body {
     font-weight: bold;
     font-size: 16px;
 }
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.popover-custom {
+    position: relative;
+    display: inline-block;
+    /* margin-top: 100px; */
+}
+
+
+
+.popover-custom .popover {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    right: 50%;
+    transform: translateX(-80%);
+    width: 250px;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 10;
+    /* display: block; */
+}
+
+.user-account-icon {
+    font-size: 20px;
+    padding-right: 5px;
+    color: gray;
+    vertical-align: middle;
+
+}
+
+.recharge__paymentbox {
+    min-width: 300px !important;
+}
+
+.home-page-details {}
+
+.home-page-details .top-message {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 25px;
+    color: lightgray;
+    font-weight: bold;
+    padding: 10px 15px;
+    margin-bottom: 20px !important;
+}
+
+.home-page-details h1 {
+    font-size: 55px;
+    color: white;
+    font-weight: 900;
+}
+
+.home-page-details h1 span {
+    /* background-color: #10ac84; */
+    color: #10ac84;
+    border-radius: 5px;
+    padding-top: 150px !important;
+    margin-bottom: 10px;
+    /* padding: 5px 15px; */
+    /* font-style: italic; */
+    /* font-size: 30px;
+    font-weight: 500 !important; */
+}
+
+.home-page-details ul li {
+    color: white;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-family: Roboto;
+
+}
+
+.home-page-details ul {
+    margin-left: 20px;
+}
+
+.Home__banner_section {
+    /* background-color: var(--custombase); */
+    background: var(--custombase);
+    height: 100vh;
+    margin-bottom: 0px !important;
+}
+
+.user-account-icon-name {
+    vertical-align: middle;
+    padding-top: 5px;
+    text-transform: capitalize;
+    font-family: Roboto "Sans serif";
+}
+
+.popover-body .list-group-item:hover {
+    color: var(--custombase) !important;
+}
+
+.popover-custom .popover .arrow {
+    position: absolute;
+    left: calc(72% - 10px);
+    /* Adjust this value to position the arrow */
+    top: -10px;
+    /* Adjust this value to position the arrow */
+    width: 20px;
+    height: 20px;
+    transform: rotate(45deg);
+    /* background-color: white; */
+    border: 1px solid #ddd;
+}
+
+.popover-custom .popover-custom-header {
+    font-weight: bold;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    background-color: none;
+}
+
+.popover-custom .popover-body {
+    font-size: 14px;
+}
+
+
+.user-account:hover .popover {
+    display: block;
+
+}
+
 
 .custom-input {
     padding-top: 10px;
@@ -488,6 +767,24 @@ h2 {
 
 } */
 
+.before-loader-container {
+    margin-top: 7vh;
+    text-align: center;
+    justify-content: center;
+    margin-bottom: 25vh;
+}
+
+.before-loader-container img {
+    width: 400px;
+    height: auto;
+}
+
+.processing_google_authentication {
+    z-index: 299;
+    /* background-color: rgba(0, 0, 0, 0.5) !important; */
+    opacity: 0.8;
+}
+
 @media only screen and (max-width: 1350px) {
 
     .giftcard_img {
@@ -501,6 +798,10 @@ h2 {
     .search_img {
         width: 100%;
         max-height: 100px !important;
+    }
+
+    .LgbsSe-Bz112c {
+        margin-left: 53px;
     }
 }
 
@@ -518,6 +819,8 @@ h2 {
         width: 100%;
         max-height: 140px !important;
     }
+
+
 }
 
 @media only screen and (max-width: 700px) {

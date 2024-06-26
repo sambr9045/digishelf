@@ -9,7 +9,7 @@ import { SessionProvider } from "./components/sessionContext.jsx";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <SessionProvider>
-      <RouterProvider router={router} />
-    </SessionProvider>
+      <RouterProvider router={router} />{" "}
+    </SessionProvider>{" "}
   </React.StrictMode>
 );

@@ -16,7 +16,7 @@ export default function GiftCardContentDisplau({
         <div className="row g-4 justify-content-center">
           {isLoading ? (
             <>
-              <Loader />
+              <Loader beforeLoaderContent={true} />
             </>
           ) : (
             <>
