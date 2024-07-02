@@ -6,6 +6,7 @@ from . import views
 urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login/', views.LoginWithEmailView.as_view(), name="login_with_email"),
     path('api/social/google/', GoogleLogin.as_view(), name='google_login'),
     # path('api/social/facebook/', FacebookLogin.as_view(), name='facebook_login'),
     path('auth/google/', GoogleLogin.as_view(), name='google_login'),

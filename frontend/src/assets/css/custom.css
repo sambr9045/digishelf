@@ -1,11 +1,133 @@
 :root {
     --custombase: #551839;
+    --secondary: #10ac84;
 }
 
 /* body li {
     font-family: 'Poppins', sans-serif !important;
 } */
 
+
+/* .fade-in-text-from-top span {
+    display: inline-block;
+    position: relative;
+}
+
+.fade-in-text-from-top span:after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: #2ecc71;
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+}
+
+.fade-in-text-from-top span:before {
+    content: '';
+    display: block;
+    width: 50%;
+    height: 2px;
+    background: #e74c3c;
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+} */
+
+.recharge__paymentbox {
+    width: 450px !important;
+    border-radius: 1px;
+}
+
+
+
+.text-with-circle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 100px;
+    border: 3px solid var(--secondary);
+    border-radius: 54%;
+    transform: translate(20%, -79%) rotate(163deg);
+    z-index: -1;
+    opacity: 0.5;
+}
+
+
+.text-with-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 100px;
+    border: 3px solid var(--secondary);
+    border-radius: 50%;
+    transform: translate(15%, -85%) rotate(-11deg);
+    z-index: -1;
+    opacity: 0.5;
+}
+
+
+.fade-in-list {
+    list-style: none;
+    padding: 0;
+}
+
+.fade-in-item img {
+    margin-right: 10px;
+    width: 30px;
+    height: auto;
+}
+
+.fade-in-item {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeIn 0.5s forwards;
+    animation-delay: var(--delay);
+}
+
+.fade-in-item:nth-child(1) {
+    --delay: 0s;
+}
+
+.fade-in-item:nth-child(2) {
+    --delay: 0.5s;
+}
+
+.fade-in-item:nth-child(3) {
+    --delay: 1s;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+.fade-in-text-from-top {
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: fadeInTop 2s forwards;
+}
+
+@keyframes fadeInTop {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.forgot_password a:hover {
+    color: var(--custombase) !important;
+    font-weight: 300;
+    text-decoration: underline;
+}
 
 .roboto-thin {
     font-family: "Roboto", sans-serif;
@@ -138,7 +260,7 @@
 }
 
 .selected {
-    border: 2px solid var(--custombase) !important;
+    border: 2px solid var(--secondary) !important;
     /* background-color: red; */
 
 }
@@ -323,7 +445,7 @@ body {
 
 .home-page-details h1 span {
     /* background-color: #10ac84; */
-    color: #10ac84;
+    color: var(--secondary);
     border-radius: 5px;
     padding-top: 150px !important;
     margin-bottom: 10px;
@@ -350,6 +472,8 @@ body {
     background: var(--custombase);
     height: 100vh;
     margin-bottom: 0px !important;
+
+    overflow: auto;
 }
 
 .user-account-icon-name {
@@ -394,6 +518,9 @@ body {
 
 }
 
+.secondary_base {
+    color: var(--secondary) !important;
+}
 
 .custom-input {
     padding-top: 10px;
@@ -403,16 +530,41 @@ body {
     font-weight: bold;
 }
 
+.selectCountryinput {
+    border-radius: 3px !important;
+    width: 100% !important;
+    font-weight: bolder;
+    font-size: 40px;
+    justify-content: start;
+    margin-top: 20px !important;
+    border-color: var(--custombase) !important;
+
+}
+
+.intl-tel-input {
+    width: 100%;
+}
+
+.selectCountryinput:focus {
+    /* border-color: green !important; */
+    /* Change this color to your desired border color */
+    /* box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); */
+    box-shadow: none !important;
+    /* Opti
+}
+
+
 .image-display {
     display: block;
     position: absolute;
-    margin-top: 12px;
-    margin-left: 28px;
+    margin-top: 15px;
+    margin-left: 10px;
+
 }
 
 .image-display img {
     vertical-align: middle;
-    width: 26px;
+    width: 35px;
     height: auto;
 }
 
@@ -464,7 +616,7 @@ body {
     flex-grow: 1;
     font-size: 20px;
     font-weight: bold;
-    color: #0056b3;
+    color: var(--secondary);
 }
 
 .operator-logo {
@@ -497,8 +649,8 @@ h2 {
 
 .top-up-option {
     background-color: white;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
     padding: 10px;
     display: flex;
     align-items: center;
@@ -511,12 +663,14 @@ h2 {
 }
 
 .label {
-    background-color: #0056b3;
+    background-color: var(--secondary);
     color: white;
     border-radius: 4px;
     padding: 2px 4px;
     font-size: 12px;
     margin-right: 10px;
+    position: absolute;
+    margin-top: -372px;
 }
 
 .text__base {
@@ -535,7 +689,7 @@ h2 {
 }
 
 .buy-button {
-    background-color: #0056b3;
+    background-color: var(--secondary);
     border: none;
     border-radius: 26px;
     padding: 10px 20px;

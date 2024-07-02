@@ -18,6 +18,10 @@ import confirm from "../assets/images/payment/confirm.svg";
 import { usePaystackPayment } from "react-paystack";
 import { configPaystack, exchangeRateConverter } from "./includes/Functions";
 import { PaystackConsumer } from "react-paystack";
+import arrowright from "../assets/images/payment/arrow-right.png";
+import Form from "react-bootstrap/Form";
+import IntlTelInput from "react-intl-tel-input";
+import "react-intl-tel-input/dist/main.css";
 
 // import VirtualizedSelect from "react-virtualized-select";
 
@@ -61,7 +65,7 @@ export default function Banner() {
   const [EmailAddress, setEmailAddress] = useState("");
   const [EmailError, setEmailError] = useState("");
   const [paystackConfig, setPaystackConfig] = useState([]);
-
+  const [operatoCountryData, setoperatorCountryData] = useState();
   const amount_2 = 27;
   const amount_3 = 54;
 
@@ -78,13 +82,6 @@ export default function Banner() {
   const initializePayment = usePaystackPayment(config);
 
   // handle payment
-
-  // const componentProps = {
-  //   ...config,
-  //   text: "Paystack Button Implementation",
-  //   onSuccess: (reference) => handleSuccess(reference),
-  //   onClose: handleClose,
-  // };
 
   const HandlePayment = async () => {
     const amount_in_usd = exchangeRateConverter(
@@ -165,8 +162,17 @@ export default function Banner() {
     setSteps(1);
     setShowCustomInput(false);
   };
+
   const getOparator = async (number) => {
     setisLoading(true);
+    // const number_update = Number(
+    //   String(number).startsWith("0")
+    //     ? `00${operatoCountryData.dialCode}${Number(
+    //         String(number).substring(1)
+    //       )}`
+    //     : `00${operatoCountryData.dialCode}${number}`
+    // );
+    // console.log(number_update);
     if (number === "") {
       setPhoneError("Please enter a valid number");
       setisLoading(false);
@@ -178,9 +184,10 @@ export default function Banner() {
       } else {
         edit_number = number;
       }
-      const phone_ = `+${country.country_code}${edit_number}`;
+      const phone_ = `+${operatoCountryData.dialCode}${edit_number}`;
       setEditNumber(phone_);
-      const data = { phone: phone_, country: country.country };
+      console.log(phone_);
+      const data = { phone: phone_, country: operatoCountryData.iso2 };
       try {
         const response = await axios.post(
           `${api_endpoint}/api/getoparator/`,
@@ -212,9 +219,10 @@ export default function Banner() {
   };
 
   const handleNumber = (e) => {
-    const inputValue = e.target.value.trim();
+    const inputValue = e.trim();
     if (isNaN(inputValue)) {
       setPhoneError("Invalid phone number");
+      return;
     } else {
       setNumber(inputValue);
       setPhoneError(""); // Clear any previous error message
@@ -223,8 +231,26 @@ export default function Banner() {
 
   const HandleSteps2 = async (e) => {
     e.preventDefault();
-    const result = await getOparator(number);
-    console.log(result);
+
+    console.log(number);
+    if (isNaN(number)) {
+      toast.error("Invalide phone number");
+    } else {
+      const result = await getOparator(number);
+      console.log(result);
+    }
+  };
+
+  const handlePhoneNumberChange = (status, value, countryData, number, id) => {
+    if (isNaN(value)) {
+      setPhoneError("Invalid phone number");
+      return;
+    } else {
+      setNumber(value);
+      setPhoneError("");
+      setoperatorCountryData(countryData);
+    }
+    console.log(status, value, countryData, number, id);
   };
 
   const handleChange = (newValue) => {
@@ -263,7 +289,7 @@ export default function Banner() {
     <>
       <section className="banner__section Home__banner_section">
         <Header />
-        <ToastContainer position="bottom-center" theme="colored" />
+        <ToastContainer position="top-center" theme="colored" />
         {/* {paystackConfig && (
           <>
             <PaystackHookExample config={paystackConfig} />
@@ -280,15 +306,26 @@ export default function Banner() {
                 <div className="home-page-details" style={{ zIndex: "1000" }}>
                   <span className="top-message">Airtime top-up</span>
                   <br /> <br />
-                  <h1 className="">
-                    Instant Airtime <span>top-Ups</span> Anytime
+                  <h1 className="fade-in-text-from-top">
+                    Instant Airtime{" "}
+                    <span className="text-with-circle">top-Ups</span> Anytime
                   </h1>
                   <br />
                   <div className="">
-                    <ul className="">
-                      <li>Instant top-up</li>
-                      <li>Secure & safe</li>
-                      <li>Crypto & Debit/Credit Card</li>
+                    <ul className="fade-in-list ">
+                      <li className="fade-in-item">
+                        <img src={arrowright} alt="arrow-right" />
+                        Instant top-up
+                      </li>
+                      <li className="fade-in-item">
+                        {" "}
+                        <img src={arrowright} alt="arrow-right" />
+                        Secure & safe
+                      </li>
+                      <li className="fade-in-item">
+                        <img src={arrowright} alt="arrow-right" />
+                        Crypto & Debit/Credit Card
+                      </li>
                     </ul>
                   </div>
                   {/* <div>
@@ -296,70 +333,44 @@ export default function Banner() {
                   </div> */}
                 </div>
               </div>
-              <div className="col-xxl-5 col-xl-5 col-lg-5 col-md-5">
+              <div className="col-xxl-5 col-xl-5 col-lg-4 col-md-5 col-sm-5">
                 <div className="recharge__paymentbox">
                   {steps === 1 && (
                     <>
-                      <div className="mobile__recharge text-center">
-                        <h5 className="mb-5 mt-5">Ready to send top-up ?</h5>
+                      <div className="mobile__recharge ">
+                        <h5 className=" mt-3 mb-2 text-left">
+                          Ready to send top-up ?
+                        </h5>
+                        <br />
 
                         <form
                           action="javascript:void(0)"
                           className="pb__40 mt-10 "
-                          style={{ justifyContent: "center" }}
+                          style={{ justifyContent: "left" }}
                         >
-                          <div className="row g-4">
-                            <div className="col-lg-4">
-                              {country.country !== null && (
-                                <>
-                                  <div className="image-display">
-                                    {country && (
-                                      <>
-                                        <img
-                                          src={`https://flagsapi.com/${country.country.toUpperCase()}/flat/64.png`}
-                                        />
-                                      </>
-                                    )}
-                                  </div>
-                                </>
-                              )}
-                              <select name="niceselect" className="wide">
-                                <option value="1" selected>
-                                  {country.country}&nbsp;+{country.country_code}
-                                </option>
-                                <option value="2">1st Operator</option>
-                                <option value="3">2nd Operator</option>
-                                <option value="4">3rd Operator</option>
-                              </select>
-                            </div>
-                            <div className="col-lg-8 text-center">
-                              <input
-                                type="text"
-                                placeholder="8888888888"
-                                value={number}
-                                onChange={handleNumber}
-                                className="custom-input"
+                          <div
+                            className="row"
+                            style={{
+                              width: "100%",
+                            }}
+                          >
+                            <div className="">
+                              <IntlTelInput
+                                preferredCountries={["us", "gb"]}
+                                defaultCountry={
+                                  country.country !== null
+                                    ? country.country.toLowerCase()
+                                    : "us"
+                                }
+                                containerClassName="intl-tel-input"
+                                inputClassName="form-control selectCountryinput"
+                                onPhoneNumberChange={handlePhoneNumberChange}
+                                autoPlaceholder="aggressive"
+                                placeholder="Enter your phone number"
+                                formatOnInit={true}
+                                placeholderNumberType="MOBILE"
                               />
                             </div>
-                            {phoneError && (
-                              <>
-                                <span className="text-center mt-2 mb-2 text-danger">
-                                  {phoneError}
-                                </span>
-                              </>
-                            )}
-
-                            {/*   <div className="col-lg-6">
-                          <select name="niceselect">
-                            <option value="1">Select offers</option>
-                            <option value="2">1st Offers</option>
-                            <option value="3">2nd Offers</option>
-                            <option value="4">3rd Offers</option>
-                          </select>
-                        </div>
-                        <div className="col-lg-6">
-                          <input type="number" placeholder="Enter Amount" />
-                        </div> */}
                           </div>
                         </form>
                         <a
@@ -403,10 +414,10 @@ export default function Banner() {
                   {steps === 2 && (
                     <>
                       <div className="mobile__recharge text-left">
-                        <h5 className="mb-4 mt-2">You’re sending top-up to</h5>
-                        <div className="mt-4">
+                        {/* <h5 className="mb-4 mt-2">You’re sending top-up to</h5> */}
+                        <div className="mt-2">
                           <div className="top-up-container">
-                            <div className="header mb-5 mt-2">
+                            <div className="header mb-4 mt-2 border p-4 rouded-1 shadow-sm">
                               {showCustomInput && (
                                 <>
                                   <span
@@ -455,7 +466,7 @@ export default function Banner() {
                             </div>
                             {!showCustomInput && (
                               <>
-                                <h6 className="mb-5">
+                                <h6 className="mb-3 text-muted robot-thin">
                                   <b>1.</b> Let’s select a top-up
                                 </h6>
                                 <div className="top-up-options">
@@ -475,11 +486,12 @@ export default function Banner() {
                                       })
                                     }
                                   >
-                                    <p className="label">Most people buy 🔥</p>
-                                    <br />
-                                    <span className="amount">
+                                    {/* <div className="label">
+                                      Most people buy 🔥
+                                    </div> */}
+                                    <p className="amount">
                                       {oparatorData.data.mostPopularAmount} GHS
-                                    </span>
+                                    </p>
                                     <button className="buy-button">
                                       Buy{" "}
                                       <ExchangeRateConverter
@@ -577,26 +589,26 @@ export default function Banner() {
                                 />
                               </div>
                             )}
-
+                            {/* 
                             <div className="mb-5 mt-5 mb-4">
                               <h6>
                                 <b>2.</b> Enter Email address
-                                <div className="mt-2">
-                                  <input
-                                    type="email"
-                                    value={EmailAddress}
-                                    onChange={handleEmailAddress}
-                                    placeholder="Enter email address"
-                                    className="custom-input form-control mt-3 mb-2"
-                                  />
-                                </div>
-                                {EmailError && (
-                                  <>
-                                    <p className="text-danger">{EmailError}</p>
-                                  </>
-                                )}
                               </h6>
-                            </div>
+                              <div className="mt-2">
+                                <input
+                                  type="email"
+                                  value={EmailAddress}
+                                  onChange={handleEmailAddress}
+                                  placeholder="Enter email address"
+                                  className="custom-input form-control mt-3 mb-2"
+                                />
+                              </div>
+                              {EmailError && (
+                                <>
+                                  <p className="text-danger">{EmailError}</p>
+                                </>
+                              )}
+                            </div> */}
 
                             {/* <div className="mb-5 choose_payment mt-5">
                               <div className="card border-0">

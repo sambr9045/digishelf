@@ -14,7 +14,7 @@ import { ToastContainer, toast } from "react-toastify";
 export default function Header() {
   const { cart } = useContext(SessionContext);
   const [pathActive, setPathActive] = useState(false);
-  const { session } = useContext(SessionContext);
+  const { session, logout } = useContext(SessionContext);
   const pathname = window.location.pathname;
   console.log(pathname);
 
@@ -23,6 +23,11 @@ export default function Header() {
   const toggleCart = () => {
     setShowCart(!showCart);
   };
+
+  if (localStorage.getItem("sct") && session) {
+    toast.success(`You sucessfully login as ${session.user.username}`);
+    localStorage.removeItem("sct");
+  }
   // const location = useLocation();
   // const checkActive = (match, location) => {
   //   return (
@@ -44,9 +49,20 @@ export default function Header() {
         <div className="container">
           <div className="header-wrapper">
             <div className="logo-menu">
-              <a href="index.html" className="logo">
-                <img src={logo} alt="logo" />
-              </a>
+              {/* <a href="index.html" className="logo"> */}
+              {/* <img src={logo} alt="logo" /> */}
+              <div
+                className=""
+                style={{
+                  fontSize: "30px",
+                  fontWeight: "900",
+                  color: "#551839!important",
+                  fontFamily: "robot",
+                }}
+              >
+                DIGISHELF
+              </div>
+              {/* </a> */}
               <a href="index.html" className="small__logo d-xl-none">
                 <img src="assets/img/logo/favicon.png" alt="logo" />
               </a>
@@ -264,7 +280,10 @@ export default function Header() {
 
                               <hr />
 
-                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center flex-row">
+                              <li
+                                className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center flex-row"
+                                onClick={logout}
+                              >
                                 <span className="material-symbols-outlined user-account-icon">
                                   logout
                                 </span>

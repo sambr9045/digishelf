@@ -26,6 +26,8 @@
     "react-dom": "^18.3.1",
     "react-facebook-login": "^4.1.1",
     "react-google-login": "^5.2.2",
+    "react-intl": "^6.6.8",
+    "react-intl-tel-input": "^8.2.0",
     "react-owl-carousel": "^2.3.3",
     "react-paystack": "^5.0.0",
     "react-router-dom": "^6.23.1",

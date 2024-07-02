@@ -26,9 +26,10 @@ const SessionProvider = ({ children }) => {
   const [pc, setPc] = useState();
   const [gpc, setGpc] = useState();
   const [yps, setYps] = useState();
+  const [mainCurrency, setMainCurrency] = useState("");
 
-  // Load session from localStorage when the app starts
-  const GetCart = async (session) => {
+  // Get cart from database
+  const FetchDataBaseCart = async (session) => {
     const response = await axios.get(`${api_endpoint}/api/cart/`, {
       headers: {
         "Content-Type": "application/json",
@@ -36,26 +37,36 @@ const SessionProvider = ({ children }) => {
       },
     });
     if (response.data) {
-      console.log(response.data);
       setCart(response.data);
     }
   };
+
+  // Get cart from local storage
+  const FetchLocalStorageCart = async () => {
+    const cart = JSON.parse(localStorage.getItem("cart"));
+    setCart(cart ? cart : []);
+  };
+
   useEffect(() => {
     const savedSession = localStorage.getItem("session");
     if (savedSession) {
       console.log("save sessiong is runing");
       const localSession = JSON.parse(savedSession);
       setSession(localSession);
-      GetCart(localSession);
+      FetchDataBaseCart(localSession);
     } else {
-      const savedCart = localStorage.getItem("cart");
-      setCart(savedCart ? JSON.parse(savedCart) : []);
+      // const savedCart = localStorage.getItem("cart");
+      // setCart(savedCart ? JSON.parse(savedCart) : []);
+      FetchLocalStorageCart();
     }
   }, []);
 
   useEffect(() => {
-    if (session.accessToken && cartUpdated) {
-      GetCart(session);
+    if (session.user && cartUpdated) {
+      FetchDataBaseCart(session);
+      setCartUpdated(false); // Reset the flag after updating
+    } else if (session.user === null && cartUpdated) {
+      FetchLocalStorageCart();
       setCartUpdated(false); // Reset the flag after updating
     }
   }, [cartUpdated, session]);
@@ -86,7 +97,6 @@ const SessionProvider = ({ children }) => {
           setCartUpdated(true);
         }
       } catch (error) {
-        console.log(error.message);
         toast.update(loading, {
           render: "Item already exist !",
           type: "error",
@@ -245,6 +255,14 @@ const SessionProvider = ({ children }) => {
           country: response.data.country,
           country_code: result[0].callingCode,
         });
+
+        console.log(response.data.country);
+
+        if (response.data.country === "GH") {
+          setMainCurrency("GHS");
+        } else {
+          setMainCurrency("USD");
+        }
       }
     } catch (error) {
       console.log(error);
@@ -313,6 +331,7 @@ const SessionProvider = ({ children }) => {
       accessToken: null,
       refreshToken: null,
     });
+    setCartUpdated(true);
   };
 
   return (
@@ -329,8 +348,10 @@ const SessionProvider = ({ children }) => {
         addToCart,
         removeFromCart,
         updateCartItem,
+        mainCurrency,
         clearCart,
         cart,
+        setCartUpdated,
       }}
     >
       {" "}

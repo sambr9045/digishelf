@@ -1,4 +1,4 @@
-oparator_url = "https://topups-sandbox.reloadly.com/operators?includeBundles=true&includeData=true&suggestedAmountsMap=%7Bvalue%7D&size=10&page=2&includeCombo=%7Bvalue%7D&comboOnly=%7Bvalue%7D&bundlesOnly=%7Bvalue%7D&dataOnly=%7Bvalue%7D&pinOnly=%7Bvalue%7D"
+oparator_url = "https://topups-sandbox.reloadly.com/operators?includeBundles=true&includeData=true&suggestedAmountsMap=trueD&size=10&page=1&includeCombo=false&comboOnly=false&bundlesOnly=false&dataOnly=false&pinOnly=false"
 
 
 # production

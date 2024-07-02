@@ -176,6 +176,7 @@ class Cart(models.Model):
     recipientCurrency = models.CharField(default=None)
     AmountToPay = models.DecimalField(max_digits=9, decimal_places=2)
     currencyToPayIn = models.CharField(default=None, max_length=10)
+    processing_fee = models.DecimalField(max_digits=9, decimal_places=2, default=2.0)
     img = models.CharField(max_length=250, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     

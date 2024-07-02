@@ -26,6 +26,7 @@ class Reloady:
         response.raise_for_status()
         response_data = response.json()
         access_token = response_data.get('access_token')
+        print(access_token)
         return access_token
 
     def get_token(self, audience):

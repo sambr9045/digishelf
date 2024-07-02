@@ -8,6 +8,7 @@ from social_core.exceptions import MissingBackend
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 import threading
+from django.contrib.auth import authenticate
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from django.conf import settings
 from django.contrib.auth import login
@@ -28,6 +29,33 @@ import asyncio
 import aiohttp
 from . import tasks
 load_dotenv()
+
+
+
+
+class LoginWithEmailView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, format=None):
+        import time
+        
+        email = request.data.get("email")
+        password = request.data.get("password")
+        # Validate email and password
+        if not email or not password:
+            return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Authenticate user
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
+            token = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(token),
+                'access': str(token.access_token),
+                'user': UserSerializer(user).data,
+            }, status=200)
+
+        else:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 class GoogleLogin(APIView):
     
     permission_classes = [AllowAny]  # Use AllowAny permission class for unrestricted access
@@ -164,15 +192,15 @@ class GetOperator(APIView):
         phone = request.data.get("phone")
         country = request.data.get("country")
         
-        try:
-            reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
-            oparator_urls = urls.auto_detect_oparator(phone, country)
-            audience = "https://topups-sandbox.reloadly.com"
-            result= reloady_object.make_api_request(oparator_urls,"application/com.reloadly.topups-v1+json", audience )
-            return Response({"data":result}, status=200)
-        except Exception as e:
-            print(f"Error:{e}")
-            return Response({"status":"error", "data":None}, status=400)
+        # try:
+        reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
+        oparator_urls = urls.auto_detect_oparator(phone, country.upper())
+        audience = "https://topups-sandbox.reloadly.com"
+        result= reloady_object.make_api_request(oparator_urls,"application/com.reloadly.topups-v1+json", audience )
+        return Response({"data":result}, status=200)
+        # except Exception as e:
+        #     print(f"Error:{e}")
+        #     return Response({"status":"error", "data":None}, status=400)
             
     
 class FiatExchangeRate(APIView):

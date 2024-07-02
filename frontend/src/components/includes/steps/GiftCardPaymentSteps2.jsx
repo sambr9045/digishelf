@@ -20,6 +20,7 @@ import { nanoid } from "nanoid";
 import { useNavigate } from "react-router-dom";
 import { SessionContext } from "../../sessionContext";
 import { ProcessingFeeCalculation } from "../Functions";
+import { IntlProvider, FormattedNumber } from "react-intl";
 
 // id
 // productName
@@ -37,7 +38,7 @@ export default function GiftCardPaymentSteps2() {
   const [emailError, setEmailError] = useState("");
   const [reference, setReference] = useState("reference");
   const [isLading, setIsLoading] = useState(false);
-  const { cart, country, clearCart } = useContext(SessionContext);
+  const { cart, country, clearCart, mainCurrency } = useContext(SessionContext);
   const [cartTotal, setCartTotal] = useState(0);
   const [CurrencyToPay, setCurrencyToPay] = useState("");
   const [steps, setSteps] = useState(1);
@@ -168,6 +169,8 @@ export default function GiftCardPaymentSteps2() {
   };
 
   useEffect(() => {
+    console.log(cart);
+    console.log(mainCurrency, "this is the main currency");
     if (country.country === "GH") {
       setCurrencyToPay("GHS");
     }
@@ -178,7 +181,7 @@ export default function GiftCardPaymentSteps2() {
           acc +
           ProcessingFeeCalculation(
             item.AmountToPay,
-            item.currencyToPayIn,
+            mainCurrency,
             item.processing_fee
           ) *
             item.quantity,
@@ -231,8 +234,13 @@ export default function GiftCardPaymentSteps2() {
                                 </span>
                                 <span className="fs-6">
                                   <b>
-                                    {cart[0].recipientAmount}&nbsp;
-                                    {cart[0].recipientCurrency}
+                                    <IntlProvider defaultLocale="en">
+                                      <FormattedNumber
+                                        value={cart[0].recipientAmount}
+                                        style="currency"
+                                        currency={cart[0].recipientCurrency}
+                                      />
+                                    </IntlProvider>
                                   </b>
                                 </span>
                               </div>
@@ -251,11 +259,19 @@ export default function GiftCardPaymentSteps2() {
                                 </span>
                                 <span className="fs-6">
                                   <b>
-                                    {ProcessingFeeCalculation(
-                                      cart[0].AmountToPay,
-                                      cart[0].currencyToPayIn,
-                                      cart[0].processing_fee
-                                    ) * cart[0].quantity}
+                                    <IntlProvider defaultLocale="en">
+                                      <FormattedNumber
+                                        value={
+                                          ProcessingFeeCalculation(
+                                            cart[0].AmountToPay,
+                                            mainCurrency,
+                                            cart[0].processing_fee
+                                          ) * cart[0].quantity
+                                        }
+                                        style="currency"
+                                        currency={mainCurrency}
+                                      />
+                                    </IntlProvider>
                                   </b>
                                 </span>
                               </div>
@@ -265,8 +281,13 @@ export default function GiftCardPaymentSteps2() {
                                 </span>
                                 <span className="fs-6">
                                   <b>
-                                    {cart[0].AmountToPay}&nbsp;
-                                    {cart[0].currencyToPayIn}
+                                    <IntlProvider defaultLocale="en">
+                                      <FormattedNumber
+                                        value={cart[0].AmountToPay}
+                                        style="currency"
+                                        currency={mainCurrency}
+                                      />
+                                    </IntlProvider>
                                   </b>
                                 </span>
                               </div>
@@ -335,8 +356,15 @@ export default function GiftCardPaymentSteps2() {
                                             </span>
                                             <span className="fs-6">
                                               <b>
-                                                {item.recipientAmount}&nbsp;
-                                                {item.recipientCurrency}
+                                                <IntlProvider defaultLocale="en">
+                                                  <FormattedNumber
+                                                    value={item.recipientAmount}
+                                                    style="currency"
+                                                    currency={
+                                                      item.recipientCurrency
+                                                    }
+                                                  />
+                                                </IntlProvider>
                                               </b>
                                             </span>
                                           </div>
@@ -355,11 +383,15 @@ export default function GiftCardPaymentSteps2() {
                                             </span>
                                             <span className="fs-6">
                                               <b>
-                                                {parseFloat(
-                                                  item.AmountToPay
-                                                ).toFixed(2)}
-                                                &nbsp;
-                                                {item.currencyToPayIn}
+                                                <IntlProvider defaultLocale="en">
+                                                  <FormattedNumber
+                                                    value={parseFloat(
+                                                      item.AmountToPay
+                                                    ).toFixed(2)}
+                                                    style="currency"
+                                                    currency={mainCurrency}
+                                                  />
+                                                </IntlProvider>
                                               </b>
                                             </span>
                                           </div>
@@ -370,11 +402,19 @@ export default function GiftCardPaymentSteps2() {
                                             </span>
                                             <span className="fs-6">
                                               <b>
-                                                {ProcessingFeeCalculation(
-                                                  item.AmountToPay,
-                                                  item.currencyToPayIn,
-                                                  item.processing_fee
-                                                ) * item.quantity}
+                                                <IntlProvider defaultLocale="en">
+                                                  <FormattedNumber
+                                                    value={
+                                                      ProcessingFeeCalculation(
+                                                        item.AmountToPay,
+                                                        mainCurrency,
+                                                        item.processing_fee
+                                                      ) * item.quantity
+                                                    }
+                                                    style="currency"
+                                                    currency={mainCurrency}
+                                                  />
+                                                </IntlProvider>
                                               </b>
                                             </span>
                                           </div>
@@ -391,7 +431,14 @@ export default function GiftCardPaymentSteps2() {
                             <span className="mt-4 fs-3">Total:</span>
                             <span className="mt-4 fs-3">
                               <b>
-                                {cartTotal}&nbsp;{CurrencyToPay}
+                                {/* {cartTotal}&nbsp;{mainCurrency} */}
+                                <IntlProvider defaultLocale="en">
+                                  <FormattedNumber
+                                    value={cartTotal}
+                                    style="currency"
+                                    currency={mainCurrency}
+                                  />
+                                </IntlProvider>
                               </b>
                             </span>
                           </div>
@@ -436,18 +483,17 @@ export default function GiftCardPaymentSteps2() {
                             style={{ fontFamily: "Sans-serif" }}
                           >
                             <b>
-                              {cartTotal}&nbsp;{CurrencyToPay}
+                              <IntlProvider defaultLocale="en">
+                                <FormattedNumber
+                                  value={cartTotal}
+                                  style="currency"
+                                  currency={mainCurrency}
+                                />
+                              </IntlProvider>
                             </b>
                           </span>
                         </div>
-                        {/* <div className="d-flex justify-content-between mb-2 p-3 pt-4 pb-4">
-                          <span className="fs-1 text-muted ">Total</span>
-                          <span className="fs-1 basecolor_custom">
-                            <b>
-                              {cartTotal}&nbsp;{CurrencyToPay}
-                            </b>
-                          </span>
-                        </div> */}
+
                         <div className="card-body">
                           <h5 className="card-title mb-2 fs-6">
                             Email address
