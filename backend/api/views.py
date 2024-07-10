@@ -28,8 +28,8 @@ from django.db import transaction
 import asyncio
 import aiohttp
 from . import tasks
+import requests
 load_dotenv()
-
 
 
 
@@ -413,33 +413,6 @@ class GetSearchResult(APIView):
 
             
         # {
-#     "transactionId": 1,
-#     "amount": 34536.21,
-#     "discifount": 1709.72,
-#     "currencyCode": "NGN",
-#     "fee": 285,
-#     "recipientEmail": "anyone@email.com",
-#     "customIdentifier": "obucks1dime0",
-#     "status": "SUCCESSFUL",
-#     "product": {
-#         "productId": 1,
-#         "productName": "1-800-PetSupplies",
-#         "countryCode": "PS",
-#         "quantity": 1,
-#         "unitPrice": 59.99,
-#         "totalPrice": 59.99,
-#         "currencyCode": "USD",
-#         "brand": {
-#             "brandId": 6,
-#             "brandName": "1-800-PetSupplies"
-#         }
-#     },
-#     "smsFee": 56.91,
-#     "recipientPhone": 34012345678,
-#     "transactionCreatedTime": "2022-02-28 13:46:00",
-#     "preOrdered": false
-# }
-
 
 class CartView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -480,3 +453,108 @@ class CartView(APIView):
         object_ = models.Cart.objects.filter(pk=cartid).delete()
         return Response({"data":"success"}, status=200)
         
+
+
+class AirtimeTopUpPurcahse(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request, format=None):
+        transaction_data = request.data.get("transaction")
+        receiver_amount = request.data.get("receiverAmount")
+        receiver_currency = request.data.get("receiverCurrency")
+        amountPaid = request.data.get('AmountPaid')
+        email = request.data.get("email")
+        user_type = request.data.get("userType")
+        proccessing_fee = request.data.get("ProcessingFee")
+        payment_currency = request.data.get("PaymentCurreuncy")
+        payment_method = request.data.get("PaymentMethod")
+        converted_amount = request.data.get("ConvertedAmountToUsd")
+        operator_data = request.data.get("oparatorData")
+        edited_number = request.data.get("editNumber")
+        ghana_cedis_exchange_rate = request.data.get("ghana_cedis_rate")
+       
+        # print(operator_data.get("data").get("id"))
+
+        
+        # verify from paystack if payment is successfull 
+        # fetch balance to check if the requested amount is less then accoutn baalnce 
+        # topup reloady 
+        # save transaction
+        # return success response 
+        
+
+        
+        # try:
+        with transaction.atomic():
+            # verify from paystack if payment is successfull
+            response = requests.get(f"https://api.paystack.co/transaction/verify/{transaction_data.get('reference')}", headers={
+                    "Authorization": f"Bearer {os.getenv('PAYSTACK_SECRET_KEY')}",
+                    "Cache-Control": "no-cache"
+                })
+            
+            # print(response)
+            
+            if response.status_code != 200:
+                return Response(
+                    {"error": "An error occurred", "details": "Specific details about the error"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            data = response.json()
+            # print(data)
+            
+            if not data.get("status", False):
+                return Response({"error":"Failed to verify payment. Please contact support"}, status=status.HTTP_400_BAD_REQUEST)
+                
+            # fetch reloady balance to see if purchasing amount is less than reloady balance 
+            
+            reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
+            balance = reloady_object.get_balance()
+            print(balance, "This is the balance")
+            reloady_balance_currency_code = balance.get("currencyCode")
+            if payment_currency == "GHS" and reloady_balance_currency_code == "GHS":
+                if float(balance.get("balance")) < float(receiver_amount):
+                    return Response({"error":"Something went wrong please try again later !!!"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if payment_currency == "USD" and reloady_balance_currency_code == "GHS":
+                if converted_amount != False:
+                    
+                    if float(balance.balance) < float(receiver_amount) * float(ghana_cedis_exchange_rate):
+                        return Response({"error":"Something went wrong please try again later !!!"}, status=status.HTTP_400)
+                    
+            # topup reloadet topapi 
+            data ={
+                "operatorId": operator_data.get("data").get("operatorId"),
+                "amount": receiver_amount,
+                "useLocalAmount": True,
+                "customIdentifier": transaction_data.get("reference"),
+                "recipientEmail": email,
+                "recipientPhone": {
+                    "countryCode": operator_data.get("data").get("country").get("isoName"),
+                    "number": edited_number
+                },
+                
+            }
+            audience ="https://topups-sandbox.reloadly.com"
+            response = reloady_object.make_api_request(urls.airtime_top_up, "application/com.reloadly.topups-v1+json",audience, "POST", data)
+            
+            if response:
+                # save transaction to database 
+                # serializer data 
+                user = None
+                if user_type == "guest":
+                    user=""
+                else:
+                    user = user_type.get("id")
+                    user_type = "user"
+                           
+                data ={
+                    "user":user,
+                    "user_type" :user_type
+                }
+                return Response({"data":response}, status=200)
+    
+        # except Exception as e:
+        #     print(e)
+        #     return Response({"error":e}, status=status.HTTP_400_BAD_REQUEST)
+        
+    

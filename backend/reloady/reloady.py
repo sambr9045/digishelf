@@ -1,5 +1,6 @@
 import requests
 from django.core.cache import cache
+from . import urls
 
 class Reloady:
     TOKEN_EXPIRATION = 24 * 60 * 60  # 24 hours in seconds
@@ -52,6 +53,10 @@ class Reloady:
             response = requests.post(api_endpoint, headers=headers, json=data)
         response.raise_for_status()
         return response.json()
+    
+    def get_balance(self):
+        balance = self.make_api_request(urls.balance_url, "application/com.reloadly.topups-v1+json", "https://topups-sandbox.reloadly.com")
+        return balance
 
     def airtime_top_up(self, data):
         api_endpoint = 'https://www.sample.com/api/airtime-topup'

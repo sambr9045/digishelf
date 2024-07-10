@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.contrib.postgres.fields import ArrayField
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -157,13 +158,21 @@ class ErrorLog(models.Model):
 class TopupTransaction(models.Model):
     user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
     user_type = models.CharField(max_length=200, default="guest")
+    reference = models.CharField(max_length=14, unique=True, default=False, blank=False)
     operator = models.CharField(max_length=200, default=None)
-    amount_in_usd = models.DecimalField(max_digits=9, decimal_places=2)
-    amount_local_currency = models.DecimalField(max_digits=9,decimal_places=2)
+    phone_number = models.IntegerField(default=None, blank=True, null=True)
+    receiver_amount = models.DecimalField(default=None, decimal_places=2, max_digits=9)
+    receiver_country = models.CharField(default=None, max_length=250)
+    receiver_currency_code = models.CharField(default=None, max_length=250)
+    total_paid = models.DecimalField(max_digits=9, decimal_places=2)
+    sender_currency = models.CharField(max_length=250, default=None)
+    sender_country = models.CharField(max_length=250, default=None)
     processing_fee = models.DecimalField(max_digits=9, decimal_places=2)
     payment_method = models.CharField(max_length=200, default=None)
-    phone_number = models.IntegerField(default=None, blank=True, null=True)
     email = models.EmailField(default=None,blank=True, null=True)
+    reloader_transaction = models.JSONField()
+    paystack_very_transaction = models.JSONField()
+    status = models.CharField(max_length=250, default=None)
     country = models.CharField(max_length=200, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     
