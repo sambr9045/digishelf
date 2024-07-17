@@ -259,11 +259,6 @@
     color: var(--custombase) !important;
 }
 
-.selected {
-    border: 2px solid var(--secondary) !important;
-    /* background-color: red; */
-
-}
 
 .defual-bg::before {
     background-color: var(--custombase);
@@ -476,6 +471,35 @@ body {
     overflow: auto;
 }
 
+.cutom-form-input input {
+    color: var(--custombase);
+    font-weight: bold;
+    height: 70px !important;
+    width: 100%;
+    font-size: 30px;
+    margin-top: 5px;
+    border-color: var(--custombase);
+    border: 1px solid var(--custombase);
+    border-radius: 5px;
+
+}
+
+.custom-amount-input h2 {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #800020 !important;
+}
+
+.custom-form-input-label {
+    color: #000;
+    font-size: 25px !important;
+    padding-bottom: 5px !important;
+}
+
+.more-option {
+    cursor: pointer;
+}
+
 .user-account-icon-name {
     vertical-align: middle;
     padding-top: 5px;
@@ -621,7 +645,7 @@ body {
 
 .operator-logo {
     width: 34px;
-    height: 34px;
+    height: auto;
     margin-right: 10px;
 }
 
@@ -647,6 +671,20 @@ h2 {
     margin-bottom: 20px;
 }
 
+/* .select-offer {
+    margin-top: 50px;
+    text-align: center;
+}
+
+.select-offer button {
+
+    background-color: var(--secondary);
+    border-radius: 25px;
+    color: white;
+    padding: 10px 20px;
+    border-color: var(--secondary);
+} */
+
 .top-up-option {
     background-color: white;
     border: 1px solid #e0e0e0;
@@ -659,7 +697,25 @@ h2 {
 }
 
 .selected {
-    border-color: #0056b3;
+    border-color: None !important;
+    border-radius: 5px;
+    background-color: var(--custombase);
+    color: white;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+.selected p {
+    color: white !important;
+}
+
+.payment-icone {
+    width: 30px;
+    height: auto;
+}
+
+.FormError {
+    border: 1px solid red;
 }
 
 .label {
@@ -688,14 +744,52 @@ h2 {
     padding-left: 35px !important;
 }
 
+.selectNetwork .card {
+    width: 150px;
+    height: 150px;
+    margin: 5px;
+    text-align: center;
+}
+
+.selectNetwork .card img {
+    margin: 0 auto;
+    width: 70px;
+    height: auto;
+    margin-top: 15px;
+
+}
+
+.selectNetwork .card b {
+    margin-top: 10px;
+}
+
+.selectNetwork-active {
+    background-color: var(--custombase);
+    border-radius: 5px;
+}
+
+.selectNetwork-active .card {
+    background-color: var(--custombase);
+    color: white !important;
+
+}
+
+
 .buy-button {
-    background-color: var(--secondary);
+    background-color: var(--custombase);
     border: none;
     border-radius: 26px;
-    padding: 10px 20px;
+    padding: 5px 10px;
     font-size: 16px;
     cursor: pointer;
     color: white;
+}
+
+.receive-airtime {
+    position: absolute;
+    margin-top: -30px;
+    margin-bottom: 10px;
+
 }
 
 .payment-icon {
@@ -831,7 +925,7 @@ h2 {
 }
 
 .giftcard .countryflag img {
-    border-radius: none;
+    border-radius: none !important;
     width: 30px;
     height: auto;
 

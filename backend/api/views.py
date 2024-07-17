@@ -192,15 +192,29 @@ class GetOperator(APIView):
         phone = request.data.get("phone")
         country = request.data.get("country")
         
-        # try:
-        reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
-        oparator_urls = urls.auto_detect_oparator(phone, country.upper())
-        audience = "https://topups-sandbox.reloadly.com"
-        result= reloady_object.make_api_request(oparator_urls,"application/com.reloadly.topups-v1+json", audience )
-        return Response({"data":result}, status=200)
-        # except Exception as e:
-        #     print(f"Error:{e}")
-        #     return Response({"status":"error", "data":None}, status=400)
+        try:
+            reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
+            oparator_urls = urls.auto_detect_oparator(phone, country.upper())
+            audience = "https://topups-sandbox.reloadly.com"
+            
+            try:
+                result= reloady_object.make_api_request(oparator_urls,"application/com.reloadly.topups-v1+json", audience )
+                
+                if result:
+                    return Response({"data":result, "autoDetected":True}, status=200)
+            except Exception as e:
+               print(e)
+                
+            
+            # if result failed get the oparators by country name
+            
+            operators_by_countri = reloady_object.make_api_request(urls.get_operators_by_country(country.upper()),"application/com.reloadly.topups-v1+json", audience )
+            
+            return Response({"data":operators_by_countri, "autoDetected":False}, status=200)
+            
+        except Exception as e:
+            print(f"Error:{e}")
+            return Response({"status":"Error !! Something went wrong please try again later.", "data":None, "autoDetected":False}, status=400)
             
     
 class FiatExchangeRate(APIView):
@@ -472,89 +486,121 @@ class AirtimeTopUpPurcahse(APIView):
         operator_data = request.data.get("oparatorData")
         edited_number = request.data.get("editNumber")
         ghana_cedis_exchange_rate = request.data.get("ghana_cedis_rate")
-       
-        # print(operator_data.get("data").get("id"))
-
-        
-        # verify from paystack if payment is successfull 
-        # fetch balance to check if the requested amount is less then accoutn baalnce 
-        # topup reloady 
-        # save transaction
-        # return success response 
-        
-
-        
-        # try:
-        with transaction.atomic():
-            # verify from paystack if payment is successfull
-            response = requests.get(f"https://api.paystack.co/transaction/verify/{transaction_data.get('reference')}", headers={
-                    "Authorization": f"Bearer {os.getenv('PAYSTACK_SECRET_KEY')}",
-                    "Cache-Control": "no-cache"
-                })
-            
-            # print(response)
-            
-            if response.status_code != 200:
-                return Response(
-                    {"error": "An error occurred", "details": "Specific details about the error"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            data = response.json()
-            # print(data)
-            
-            if not data.get("status", False):
-                return Response({"error":"Failed to verify payment. Please contact support"}, status=status.HTTP_400_BAD_REQUEST)
-                
-            # fetch reloady balance to see if purchasing amount is less than reloady balance 
-            
-            reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
-            balance = reloady_object.get_balance()
-            print(balance, "This is the balance")
-            reloady_balance_currency_code = balance.get("currencyCode")
-            if payment_currency == "GHS" and reloady_balance_currency_code == "GHS":
-                if float(balance.get("balance")) < float(receiver_amount):
-                    return Response({"error":"Something went wrong please try again later !!!"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if payment_currency == "USD" and reloady_balance_currency_code == "GHS":
-                if converted_amount != False:
+        country = request.data.get("country")
+        try:
+            with transaction.atomic():
+                # verify from paystack if payment is successfull
+                if payment_method == "cbc":
                     
-                    if float(balance.balance) < float(receiver_amount) * float(ghana_cedis_exchange_rate):
-                        return Response({"error":"Something went wrong please try again later !!!"}, status=status.HTTP_400)
+                    response = requests.get(f"https://api.paystack.co/transaction/verify/{transaction_data.get('reference')}", headers={
+                            "Authorization": f"Bearer {os.getenv('PAYSTACK_SECRET_KEY')}",
+                            "Cache-Control": "no-cache"
+                        })
                     
-            # topup reloadet topapi 
-            data ={
-                "operatorId": operator_data.get("data").get("operatorId"),
-                "amount": receiver_amount,
-                "useLocalAmount": True,
-                "customIdentifier": transaction_data.get("reference"),
-                "recipientEmail": email,
-                "recipientPhone": {
-                    "countryCode": operator_data.get("data").get("country").get("isoName"),
-                    "number": edited_number
-                },
-                
-            }
-            audience ="https://topups-sandbox.reloadly.com"
-            response = reloady_object.make_api_request(urls.airtime_top_up, "application/com.reloadly.topups-v1+json",audience, "POST", data)
+                    # print(response)
+                    
+                    if response.status_code != 200:
+                        return Response(
+                            {"error": "An error occurred", "details": "Specific details about the error"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    paystack_data = response.json()
+                    # print(data)
+                    
+                    if not paystack_data.get("status", False):
+                        return Response({"error":"Failed to verify payment. Please contact support"}, status=status.HTTP_400_BAD_REQUEST)
+                        
+                    # fetch reloady balance to see if purchasing amount is less than reloady balance 
+                    
+                    reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
+                    balance = reloady_object.get_balance()
+                    print(balance, "This is the balance")
+                    reloady_balance_currency_code = balance.get("currencyCode")
+                    if payment_currency == "GHS" and reloady_balance_currency_code == "GHS":
+                        if float(balance.get("balance")) < float(receiver_amount):
+                            return Response({"error":"Something went wrong please try again later !!!"}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    if payment_currency == "USD" and reloady_balance_currency_code == "GHS":
+                        if converted_amount != False:
+                            
+                            if float(balance.balance) < float(receiver_amount) * float(ghana_cedis_exchange_rate):
+                                return Response({"error":"Something went wrong please try again later !!!"}, status=status.HTTP_400)
+                            
+                    # topup reloadet topapi 
+                    data ={
+                        "operatorId": operator_data.get("data").get("operatorId"),
+                        "amount": receiver_amount,
+                        "useLocalAmount": True,
+                        "customIdentifier": transaction_data.get("reference"),
+                        "recipientEmail": email,
+                        "recipientPhone": {
+                            "countryCode": operator_data.get("data").get("country").get("isoName"),
+                            "number": edited_number
+                        },
+                        
+                    }
+                    audience ="https://topups-sandbox.reloadly.com"
+                    response = reloady_object.make_api_request(urls.airtime_top_up, "application/com.reloadly.topups-v1+json",audience, "POST", data)
+                    
+                    if response:
+                        # save transaction to database 
+                        # serializer data 
+                        user = None
+                        if user_type == "guest":
+                            user=""
+                        else:
+                            user = user_type.get("id")
+                            user_type = "user"
+                                
+                        data ={
+                            "user":user,
+                            "user_type" :user_type,
+                            "reference":transaction_data.get("reference"),
+                            "operator":operator_data.get("data").get("name"),
+                            "phone_number":edited_number,
+                            "receiver_amount":receiver_amount,
+                            "receiver_country": operator_data.get("data").get("country").get("name"),
+                            "receiver_currency_code":receiver_currency,
+                            "total_paid":paystack_data.get("data").get("amount") /100,
+                            "sender_currency":payment_currency,
+                            "sender_country":country,
+                            "processing_fee":proccessing_fee,
+                            "payment_method": payment_method,
+                            "email":email,
+                            "reloader_transaction":response,
+                            "paystack_very_transaction":paystack_data,
+                            "status":response.get("status"),
+                            "country":country,
+                            
+                        }
             
-            if response:
-                # save transaction to database 
-                # serializer data 
-                user = None
-                if user_type == "guest":
-                    user=""
-                else:
-                    user = user_type.get("id")
-                    user_type = "user"
-                           
-                data ={
-                    "user":user,
-                    "user_type" :user_type
-                }
-                return Response({"data":response}, status=200)
-    
-        # except Exception as e:
-        #     print(e)
-        #     return Response({"error":e}, status=status.HTTP_400_BAD_REQUEST)
+                        airtime_top_up_serializer = serializers.AirtimTopUpSerializer(data=data)
+                        airtime_top_up_serializer.is_valid(raise_exception=True)
+                        airtime_top_up_serializer.save();
+                    
+                        return Response({"data":response}, status=200)
         
+        except Exception as e:
+            print(e)
+            return Response({"error":e}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class AirtimeSuccessOrder(APIView):
+    permission_classes = [AllowAny]
     
+    def post(self, request):
+        reference = request.data.get("reference")  # Using query_params for GET request
+
+        if not reference:
+            return Response({"error": "Reference parameter is missing."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            airtime_order = models.TopupTransaction.objects.get(reference=reference)
+            print(airtime_order, reference, "This is the")
+            serializer_ = serializers.AirtimTopUpSerializer(airtime_order)
+            
+        except models.TopupTransaction.DoesNotExist:
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer_.data, status=status.HTTP_200_OK)
+            

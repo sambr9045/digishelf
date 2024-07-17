@@ -354,8 +354,7 @@ const SessionProvider = ({ children }) => {
         setCartUpdated,
       }}
     >
-      {" "}
-      {children}{" "}
+      {children}
     </SessionContext.Provider>
   );
 };

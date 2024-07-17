@@ -1,6 +1,11 @@
 oparator_url = "https://topups-sandbox.reloadly.com/operators?includeBundles=true&includeData=true&suggestedAmountsMap=trueD&size=10&page=1&includeCombo=false&comboOnly=false&bundlesOnly=false&dataOnly=false&pinOnly=false"
 
 
+def get_operators_by_country(country):
+    # return f"https://topups-sandbox.reloadly.com/countries/{country}"
+
+    return f"https://topups-sandbox.reloadly.com/operators/countries/{country}?suggestedAmountsMap=true&suggestedAmounts=true&"
+
 def phone_lookup(phone, country):
     return f"https://topups-sandbox.reloadly.com/operators/mnp-lookup/phone/{phone}/countries/?suggestedAmountsMap=true&suggestedAmounts=true"
 

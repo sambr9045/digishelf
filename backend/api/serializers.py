@@ -58,8 +58,8 @@ class CardRedeemCodeSerializer(serializers.ModelSerializer):
 
 class AirtimTopUpSerializer(serializers.ModelSerializer):
     class Meta:
-        model: models.TransactionProduct
-        fields= '__all__'
+        model = models.TopupTransaction
+        fields = '__all__'
         
 
 class CartSerializer(serializers.ModelSerializer):

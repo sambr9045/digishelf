@@ -1,25 +1,50 @@
 import React, { useState, useEffect, useContext } from "react";
 import { SessionContext } from "./sessionContext";
-const ExchangeRateConverter = ({ currency, amount }) => {
+const ExchangeRateConverter = ({
+  receiverCurrencyCode,
+  senderCountry,
+  Amount,
+  fx_rate,
+}) => {
   const percentage = localStorage.getItem("percentage");
+  const amountToPayInSenderCurrency = fx_rate * Amount;
 
-  const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));
+  console.log(receiverCurrencyCode, senderCountry, Amount, fx_rate);
 
-  const country_currency_rate = exchangeRate[currency];
-  const sellAmountInLocalCurrency =
-    parseFloat(amount) * (parseFloat(percentage) / 100);
-  const sell_amoun_with_percentage = sellAmountInLocalCurrency + amount;
-  const sellAmountUsd = sell_amoun_with_percentage / country_currency_rate;
-  console.log(
-    exchangeRate[currency],
-    sellAmountUsd,
-    country_currency_rate,
-    percentage,
-    sellAmountInLocalCurrency,
-    amount
-  );
+  if (senderCountry === "GH") {
+    if (receiverCurrencyCode === "GHS") {
+      // pass
+      return [amountToPayInSenderCurrency.toFixed(2), " GHS"];
+    } else {
+      return [
+        amountToPayInSenderCurrency.toFixed(2),
+        ` ${receiverCurrencyCode}`,
+      ];
+    }
+  } else {
+    return amountToPayInSenderCurrency;
+  }
 
-  return sellAmountUsd.toFixed(2);
+  // const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));
+  //   const exchangeRate = fx_rate * amount;
+  //   console.log(exchangeRate, "next exchange");
+
+  //   const country_currency_rate = exchangeRate[currency];
+  //   console.log(country_currency_rate, "this is the current rate");
+  //   const sellAmountInLocalCurrency =
+  //     parseFloat(amount) * (parseFloat(percentage) / 100);
+  //   const sell_amoun_with_percentage = sellAmountInLocalCurrency + amount;
+  //   const sellAmountUsd = sell_amoun_with_percentage / country_currency_rate;
+  //   console.log(
+  //     exchangeRate[currency],
+  //     sellAmountUsd,
+  //     country_currency_rate,
+  //     percentage,
+  //     sellAmountInLocalCurrency,
+  //     amount
+  //   );
+
+  //   return exchangeRate.toFixed(2);
 };
 
 export default ExchangeRateConverter;

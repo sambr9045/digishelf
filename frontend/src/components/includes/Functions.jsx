@@ -61,12 +61,50 @@ export const ProcessingFeeCalculation = (amount, currency, giftcardFee) => {
             (processingFeePercentage / 100) * amount - giftcardFee
         ).toFixed(2);
     }
-    console.log(
-        amount,
-        currency,
-        giftcardFee,
-        proccessingFeeAmount,
-        processingFeePercentage
-    );
+    // console.log(
+    //     amount,
+    //     currency,
+    //     giftcardFee,
+    //     proccessingFeeAmount,
+    //     processingFeePercentage
+    // );
     return proccessingFeeAmount;
+};
+
+
+export const TopupExchangeRateConverter = (receiverCurrencyCode, senderCountry, Amount, receiverCurrency, receiveFxRate) => {
+    const amountToPayInSenderCurrency = receiveFxRate * Amount;
+
+    if (senderCountry === "GH") {
+        return [amountToPayInSenderCurrency, "GHS"]
+    }
+
+    // First convert the amount of receiver to GHS
+    // if country is sender country is ghana retunr ghana cedis  else ..
+    // convert ghana cedis to USD 
+    // then convert Ghana cedis  dollars t
+}
+
+
+export const TopUpAitimeFeeCalculatio = (amount, senderCountry) => {
+    const percentage = localStorage.getItem("percentage")
+    const amountToPay = parseFloat((percentage / 100) * amount).toFixed(2)
+    let currency = "USD"
+    if (senderCountry === "GH") {
+        currency = "GHS"
+    }
+
+    console.log(amountToPay, percentage, amount, "This is amount to pay")
+    return [amountToPay, currency];
+}
+
+
+export const ConvertGHStoUSD = (amount) => {
+    const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"))
+    return parseFloat(exchangeRate["GHS"] * amount)
+}
+
+export const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
 };

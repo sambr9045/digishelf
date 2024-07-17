@@ -20,11 +20,14 @@ import walletpro from "../assets/images/working/walletpro.png";
 import find from "../assets/images/working/find.png";
 import mobilepro from "../assets/images/working/mobilepro.png";
 import working3shape from "../assets/images/working/working3shape.png";
+import { TopUpProvider } from "../components/Context/TopUpContext";
 
 export default function Home() {
   return (
     <>
-      <Banner />
+      <TopUpProvider>
+        <Banner />
+      </TopUpProvider>
 
       <section className="working__section__three bgsection pt-120 pb-120">
         <div className="container">

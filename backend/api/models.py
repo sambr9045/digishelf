@@ -160,7 +160,7 @@ class TopupTransaction(models.Model):
     user_type = models.CharField(max_length=200, default="guest")
     reference = models.CharField(max_length=14, unique=True, default=False, blank=False)
     operator = models.CharField(max_length=200, default=None)
-    phone_number = models.IntegerField(default=None, blank=True, null=True)
+    phone_number =models.CharField(max_length=250, default=None)
     receiver_amount = models.DecimalField(default=None, decimal_places=2, max_digits=9)
     receiver_country = models.CharField(default=None, max_length=250)
     receiver_currency_code = models.CharField(default=None, max_length=250)

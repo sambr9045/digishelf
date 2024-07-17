@@ -12,6 +12,7 @@ import Details from "./pages/Details";
 import PaymentSuccess from "./components/payment/PaymentSuccess";
 import Checkout from "./components/payment/Checkout";
 import Search from "./pages/Search";
+import TopUpSuccess from "./components/payment/TopUpSuccess";
 
 
 import "./assets/css/index.css";
@@ -61,9 +62,13 @@ const router = createBrowserRouter([{
     element: < Search / >
   },
   {
+    path: "/top-up/success/:reference",
+    element: < TopUpSuccess / >
+  },
+  {
     path: "/top-up",
     element: < Home / >
-  }
+  },
 ]);
 
 export default router;

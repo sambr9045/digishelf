@@ -19,7 +19,8 @@ urlpatterns = [
     path('giftcardorder/', views.GetGiftCardOrder.as_view(), name="giftcardorder"),
     path('giftcard-search/', views.GetSearchResult.as_view(), name="giftcardseach"),
     path('cart/', views.CartView.as_view(), name="cart"),
-    path("aitimetopup/", views.AirtimeTopUpPurcahse.as_view(), name="airtime_top_up")
+    path("aitimetopup/", views.AirtimeTopUpPurcahse.as_view(), name="airtime_top_up"),
+    path("airtime-topup-order/", views.AirtimeSuccessOrder.as_view(), name="airtime_topup_order")
     
 
 ]
