@@ -49,7 +49,7 @@ const StepTwo = () => {
             </>
           )}
           {/* Additional sections like payment methods can be added similarly */}
-          <ContinueButton handleSubmitStepTwo={handleSubmitStepTwo} />
+          <ContinueButton />
         </div>
       </div>
     </div>

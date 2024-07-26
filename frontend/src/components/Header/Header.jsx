@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import logo from "../../assets/images/logo.png";
+import logo4 from "../../assets/images/NLogo/logo4.png";
 import { Link } from "react-router-dom";
 import Stack from "@mui/material/Stack";
 import Badge from "@mui/material/Badge";
@@ -9,6 +9,7 @@ import Cart from "../includes/Cart";
 import { SessionContext } from "../sessionContext";
 import { NavLink } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
+import UserAccountPart from "../includes/UserAccountPart";
 // import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Header() {
@@ -49,33 +50,64 @@ export default function Header() {
         <div className="container">
           <div className="header-wrapper">
             <div className="logo-menu">
-              {/* <a href="index.html" className="logo"> */}
-              {/* <img src={logo} alt="logo" /> */}
-              <div
-                className=""
-                style={{
-                  fontSize: "30px",
-                  fontWeight: "900",
-                  color: "#551839!important",
-                  fontFamily: "robot",
-                }}
-              >
-                DIGISHELF
-              </div>
-              {/* </a> */}
-              <a href="index.html" className="small__logo d-xl-none">
-                <img src="assets/img/logo/favicon.png" alt="logo" />
+              <a href="/" className="logo">
+                <img
+                  src={logo4}
+                  alt="logo"
+                  style={{ width: "160px", height: "auto" }}
+                />
+              </a>
+              <a href="/" className="small__logo d-xl-none">
+                <img
+                  src={logo4}
+                  alt="logo"
+                  style={{ width: "100px", height: "auto" }}
+                />
               </a>
             </div>
             <div className="menu__right__components d-flex align-items-center">
               <div className="sigup__grp d-lg-none">
-                <NavLink to="/signin" className="cmn__btn outline__btn">
-                  <span>Signin</span>
-                </NavLink>
-
-                <NavLink to="/signup" className="cmn__btn">
-                  Signup
-                </NavLink>
+                {session && session.user ? (
+                  <>
+                    {/* <div
+                      className="rounded-circle text-white d-flex align-items-center justify-content-center"
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        backgroundColor: "#551839",
+                      }}
+                    >
+                      {session.user.email.charAt(0).toUpperCase()}
+                    </div> */}
+                    {/* <div className="me-2">
+                      <b className="pl-2"> My account </b>
+                      <span
+                        className="material-symbols-outlined text-black"
+                        style={{
+                          fontSize: "18px",
+                          verticalAlign: "middle",
+                          marginTop: "0px",
+                          paddingLeft: "3px",
+                        }}
+                      >
+                        keyboard_arrow_down
+                      </span>
+                    </div> */}
+                  </>
+                ) : (
+                  <>
+                    <NavLink
+                      to="/signin"
+                      className="cmn__btn outline__btn mr-4"
+                    >
+                      <span>Signin</span>
+                    </NavLink>
+                    &nbsp; &nbsp;
+                    <NavLink to="/signup" className="cmn__btn">
+                      Signup
+                    </NavLink>
+                  </>
+                )}
               </div>
               <div className="header-bar d-lg-none">
                 <span></span>
@@ -127,20 +159,7 @@ export default function Header() {
                   Gift&nbsp;<span className="text-lowercase">cards</span>
                 </NavLink>
               </li>
-              <li className="grid__style">
-                <NavLink
-                  to="/pay-bills"
-                  className={({ isActive, isPending }) =>
-                    isPending
-                      ? "pending d-flex "
-                      : isActive
-                      ? "menu-active d-flex"
-                      : "d-flex"
-                  }
-                >
-                  Pay&nbsp;<span className="text-lowercase">bills</span>
-                </NavLink>
-              </li>
+
               <li className="grid__style">
                 <NavLink
                   to="/about"
@@ -165,6 +184,7 @@ export default function Header() {
                   Contact
                 </NavLink>
               </li>
+
               <li className="sigup__grp d-lg-none d-flex align-items-center">
                 <NavLink to="/signin" className="cmn__btn outline__btn">
                   <span>Signin</span>
@@ -206,98 +226,7 @@ export default function Header() {
 
               {session && session.user ? (
                 <>
-                  <div className="user-account ">
-                    <div className="container d-flex align-items-center text-center">
-                      <div
-                        className="rounded-circle text-white d-flex align-items-center justify-content-center"
-                        style={{
-                          width: "32px",
-                          height: "32px",
-                          backgroundColor: "#551839",
-                        }}
-                      >
-                        {session.user.email.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="me-2">
-                        <b className="pl-2">&nbsp;My account</b>
-                        <span
-                          className="material-symbols-outlined text-black"
-                          style={{
-                            fontSize: "18px",
-                            verticalAlign: "middle",
-                            marginTop: "0px",
-                            paddingLeft: "3px",
-                          }}
-                        >
-                          keyboard_arrow_down
-                        </span>
-                      </div>
-
-                      <div className="popover-custom">
-                        {/* <button className="btn">Hover me to see</button> */}
-
-                        <div className="popover">
-                          {/* <div className="arrow"></div> */}
-                          <h6 className="popover-custom-header">
-                            <span className="text-muted mt-3">Hello</span>{" "}
-                            <span className="basecolor_custom">Shamsu</span>
-                          </h6>
-                          <div className="popover-body p-0">
-                            <ul className="list-group p-0 bg-white">
-                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                                <span className="material-symbols-outlined user-account-icon">
-                                  person
-                                </span>
-                                <span className="user-account-icon-name">
-                                  account
-                                </span>
-                              </li>
-                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                                <span className="material-symbols-outlined user-account-icon">
-                                  history
-                                </span>
-                                <span className="user-account-icon-name">
-                                  profile
-                                </span>
-                              </li>
-                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                                <span className="material-symbols-outlined user-account-icon">
-                                  history
-                                </span>
-                                <span className="user-account-icon-name">
-                                  History
-                                </span>
-                              </li>
-
-                              <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                                <span className="material-symbols-outlined user-account-icon">
-                                  settings
-                                </span>
-                                <span className="user-account-icon-name">
-                                  Settings
-                                </span>
-                              </li>
-
-                              <hr />
-
-                              <li
-                                className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center flex-row"
-                                onClick={logout}
-                              >
-                                <span className="material-symbols-outlined user-account-icon">
-                                  logout
-                                </span>
-                                <span className="user-account-icon-name">
-                                  Logout
-                                </span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                      {/* <div className="pop ">Hello world crazy world</div> */}
-                    </div>
-                  </div>
+                  <UserAccountPart session={session} logout={logout} />
                 </>
               ) : (
                 <>

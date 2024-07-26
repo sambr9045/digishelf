@@ -82,3 +82,10 @@ class CartSerializer(serializers.ModelSerializer):
         user = self.context['request'].user  # Get user from request context
         validated_data['user'] = user  # Assign the current user to the instance before saving
         return super().create(validated_data)
+    
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Contact
+        fields= '__all__'
+        

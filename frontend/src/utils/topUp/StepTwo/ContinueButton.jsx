@@ -5,23 +5,19 @@ import { validateEmail } from "../../../components/includes/Functions";
 import { toast } from "react-toastify";
 
 const ContinueButton = () => {
-  const {
-    EmailAddress,
-    oparatorData,
-    selectedOption,
-    setEmailError,
-    setSelectedOptionData,
-    setSteps,
-  } = useContext(TopUpContext);
+  const { EmailAddress, selectedOptinData, setEmailError, setSteps } =
+    useContext(TopUpContext);
+  console.log(selectedOptinData);
 
   const handleSubmitStepTwo = async (e) => {
     e.preventDefault();
 
-    console.log(EmailAddress, !validateEmail(EmailAddress));
     if (!validateEmail(EmailAddress) || EmailAddress === "") {
-      console.log("invalide email address");
       setEmailError("Invalide email address");
       toast.error("Invalide email address !!");
+      return;
+    } else if (selectedOptinData === "" || selectedOptinData === undefined) {
+      toast.error("Please select amount to top-up!!");
       return;
     } else {
       setEmailError("");

@@ -3,9 +3,16 @@ import Footer from "../components/Footer/Footer";
 import Banner from "../components/Banner";
 
 import support from "../assets/images/refer/support.png";
+import support2 from "../assets/images/refer/support2.svg";
+
+import team from "../assets/images/refer/team.svg";
+import team2 from "../assets/images/refer/team2.svg";
+
 import redericon from "../assets/images/refer/redericon.png";
 import payicon from "../assets/images/refer/payicon.png";
 import payment from "../assets/images/refer/payment.png";
+import payment2 from "../assets/images/refer/payment2.png";
+
 import suppoticon from "../assets/images/refer/suppoticon.png";
 import flowerrefer from "../assets/images/refer/flowerrefer.png";
 
@@ -126,7 +133,7 @@ export default function Home() {
                   >
                     <div className="support__contentbox">
                       <div className="thumb">
-                        <img src={payment} alt="payment" />
+                        <img src={payment2} alt="payment" />
                       </div>
                       <h5>
                         <a href="help-support.html">Secure Payment</a>
@@ -176,8 +183,12 @@ export default function Home() {
               </div>
             </div>
             <div className="col-xl-5 col-lg-5">
-              <div className="support__thumb wow fadeInUp">
-                <img src={support} alt="support" />
+              <div className="support__thumb wow fadeInUp text-center">
+                <img
+                  src={support2}
+                  alt="support"
+                  style={{ width: "70%", margin: "" }}
+                />
               </div>
             </div>
           </div>

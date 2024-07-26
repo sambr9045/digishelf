@@ -1,10 +1,12 @@
 import React from "react";
 import logo from "../../assets/images/logo.png";
-import twitter from "../../assets/images/svg/twitter.svg";
-import facebook from "../../assets/images/svg/facebook.svg";
+import logo4 from "../../assets/images/NLogo/logo4.png";
+
+import twitter from "../../assets/images/svg/twitter.png";
+import facebook from "../../assets/images/svg/facebook.png";
 import ball from "../../assets/images/svg/ball.svg";
 import linkedin from "../../assets/images/svg/linkedin.svg";
-
+import { Link } from "react-router-dom";
 export default function Footer() {
   return (
     <>
@@ -20,7 +22,11 @@ export default function Footer() {
                   <div className="footer__widget">
                     <div className="widget__head mb__20">
                       <a href="index.html" className="footer__logo">
-                        <img src={logo} alt="logo" />
+                        <img
+                          src={logo4}
+                          alt="logo"
+                          style={{ width: "200px", height: "auto" }}
+                        />
                       </a>
                     </div>
                     <p className="pratext mb__20 fz-18">
@@ -43,11 +49,11 @@ export default function Footer() {
                           <img src={twitter} alt="svg" />
                         </a>
                       </li>
-                      <li>
+                      {/* <li>
                         <a href="javascript:void(0)" className="social__icon">
                           <img src={ball} alt="svg" />
                         </a>
-                      </li>
+                      </li> */}
                     </ul>
                   </div>
                 </div>
@@ -60,24 +66,23 @@ export default function Footer() {
                       <h4 className="fz-24 pratext">Quick Links</h4>
                     </div>
                     <div className="widget__link">
-                      <a href="index.html" className="link fz-18 pratext">
+                      <Link to="/" className="link fz-18 pratext">
                         Top-Up
-                      </a>
-                      <a href="about.html" className="link fz-18 pratext">
+                      </Link>
+                      <Link to="/about" className="link fz-18 pratext">
                         About
-                      </a>
-                      <a href="index.html" className="link fz-18 pratext">
+                      </Link>
+
+                      {/* <a href="index.html" className="link fz-18 pratext">
                         Bill Payment
-                      </a>
-                      <a
-                        href="booking-landing1.html"
-                        className="link fz-18 pratext"
-                      >
-                        Gift Cards
-                      </a>
-                      <a href="contact.html" className="link fz-18 pratext">
+                      </a> */}
+
+                      <Link to="/gift-cards" className="link fz-18 pratext">
+                        Gift cards
+                      </Link>
+                      <Link to="/contact" className="link fz-18 pratext">
                         Contact
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -101,10 +106,8 @@ export default function Footer() {
                         href="javascript:void(0)"
                         className="link fz-18 pratext"
                       >
-                        <span className="d-block">
-                          deanna.curtis@example.com
-                        </span>
-                        <span>debra.holt@example.com</span>
+                        <span className="d-block">support@digishelf.com</span>
+                        <span>info@digishelf.com</span>
                       </a>
                       <a
                         href="javascript:void(0)"
@@ -145,12 +148,13 @@ export default function Footer() {
                 </div>
               </div>
             </div>
+
             <div className="footer__bottom d-flex">
               <p className="fz-18 pratext">
-                Copyright &copy;2023{" "}
-                <a href="index.html" className="base">
-                  Rechargio.
-                </a>{" "}
+                Copyright &copy;2024
+                <a href="/" className="base">
+                  &nbsp;Digishelf.
+                </a>
                 All Rights Reserved
               </p>
               <ul className="footer__bottom__link">

@@ -42,9 +42,6 @@ export default function StepThree() {
     parseFloat(
       TopUpAitimeFeeCalculatio(selectedOptinData.amount, country.country)[0]
     ) + parseFloat(selectedOptinData.amount);
-
-  // reference: "wSFvu5uXj1wY4i", trans: "3952288590", status: "success", message: "Approved", transaction: "3952288590", trxref: "wSFvu5uXj1wY4i", redirecturl: "?trxref=wSFvu5uXj1wY4i&reference=wSFvu5uXj1wY4i"
-
   const handlePaymentProcessing = async (data) => {
     const response = await processPayment(data);
     if (response.status === "SUCCESSFUL") {
@@ -75,10 +72,6 @@ export default function StepThree() {
     }
   };
   const handleSuccess = (reference) => {
-    // Implementation for whatever you want to do with reference and after success call.
-    // make backend call to buy airtime from reloady here
-    // then update teh status of airtime
-    // then redirect to the success page
     setisLoading(true);
 
     // resposne

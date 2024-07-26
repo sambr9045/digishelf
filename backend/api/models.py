@@ -190,3 +190,12 @@ class Cart(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     
+class Contact(models.Model):
+    name = models.CharField(max_length=250, default=None)
+    email = models.EmailField(default=None)
+    message = models.TextField(default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+
+    
+    

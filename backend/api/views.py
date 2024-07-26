@@ -604,3 +604,27 @@ class AirtimeSuccessOrder(APIView):
 
         return Response(serializer_.data, status=status.HTTP_200_OK)
             
+
+
+class ContactView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        import time
+        time.sleep(1000)
+        data = request.data
+        formData = data.get("formData")
+        token = data.get("token")
+        # verify this google token
+        print(token)
+        print(formData)
+        try:
+            contact_serializer = serializers.ContactSerializer(data=formData)
+            contact_serializer.is_valid(raise_exception=True)
+            contact_serializer.save()
+            return Response({"data":"success"}, status=200)
+        except Exception as e:
+            return Response({"error":e}, status=status.HTTP_400_BAD_REQUEST)
+    
+        
+        

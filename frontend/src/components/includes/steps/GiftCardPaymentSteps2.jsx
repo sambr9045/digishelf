@@ -502,7 +502,7 @@ export default function GiftCardPaymentSteps2() {
                             <div className="mb-0 col-lg-12 col-md-12 col-sm-12">
                               <input
                                 type="email"
-                                className="form-control form-control-lg"
+                                className="form-control form-control-lg pt-3 pb-3"
                                 id="email"
                                 aria-describedby="emailHelp"
                                 placeholder="Enter email address"

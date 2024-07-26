@@ -18,11 +18,11 @@ export default function Banner() {
 
   return (
     <>
-      <section className="banner__section Home__banner_section">
+      <section className="banner__section Home__banner_section gradient-div">
         <Header />
         <ToastContainer position="top-center" theme="colored" />
 
-        <div className="container">
+        <div className="container ">
           <div
             className="fasilities__body wow fadeInUp justify-content-center"
             data-wow-duration="3s"
@@ -57,7 +57,7 @@ export default function Banner() {
                 </div>
               </div>
               <div className="col-xxl-5 col-xl-5 col-lg-4 col-md-5 col-sm-5">
-                <div className="recharge__paymentbox">
+                <div className="recharge__paymentbox ">
                   {steps === 1 && (
                     <>
                       <StepOne />
