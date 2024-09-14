@@ -398,20 +398,27 @@ body {
     /* margin-top: 100px; */
 }
 
+.menu-link {
+    vertical-align: baseline;
+    display: flex;
+}
 
+.breadcumnd__banner .bread__title {
+    font-size: 48px;
+}
 
 .popover-custom .popover {
     position: absolute;
-    top: 20px;
+    top: 13px;
     left: 50%;
     right: 50%;
     transform: translateX(-80%);
     width: 250px;
     padding: 10px;
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: unset;
+    border: none;
     border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); */
     display: none;
     z-index: 10;
     /* display: block; */
@@ -1097,6 +1104,11 @@ h2 {
 
 }
 
+/* .offcanvas-body .mobile-menu .nav-item .nav-link:hover {
+    color: #10ac84 !important;
+    font-size: large !important;
+} */
+
 @media only screen and (max-width: 900px) {
     .recharge__paymentbox {
         width: 100% !important;
@@ -1120,6 +1132,44 @@ h2 {
         height: auto;
         padding-bottom: 50px;
     }
+
+    .mobile-menu li a {
+        color: black;
+        font-size: larger;
+        font-weight: bold;
+    }
+
+    .mobile-menu .nav-link:hover,
+    .mobile-menu .nav-item:hover {
+        color: var(--custombase) !important;
+        font-weight: bolder;
+        font-size: 25px;
+    }
+
+    .mobile-menu .active {
+        color: var(--custombase);
+        font-weight: bolder;
+        font-size: 25px;
+    }
+
+    .mobile-menu .nav-item:hover .mobile-menu-icon {
+        color: var(--custombase) !important;
+    }
+
+    .social-menu-icon {
+        width: 23px;
+        height: auto;
+    }
+
+    .mobile-menu-icon {
+        color: black;
+        font-size: larger;
+        vertical-align: text-bottom;
+        padding-right: 5px;
+
+    }
+
+
 }
 
 

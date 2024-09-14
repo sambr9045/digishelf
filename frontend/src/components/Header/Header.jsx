@@ -10,6 +10,7 @@ import { SessionContext } from "../sessionContext";
 import { NavLink } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import UserAccountPart from "../includes/UserAccountPart";
+import MobileMenu from "../includes/MobileMenu";
 // import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Header() {
@@ -68,32 +69,7 @@ export default function Header() {
             <div className="menu__right__components d-flex align-items-center">
               <div className="sigup__grp d-lg-none">
                 {session && session.user ? (
-                  <>
-                    {/* <div
-                      className="rounded-circle text-white d-flex align-items-center justify-content-center"
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        backgroundColor: "#551839",
-                      }}
-                    >
-                      {session.user.email.charAt(0).toUpperCase()}
-                    </div> */}
-                    {/* <div className="me-2">
-                      <b className="pl-2"> My account </b>
-                      <span
-                        className="material-symbols-outlined text-black"
-                        style={{
-                          fontSize: "18px",
-                          verticalAlign: "middle",
-                          marginTop: "0px",
-                          paddingLeft: "3px",
-                        }}
-                      >
-                        keyboard_arrow_down
-                      </span>
-                    </div> */}
-                  </>
+                  <></>
                 ) : (
                   <>
                     <NavLink
@@ -109,7 +85,13 @@ export default function Header() {
                   </>
                 )}
               </div>
-              <div className="header-bar d-lg-none">
+              <div
+                className="header-bar d-lg-none"
+                style={{ cursor: "pointer" }}
+                data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasRight"
+                aria-controls="offcanvasRight"
+              >
                 <span></span>
                 <span></span>
                 <span></span>
@@ -257,6 +239,10 @@ export default function Header() {
             </div>
           </div>
         </div>
+
+        {/* mobile menu  */}
+
+        <MobileMenu session={session} />
       </header>
     </>
   );

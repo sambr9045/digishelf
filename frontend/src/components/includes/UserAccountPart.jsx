@@ -1,4 +1,16 @@
 import React from "react";
+import Paper from "@mui/material/Paper";
+import Divider from "@mui/material/Divider";
+import MenuList from "@mui/material/MenuList";
+import MenuItem from "@mui/material/MenuItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Check from "@mui/icons-material/Check";
+import Person3OutlinedIcon from "@mui/icons-material/Person3Outlined";
+import ManageHistoryOutlinedIcon from "@mui/icons-material/ManageHistoryOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import { Link } from "react-router-dom";
 
 export default function UserAccountPart({ session, logout }) {
   return (
@@ -32,51 +44,58 @@ export default function UserAccountPart({ session, logout }) {
           <div className="popover-custom">
             {/* <button className="btn">Hover me to see</button> */}
             <div className="popover">
-              {/* <div className="arrow"></div> */}
-              <h6 className="popover-custom-header">
-                <span className="text-muted mt-3"> Hello </span>
-                <span className="basecolor_custom"> Shamsu </span>
-              </h6>
-              <div className="popover-body p-0">
-                <ul className="list-group p-0 bg-white">
-                  <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                    <span className="material-symbols-outlined user-account-icon">
-                      person
-                    </span>
-                    <span className="user-account-icon-name">account </span>
-                  </li>
-                  <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                    <span className="material-symbols-outlined user-account-icon">
-                      history
-                    </span>
-                    <span className="user-account-icon-name">profile </span>
-                  </li>
-                  <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                    <span className="material-symbols-outlined user-account-icon">
-                      history
-                    </span>
-                    <span className="user-account-icon-name">History </span>
-                  </li>
-                  <li className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center">
-                    <span className="material-symbols-outlined user-account-icon">
-                      settings
-                    </span>
-                    <span className="user-account-icon-name">Settings </span>
-                  </li>
-                  <hr />
-                  <li
-                    className="list-group-item list-group-item-secondary bg-white border-0 fs-6 d-flex align-items-center flex-row"
-                    onClick={logout}
-                  >
-                    <span className="material-symbols-outlined user-account-icon">
-                      logout
-                    </span>
-                    <span className="user-account-icon-name">Logout </span>
-                  </li>
-                </ul>
-              </div>
+              <Paper
+                sx={{
+                  width: 220,
+                  paddingTop: "10px",
+                  border: "1px solid lightgray",
+                }}
+                className="shadow-sm"
+              >
+                <MenuList dense>
+                  <MenuItem>
+                    <Link
+                      to="/account"
+                      className="text-black menu-link"
+                      style={{ verticalAlign: "middle" }}
+                    >
+                      <ListItemIcon>
+                        <Person3OutlinedIcon fontSize="large" />
+                      </ListItemIcon>
+                      My account
+                    </Link>
+                  </MenuItem>
+
+                  <MenuItem>
+                    <Link to="/history" className="text-dark menu-link">
+                      <ListItemIcon>
+                        <ManageHistoryOutlinedIcon fontSize="large" />
+                      </ListItemIcon>
+                      History
+                    </Link>
+                  </MenuItem>
+                  <MenuItem>
+                    <Link to="/settings" className="text-dark menu-link">
+                      <ListItemIcon>
+                        <SettingsOutlinedIcon fontSize="large" />
+                      </ListItemIcon>
+                      Setting
+                    </Link>
+                  </MenuItem>
+                  <Divider />
+                  <MenuItem>
+                    <Link to="/Logout" className="text-dark menu-link">
+                      <ListItemIcon>
+                        <LogoutOutlinedIcon fontSize="large" />
+                      </ListItemIcon>
+                      Logout
+                    </Link>
+                  </MenuItem>
+                </MenuList>
+              </Paper>
             </div>
           </div>
+
           {/* <div className="pop ">Hello world crazy world</div> */}
         </div>
       </div>
