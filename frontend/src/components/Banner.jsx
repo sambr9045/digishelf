@@ -22,9 +22,12 @@ export default function Banner() {
         <Header />
         <ToastContainer position="top-center" theme="colored" />
 
-        <div className="container ">
+        <div className="container mt-5">
+          <br />
+          <br />
+
           <div
-            className="fasilities__body wow fadeInUp justify-content-center"
+            className="fasilities__body wow fadeInUp justify-content-center mt-5"
             data-wow-duration="3s"
           >
             <div className="row g-4 justify-content-center pt-120">
@@ -33,8 +36,8 @@ export default function Banner() {
                   <span className="top-message">Airtime top-up</span>
                   <br /> <br />
                   <h1 className="fade-in-text-from-top">
-                    Instant Airtime{" "}
-                    <span className="text-with-circle">top-Ups</span> Anytime
+                    Instant Airtime
+                    <span className="text-with-circle">Top-ups</span> Anytime
                   </h1>
                   <br />
                   <div className="">
@@ -44,13 +47,12 @@ export default function Banner() {
                         Instant top-up
                       </li>
                       <li className="fade-in-item">
-                        {" "}
                         <img src={arrowright} alt="arrow-right" />
                         Secure & safe
                       </li>
                       <li className="fade-in-item">
                         <img src={arrowright} alt="arrow-right" />
-                        Crypto & Debit/Credit Card
+                        Crypto & Debit/Credit Card payment method
                       </li>
                     </ul>
                   </div>

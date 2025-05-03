@@ -143,7 +143,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "digishelf3",
         "USER": "postgres",
-        "PASSWORD": "Tonado12",
+        "PASSWORD": "90454544",
         "HOST": "localhost",  # Or your PostgreSQL server IP
         "PORT": "5432",       # Or your PostgreSQL server port
     }

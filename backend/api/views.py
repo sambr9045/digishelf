@@ -29,6 +29,8 @@ import asyncio
 import aiohttp
 from . import tasks
 import requests
+from itertools import chain
+from operator import attrgetter
 load_dotenv()
 
 
@@ -42,12 +44,19 @@ class LoginWithEmailView(APIView):
         password = request.data.get("password")
         # Validate email and password
         if not email or not password:
-            return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Email and password are required'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        
         
         # Authenticate user
         user = authenticate(request, email=email, password=password)
         if user is not None:
+            if user.deleted:
+                return Response({'error': 'Email and password are required'}, status=status.HTTP_401_UNAUTHORIZED)
+            if user.suspended:
+                return Response({'error': 'Your account has been suspended. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
             token = RefreshToken.for_user(user)
+            
             return Response({
                 'refresh': str(token),
                 'access': str(token.access_token),
@@ -222,6 +231,7 @@ class FiatExchangeRate(APIView):
     def get(self, request):
         try:
             url = urls.get_exchange_fiat_url(os.getenv("FIA_CURRENCY_EXCHANGE_API_KEY"))
+            print(url);
             data = requests.get(url)
             # get rate percentages
             profile_entry = DigiShelfData.objects.first()
@@ -616,8 +626,6 @@ class ContactView(APIView):
         formData = data.get("formData")
         token = data.get("token")
         # verify this google token
-        print(token)
-        print(formData)
         try:
             contact_serializer = serializers.ContactSerializer(data=formData)
             contact_serializer.is_valid(raise_exception=True)
@@ -626,5 +634,88 @@ class ContactView(APIView):
         except Exception as e:
             return Response({"error":e}, status=status.HTTP_400_BAD_REQUEST)
     
+class UpdateProfile(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    
+    def post(self, request):
+        data = request.data
+        user = request.user                              
         
+         # If "name" exists but not first_name/last_name, split it here
+        if 'name' in data and ('first_name' not in data or 'last_name' not in data):
+            full_name = data.get('name', '').strip()
+            name_parts = full_name.split(' ')
+            data['first_name'] = name_parts[0] if len(name_parts) > 0 else ''                             
+            data['last_name'] = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''                 
+        # update  user profile 
+        user_serializer = serializers.UserSerializer(user, data=data, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save()
+            return Response({"data":"success"}, status=200)
+        else:
+            return Response({"error":user_serializer.errors}, status=400)
+    
         
+    
+        
+class RecentActivityView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    
+    def get(self, request):
+        # Fetch model instances
+        giftcard_qs = models.GiftCardTransaction.objects.filter(
+            user=request.user
+        ).prefetch_related("transactions_order_product")[:5]
+
+        topup_qs = models.TopupTransaction.objects.filter(
+            user=request.user
+        )[:5]
+
+        # Combine and sort all model instances
+        combined = sorted(
+            chain(giftcard_qs, topup_qs),
+            key=attrgetter("created_at"),
+            reverse=True
+        )
+
+        # Serialize each item based on its type
+        result = []
+        for obj in combined:
+            if isinstance(obj, models.GiftCardTransaction):
+                serialized = serializers.GiftCardTransactionSerializer(obj).data
+            else:
+                serialized = serializers.AirtimTopUpSerializer(obj).data
+            result.append(serialized)
+
+        return Response({"data": result}, status=200)
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        """
+        Fetch the profile of the authenticated user.
+        """
+        user = request.user
+        serializer = serializers.UserSerializer(user)
+        return Response(serializer.data, status=200)
+    
+class AccountDeletionView(APIView):
+    permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication]
+
+    def delete(self, request):
+        """
+        Delete the authenticated user's account.
+        """
+        #instead of deleting the user set the delete field to true 
+        
+        # user = request.user
+        user = request.user
+        user.deleted = True
+        user.save()
+        return Response({"message": "Account deleted successfully."}, status=204)

@@ -18,7 +18,6 @@ export default function Header() {
   const [pathActive, setPathActive] = useState(false);
   const { session, logout } = useContext(SessionContext);
   const pathname = window.location.pathname;
-  console.log(pathname);
 
   const [showCart, setShowCart] = useState(false);
 

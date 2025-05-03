@@ -1,6 +1,4 @@
-import {
-  createBrowserRouter
-} from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -14,65 +12,70 @@ import Checkout from "./components/payment/Checkout";
 import Search from "./pages/Search";
 import TopUpSuccess from "./components/payment/TopUpSuccess";
 import MyAccount from "./components/accounts/MyAccount";
-
+import ProfileSettings from "./components/accounts/ProfileSettings";
 
 import "./assets/css/index.css";
 
-const router = createBrowserRouter([{
+const router = createBrowserRouter([
+  {
     path: "/",
-    element: < Home / > ,
+    element: <Home />,
   },
   {
     path: "/about",
-    element: < About / > ,
+    element: <About />,
   },
   {
     path: "/contact",
-    element: < Contact / > ,
+    element: <Contact />,
   },
   {
     path: "/signin",
-    element: < Signin / > ,
+    element: <Signin />,
   },
   {
     path: "/signup",
-    element: < Signup / > ,
+    element: <Signup />,
   },
   {
     path: "/gift-cards",
-    element: < Giftcards / > ,
+    element: <Giftcards />,
   },
   {
     path: "/gift-card/:type",
-    element: < GiftcardType / > ,
+    element: <GiftcardType />,
   },
   {
     path: "/gift-card/:name/:productId",
-    element: < Details / > ,
+    element: <Details />,
   },
   {
     path: "/gift-card/payment-complete/:reference",
-    element: < PaymentSuccess / > ,
+    element: <PaymentSuccess />,
   },
   {
     path: "/checkout",
-    element: < Checkout / >
+    element: <Checkout />,
   },
   {
     path: "/giftcard/search",
-    element: < Search / >
+    element: <Search />,
   },
   {
     path: "/top-up/success/:reference",
-    element: < TopUpSuccess / >
+    element: <TopUpSuccess />,
   },
   {
     path: "/top-up",
-    element: < Home / >
+    element: <Home />,
   },
   {
     path: "/account",
-    element: < MyAccount / >
+    element: <MyAccount />,
+  },
+  {
+    path: "/profile-settings",
+    element: <ProfileSettings />,
   },
 ]);
 

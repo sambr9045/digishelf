@@ -21,7 +21,12 @@ urlpatterns = [
     path('cart/', views.CartView.as_view(), name="cart"),
     path("aitimetopup/", views.AirtimeTopUpPurcahse.as_view(), name="airtime_top_up"),
     path("airtime-topup-order/", views.AirtimeSuccessOrder.as_view(), name="airtime_topup_order"),
-    path("contact/", views.ContactView.as_view(), name="contact-us")
-    
+    path("contact/", views.ContactView.as_view(), name="contact-us"),
+    path("account/recent_activity/", views.RecentActivityView.as_view(), name="recent_activity"),
+    path("account/update-profile/", views.UpdateProfile.as_view(), name="update_profile"),
+    path('account/profile/', views.ProfileView.as_view(), name='profile'),
+    path('account/delete/', views.AccountDeletionView.as_view(), name='delete_account'),
 
+
+    
 ]

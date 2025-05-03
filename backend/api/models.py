@@ -32,10 +32,12 @@ class Account(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(_('staff status'), default=False)
     date_joined = models.DateTimeField(_('date joined'), auto_now_add=True)
     device = models.CharField(max_length=250, default="Web")
-    phone_number = models.IntegerField(null=True, blank=True)
+    phone_number = models.CharField(max_length=250, default=None, null=True, blank=True)
     country = models.CharField(default=None, max_length=250, null=True , blank=True)
     email_verified = models.BooleanField(default=False)
     last_login = models.DateTimeField(verbose_name="last login",auto_now_add=True, blank=True, null=True)
+    deleted = models.BooleanField(default=False)
+    suspended = models.BooleanField(default=False)
     auth_type = models.CharField(max_length=100, default="email", null=False, blank=False)
     
     

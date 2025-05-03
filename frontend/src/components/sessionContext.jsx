@@ -6,8 +6,8 @@ import { api_endpoint } from "./constant";
 import { json } from "react-router-dom";
 import Loader from "./includes/Loader";
 import { ToastContainer, toast } from "react-toastify";
-
 const SessionContext = createContext();
+import countryToCurrency from "country-to-currency";
 
 const SessionProvider = ({ children }) => {
   const [session, setSession] = useState({
@@ -27,7 +27,6 @@ const SessionProvider = ({ children }) => {
   const [gpc, setGpc] = useState();
   const [yps, setYps] = useState();
   const [mainCurrency, setMainCurrency] = useState("");
-
   // Get cart from database
   const FetchDataBaseCart = async (session) => {
     const response = await axios.get(`${api_endpoint}/api/cart/`, {
@@ -50,7 +49,6 @@ const SessionProvider = ({ children }) => {
   useEffect(() => {
     const savedSession = localStorage.getItem("session");
     if (savedSession) {
-      console.log("save sessiong is runing");
       const localSession = JSON.parse(savedSession);
       setSession(localSession);
       FetchDataBaseCart(localSession);
@@ -252,20 +250,23 @@ const SessionProvider = ({ children }) => {
         );
 
         setCountry({
-          country: response.data.country,
-          country_code: result[0].callingCode,
+          country: response.data.country_code,
+          country_code: response.data.country_calling_code.replace(/\+/g, ""),
         });
 
         console.log(response.data.country);
 
-        if (response.data.country === "GH") {
-          setMainCurrency("GHS");
-        } else {
-          setMainCurrency("USD");
-        }
+        // if (response.data.country === "GH") {
+        //   setMainCurrency("GHS");
+        // } else {
+        //   setMainCurrency("USD");
+        // }
+        const currency = response.data.currency || "USD"; // Fallback to USD
+        setMainCurrency(currency);
       }
     } catch (error) {
       console.log(error);
+      setMainCurrency("USD");
     }
   };
 
@@ -318,6 +319,8 @@ const SessionProvider = ({ children }) => {
       };
       setSession(newSession);
       localStorage.setItem("session", JSON.stringify(newSession));
+
+      console.log(response);
     } catch (error) {
       console.error("Login error:", error);
       throw error;

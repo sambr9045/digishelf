@@ -18,6 +18,8 @@ const TopUpOptions = () => {
     setSelectedOptionData,
   } = useContext(TopUpContext);
   const [show, setShow] = useState();
+  const [customAmountTwo, setCustomAmountTwo] = useState();
+  const [emailError, setEmailError] = useState("");
 
   const HandleSelectedClicke = () => {
     setSelectedOptionData({
@@ -27,12 +29,38 @@ const TopUpOptions = () => {
     });
   };
 
-  const HandleEmailChange = (e) => {
-    const email = e.target.value;
-    if (email.trim() !== "") {
-      setEmailAddress(email);
+  const HandleCustomAmounTwo = (e) => {
+    const value = e.target.value;
+    // Only allow digits and optionally one dot
+    const isValid = /^(\d+\.?\d{0,2}|\d*)$/.test(value);
+    if (isValid || value === "") {
+      setCustomAmountTwo(value);
     }
   };
+
+  const HandleEmailChange = (e) => {
+    const email = e.target.value;
+    setEmailAddress(email);
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!isValidEmail && email !== "") {
+      setEmailError("Please enter a valid email address.");
+    } else {
+      setEmailError(""); // Clear error if valid or empty
+    }
+  };
+
+  const handleOnFocusOut = () => {
+    setSelectedOptionData({
+      name: "customAmount",
+      amount: customAmountTwo,
+      currency: country.country === "GH" ? "GHS" : "USD",
+    });
+  };
+  // setSelectedOptionData({
+  //   name: "customAmount",
+  //   amount: customAmount,
+  //   currency: country.country === "GH" ? "GHS" : "USD",
+  // });
   return (
     <>
       <div className="top-up-options">
@@ -75,41 +103,76 @@ const TopUpOptions = () => {
           </>
         ) : (
           <>
-            <div
-              className={`top-up-option ${
-                selectedOption === "mostPopular" ? "selected" : ""
-              }`}
-              onClick={() =>
-                setSelectedOptionData({
-                  name: "mostPopular",
-                  amount: oparatorData.data.mostPopularAmount,
-                  currency: oparatorData.data.fx.currencyCode,
-                })
-              }
-            >
-              <p className="amount basecolor_custom">
-                <ExchangeRateConverter
-                  receiverCurrencyCode={
-                    oparatorData.data.destinationCurrencyCode
+            {oparatorData.data.mostPopularAmount === null ? (
+              <>
+                <div className="mt-2">
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      name="custom-amount-two"
+                      className={`form-control pt-3 pb-3  ${
+                        EmailError ? "FormError" : ""
+                      }`}
+                      id="custom-amount-two"
+                      placeholder={`Enter Amount ${oparatorData.data.fx.currencyCode}`}
+                      onChange={HandleCustomAmounTwo}
+                      onBlur={handleOnFocusOut}
+                      value={customAmountTwo}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        fontWeight: "bold",
+                        color: "#555",
+                        right: 0,
+                        marginRight: "120px",
+                        marginTop: "-65px",
+                      }}
+                    >
+                      {oparatorData.data.fx.currencyCode}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div
+                  className={`top-up-option ${
+                    selectedOption === "mostPopular" ? "selected" : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedOptionData({
+                      name: "mostPopular",
+                      amount: oparatorData.data.mostPopularAmount,
+                      currency: oparatorData.data.fx.currencyCode,
+                    })
                   }
-                  senderCountry={country.country}
-                  Amount={oparatorData.data.mostPopularAmount}
-                  fx_rate={oparatorData.data.fx.rate}
-                />
-              </p>
+                >
+                  <p className="amount basecolor_custom">
+                    <ExchangeRateConverter
+                      receiverCurrencyCode={
+                        oparatorData.data.destinationCurrencyCode
+                      }
+                      senderCountry={country.country}
+                      Amount={oparatorData.data.mostPopularAmount}
+                      fx_rate={oparatorData.data.fx.rate}
+                    />
+                  </p>
 
-              {country.country === "GH" &&
-              oparatorData.data.country.isoName === "GH" ? (
-                ""
-              ) : (
-                <>
-                  <button className="buy-button">
-                    Buy &nbsp; {oparatorData.data.mostPopularAmount} &nbsp;
-                    {oparatorData.data.senderCurrencyCode}
-                  </button>
-                </>
-              )}
-            </div>
+                  {country.country === "GH" &&
+                  oparatorData.data.country.isoName === "GH" ? (
+                    ""
+                  ) : (
+                    <>
+                      <button className="buy-button">
+                        Buy &nbsp; {oparatorData.data.mostPopularAmount} &nbsp;
+                        {oparatorData.data.senderCurrencyCode}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Additional options can be similarly defined */}
             {Object.keys(suggestedAmountsMap).length > 0
@@ -149,25 +212,28 @@ const TopUpOptions = () => {
           </>
         )}
 
-        {selectedOptinData === "" && (
-          <>
-            <div className="mt-0 mb-1 text-left">
-              <span
-                className="text fz-12 fw-600 basecolor_custom more-option"
-                onClick={() => setShow(true)}
-              >
-                More options
-              </span>
-              <MoreOptionModal show={show} setShow={setShow} />
-            </div>
-          </>
-        )}
+        {selectedOptinData === "" &&
+          oparatorData.data.mostPopularAmount !== null && (
+            <>
+              <div className="mt-0 mb-1 text-left">
+                <span
+                  className="text fz-12 fw-600 basecolor_custom more-option"
+                  onClick={() => setShow(true)}
+                >
+                  More options
+                </span>
+                <MoreOptionModal show={show} setShow={setShow} />
+              </div>
+            </>
+          )}
 
         <div className="mt-2">
           <div className="form-group">
-            <label htmlFor="email" className="fs-5 pb-2">
-              Enter your email*
-            </label>
+            <h2 htmlFor="email" className="text-muted pb-2">
+              <b>
+                2. Enter your email <span className="text-danger">*</span>
+              </b>
+            </h2>
             <input
               type="email"
               name="email"

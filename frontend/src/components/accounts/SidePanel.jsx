@@ -13,65 +13,61 @@ export default function SidePanel() {
                 className="nav-link menu-active"
               >
                 {/* <span className="icon">
-                  <img src={user} alt="user" />
-                </span> */}
-                <span className="fs-4"> Account </span>
+                        <img src={user} alt="user" />
+                      </span> */}
+                <span className="fs-4 acount_active"> Account </span>
               </a>
             </li>
+
             <li className="nav-item">
-              <a href="personal-information.html" className="nav-link">
+              <a href="login-security.html" className="nav-link">
                 {/* <span className="icon">
                   <img src="assets/img/svg/log.svg" alt="login" />
                 </span> */}
-                <span className="fs-4"> Personal Information </span>
+                <span> History </span>
               </a>
             </li>
-            <li className="nav-item">
-              <a href="login-security.html" className="nav-link">
-                <span className="icon">
-                  <img src="assets/img/svg/log.svg" alt="login" />
-                </span>
-                <span> Login and security </span>
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="favourites.html" className="nav-link">
-                <span className="icon">
-                  <img src="assets/img/svg/badge.svg" alt="login" />
-                </span>
-                <span> Favourites </span>
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="debit-creadit.html" className="nav-link">
-                <span className="icon">
-                  <img src="assets/img/svg/creadits.svg" alt="login" />
-                </span>
-                <span> Credit or Debit Cards </span>
-              </a>
-            </li>
+
             <li className="nav-item">
               <a href="transaction.html" className="nav-link">
-                <span className="icon">
+                {/* <span className="icon">
                   <img src="assets/img/svg/file-transfer.svg" alt="login" />
-                </span>
+                </span> */}
                 <span> Transaction </span>
               </a>
             </li>
             <li className="nav-item">
               <a href="password-change.html" className="nav-link">
-                <span className="icon">
+                {/* <span className="icon">
                   <img src="assets/img/svg/password-change.svg" alt="login" />
-                </span>
+                </span> */}
                 <span> Change Password </span>
               </a>
             </li>
             <li className="nav-item">
               <a href="notification.html" className="nav-link">
-                <span className="icon">
+                {/* <span className="icon">
                   <img src="assets/img/svg/notifications.svg" alt="login" />
-                </span>
+                </span> */}
                 <span> Notifications </span>
+              </a>
+            </li>
+
+            <li className="nav-item">
+              <a href="favourites.html" className="nav-link">
+                {/* <span className="icon">
+                  <img src="assets/img/svg/badge.svg" alt="login" />
+                </span> */}
+                <span> Settings </span>
+              </a>
+            </li>
+
+            <li className="nav-item">
+              <a href="debit-creadit.html" className="nav-link">
+                {/* <span className="icon">
+                  <img src="assets/img/svg/creadits.svg" alt="login" />
+                </span> */}
+                <span>Logout </span>
               </a>
             </li>
           </ul>

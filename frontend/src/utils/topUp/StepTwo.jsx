@@ -29,10 +29,14 @@ const StepTwo = () => {
                 <>Select an option let select network</>
               ) : (
                 <>
-                  <h6 className="mb-3 basecolor_custom robot-thin">
-                    {selectedOptinData === "" && (
+                  <h6 className="mb-3 text-muted robot-thin">
+                    {selectedOptinData === "" ? (
                       <>
-                        <b> 1. </b> Let’s select a top-up
+                        <b>1.</b> Enter Top Up Amount
+                      </>
+                    ) : (
+                      <>
+                        <b>1.</b> Select Option
                       </>
                     )}
                   </h6>

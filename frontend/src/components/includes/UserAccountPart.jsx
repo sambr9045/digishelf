@@ -11,8 +11,20 @@ import ManageHistoryOutlinedIcon from "@mui/icons-material/ManageHistoryOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { SessionContext } from "../sessionContext";
+export default function UserAccountPart({ logout }) {
+  const navigate = useNavigate();
+  const { session } = useContext(SessionContext);
+  if (session.user === null) {
+    console.log("session user is null");
+    navigate("/signin");
+  }
 
-export default function UserAccountPart({ session, logout }) {
+  const handleLogout = () => {
+    logout();
+  };
   return (
     <div>
       <div className="user-account ">
@@ -67,29 +79,22 @@ export default function UserAccountPart({ session, logout }) {
                   </MenuItem>
 
                   <MenuItem>
-                    <Link to="/history" className="text-dark menu-link">
-                      <ListItemIcon>
-                        <ManageHistoryOutlinedIcon fontSize="large" />
-                      </ListItemIcon>
-                      History
-                    </Link>
-                  </MenuItem>
-                  <MenuItem>
-                    <Link to="/settings" className="text-dark menu-link">
+                    <Link
+                      to="/profile-settings"
+                      className="text-dark menu-link"
+                    >
                       <ListItemIcon>
                         <SettingsOutlinedIcon fontSize="large" />
                       </ListItemIcon>
-                      Setting
+                      Profile setting
                     </Link>
                   </MenuItem>
                   <Divider />
-                  <MenuItem>
-                    <Link to="/Logout" className="text-dark menu-link">
-                      <ListItemIcon>
-                        <LogoutOutlinedIcon fontSize="large" />
-                      </ListItemIcon>
-                      Logout
-                    </Link>
+                  <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                      <LogoutOutlinedIcon fontSize="large" />
+                    </ListItemIcon>
+                    Logout
                   </MenuItem>
                 </MenuList>
               </Paper>
