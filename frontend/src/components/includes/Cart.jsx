@@ -4,14 +4,16 @@ import { SessionContext } from "../sessionContext";
 import { Link } from "react-router-dom";
 
 export default function Cart() {
-  const { cart, removeFromCart, updateCartItem } = useContext(SessionContext);
-  console.log(cart);
-
+  const { cart, removeFromCart, updateCartItem, mainCurrency } =
+    useContext(SessionContext);
   const HandleCardOnCahnge = async (e, id) => {
     const cartValue = e.target.value;
     updateCartItem(id, cartValue);
   };
 
+  const handleOnCHange = (e) => {
+    console.log(e.target.value);
+  };
   return (
     <div>
       {cart && cart.length > 0 ? (
@@ -45,7 +47,7 @@ export default function Cart() {
                       {(parseFloat(item.AmountToPay) * item.quantity).toFixed(
                         2
                       )}
-                      &nbsp; {item.currencyToPayIn}
+                      &nbsp; {mainCurrency}
                     </div>
                     <input
                       type="number"
@@ -79,6 +81,7 @@ export default function Cart() {
                 type="checkbox"
                 value=""
                 id="flexCheckIndeterminate"
+                onChange={handleOnCHange}
                 checked
               />
               <label
@@ -94,6 +97,7 @@ export default function Cart() {
                 type="checkbox"
                 value=""
                 id="flexCheckIndeterminate"
+                onChange={handleOnCHange}
                 checked
               />
               <label

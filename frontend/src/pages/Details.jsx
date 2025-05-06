@@ -10,7 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import GiftCardPaymentSteps2 from "../components/includes/steps/GiftCardPaymentSteps2";
 import { SessionContext } from "../components/sessionContext";
 import { useNavigate } from "react-router-dom";
-
+import { giftcardDetailsCalculation } from "../components/includes/Functions";
 // id
 // productName
 // productId
@@ -28,7 +28,7 @@ export default function Details() {
   const [selectedKey, setSelectedKey] = useState(null);
   const [selectedValue, setSelectedValue] = useState(0);
   const [customAmountError, setCustomAmountError] = useState("");
-  const [customAmount, setCustomAmount] = useState("");
+  const [customAmount, setCustomAmount] = useState(0);
   const [customAmountValue, setCustomAmountValue] = useState(parseFloat(0));
   const [steps, setSteps] = useState(1);
   const [stepTwoError, setStepTwoError] = useState();
@@ -39,6 +39,8 @@ export default function Details() {
     removeFromCart,
     clearCart,
     updateCartItem,
+    mainCurrency,
+    setMainCurrency,
   } = useContext(SessionContext);
   const [details_status, setDetails_status] = useState(false);
   const navigate = useNavigate();
@@ -47,6 +49,18 @@ export default function Details() {
 
   const HandleBuyNow = async (e) => {
     e.preventDefault();
+    const amountToAdd = selectedKey ? selectedKey : customAmount;
+
+    // Check if the amount exceeds the maximum allowed value
+    if (
+      parseFloat(amountToAdd) >
+      parseFloat(productIdData.maxRecipientDenomination)
+    ) {
+      toast.error(
+        `The amount exceeds the maximum allowed value of ${productIdData.maxRecipientDenomination}.`
+      );
+      return; // Prevent adding to cart
+    }
     addToCart({
       id: productIdData.productId,
       productName: productIdData.productName,
@@ -55,7 +69,7 @@ export default function Details() {
       recipientAmount: selectedKey ? selectedKey : customAmount,
       recipientCurrency: productIdData.recipientCurrencyCode,
       AmountToPay: selectedValue ? selectedValue : customAmountValue,
-      currencyToPayIn: country.country === "GH" ? "GHS" : "USD",
+      currencyToPayIn: mainCurrency,
       img: productIdData.logoUrls,
       processing_fee: country.country === "GH" ? productIdData.senderFee : 2,
     });
@@ -70,21 +84,25 @@ export default function Details() {
 
   const handleSelect = (key, value) => {
     setSelectedKey(key);
-    setSelectedValue(parseFloat(value).toFixed(2));
+    setSelectedValue(
+      giftcardDetailsCalculation(
+        key,
+        mainCurrency,
+        productIdData.recipientCurrencyCode
+      )
+    );
     // add or remove sender fees here
   };
 
   const HandleCustomAmount = (e, min, max) => {
     const amount = e.target.value;
     setCustomAmount(amount);
-
     // Check if the amount is not a number or is empty
-
     // Convert amount to a number for range checking
     const numericAmount = parseFloat(amount);
 
     // Check if the amount is outside the allowed range
-    if (numericAmount > max || numericAmount < min) {
+    if (numericAmount > parseFloat(max) || numericAmount < parseFloat(min)) {
       setCustomAmountError(`The amount must be between ${min} and ${max}.`);
     } else if (isNaN(amount) || amount === "") {
       setCustomAmountError("Please enter a valid amount");
@@ -92,25 +110,15 @@ export default function Details() {
       setCustomAmountError("");
     }
 
-    if (numericAmount <= max && numericAmount >= min) {
-      let amount_in_local = 0;
-      if (country.country == "GH") {
-        amount_in_local =
-          get_amount_in_local_currency(
-            productIdData.minRecipientDenomination,
-            productIdData.minSenderDenomination
-          ) * parseFloat(amount);
-        // parseFloat(productIdData.senderFee);
-      } else {
-        amount_in_local = parseFloat(amount);
-      }
-      setCustomAmountValue(amount_in_local);
+    if (numericAmount <= parseFloat(max) && numericAmount >= parseFloat(min)) {
+      setCustomAmountValue(
+        giftcardDetailsCalculation(
+          numericAmount,
+          mainCurrency,
+          productIdData.recipientCurrencyCode
+        )
+      );
     }
-  };
-
-  const get_amount_in_local_currency = (minForeingAmount, minLocalAMount) => {
-    const conversion_rate = minLocalAMount / minForeingAmount;
-    return parseFloat(conversion_rate.toFixed(2));
   };
 
   // get fetch product by from reloady api
@@ -141,19 +149,20 @@ export default function Details() {
   };
   useEffect(() => {
     Handledata();
+    console.log(productIdData);
     if (productIdData && productIdData.fixedRecipientToSenderDenominationsMap) {
-      console.log(productIdData);
-      const firstKey = Object.keys(
-        productIdData.fixedRecipientToSenderDenominationsMap
-      )[0];
+      const denomMap = productIdData.fixedRecipientToSenderDenominationsMap;
+      const firstKey = Object.keys(denomMap)[0]; // "29.99"
+
       if (firstKey) {
-        setSelectedKey(firstKey);
-        const select_value =
-          // parseFloat(productIdData.senderFee) +
-          parseFloat(
-            productIdData.fixedRecipientToSenderDenominationsMap[firstKey]
-          );
-        setSelectedValue(select_value.toFixed(2));
+        setSelectedKey(firstKey); // string: "29.99"
+        setSelectedValue(
+          giftcardDetailsCalculation(
+            firstKey, // amount is in recipient currency
+            mainCurrency,
+            productIdData.recipientCurrencyCode
+          )
+        );
       }
     }
   }, []);
@@ -224,14 +233,25 @@ export default function Details() {
                                               : ""
                                           }`}
                                           onClick={() =>
-                                            handleSelect(key, value)
+                                            handleSelect(
+                                              key,
+                                              giftcardDetailsCalculation(
+                                                key,
+                                                mainCurrency,
+                                                productIdData.recipientCurrencyCode
+                                              )
+                                            )
                                           }
                                         >
                                           {/* Render your item properties here */}
 
                                           <div
                                             className="card d-block list-card-price shadow-sm"
-                                            data-value={value}
+                                            data-value={giftcardDetailsCalculation(
+                                              key,
+                                              mainCurrency,
+                                              productIdData.recipientCurrencyCode
+                                            )}
                                           >
                                             {key}&nbsp;
                                             {
@@ -246,7 +266,9 @@ export default function Details() {
                                           <div className="input-group ">
                                             <div className="input-group-prepend">
                                               <span className="input-group-text pt-3 pb-3">
-                                                $
+                                                {
+                                                  productIdData.recipientCurrencyCode
+                                                }
                                               </span>
                                             </div>
                                             <input
@@ -292,12 +314,17 @@ export default function Details() {
                                   {productIdData.fixedRecipientToSenderDenominationsMap ? (
                                     <>
                                       {selectedValue}&nbsp;
-                                      {productIdData.senderCurrencyCode}
+                                      {mainCurrency}
                                     </>
                                   ) : (
                                     <>
-                                      {customAmountValue.toFixed(2)}&nbsp;
-                                      {productIdData.senderCurrencyCode}
+                                      {giftcardDetailsCalculation(
+                                        customAmount,
+                                        mainCurrency,
+                                        productIdData.recipientCurrencyCode
+                                      )}
+                                      &nbsp;
+                                      {mainCurrency}
                                     </>
                                   )}
                                 </h3>
@@ -310,31 +337,44 @@ export default function Details() {
                                       ? "not-allowed"
                                       : "pointer",
                                   }}
-                                  onClick={() =>
+                                  onClick={() => {
+                                    const amountToAdd = selectedKey
+                                      ? selectedKey
+                                      : customAmount;
+
+                                    // Check if the amount exceeds the maximum allowed value
+                                    if (
+                                      parseFloat(amountToAdd) >
+                                      parseFloat(
+                                        productIdData.maxRecipientDenomination
+                                      )
+                                    ) {
+                                      toast.error(
+                                        `The amount exceeds the maximum allowed value of ${productIdData.maxRecipientDenomination}.`
+                                      );
+                                      return; // Prevent adding to cart
+                                    }
+
+                                    // Proceed to add to cart if the amount is valid
                                     addToCart({
                                       id: productIdData.productId,
                                       productName: productIdData.productName,
                                       productId: productIdData.productId,
                                       quantity: 1,
-                                      recipientAmount: selectedKey
-                                        ? selectedKey
-                                        : customAmount,
+                                      recipientAmount: amountToAdd,
                                       recipientCurrency:
                                         productIdData.recipientCurrencyCode,
                                       AmountToPay: selectedValue
                                         ? selectedValue
                                         : customAmountValue,
-                                      currencyToPayIn:
-                                        country.country === "GH"
-                                          ? "GHS"
-                                          : "USD",
+                                      currencyToPayIn: mainCurrency,
                                       img: productIdData.logoUrls,
                                       processing_fee:
                                         country.country === "GH"
                                           ? productIdData.senderFee
                                           : 2,
-                                    })
-                                  }
+                                    });
+                                  }}
                                 >
                                   {!isloading && (
                                     <>
