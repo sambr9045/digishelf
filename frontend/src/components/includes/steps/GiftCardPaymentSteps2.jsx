@@ -9,18 +9,26 @@ import ae from "../../../assets/images/payment/ae.png";
 import discover from "../../../assets/images/payment/discover.png";
 import emptycart from "../../../assets/images/cart/cart.svg";
 import { Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  Loader2,
+  Mail,
+  PackageCheck,
+  Receipt,
+  ShieldCheck,
+  ShoppingBag,
+  Wallet,
+} from "lucide-react";
 
 import { usePaystackPayment } from "react-paystack";
-import { PaystackConsumer } from "react-paystack";
-import { ToastContainer, toast, useToast } from "react-toastify";
-import Loader from "../Loader";
+import { ToastContainer, toast } from "react-toastify";
 import { api_endpoint } from "../../constant";
 import { nanoid } from "nanoid";
 // import { useHistory } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { SessionContext } from "../../sessionContext";
 import { ProcessingFeeCalculation } from "../Functions";
-import { IntlProvider, FormattedNumber } from "react-intl";
 
 // id
 // productName
@@ -32,32 +40,91 @@ import { IntlProvider, FormattedNumber } from "react-intl";
 // currencyToPayIn
 // img
 
-export default function GiftCardPaymentSteps2() {
-  const [paymentMethodSelect, setPaymentMethodSelect] = useState("cdc");
+export default function GiftCardPaymentSteps2({ onStepChange }) {
+  const PAYMENT_CURRENCY = "USD";
+  const [paymentMethodSelect, setPaymentMethodSelect] = useState("crypto");
   const [userEmail, setUserEmail] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [reference, setReference] = useState("reference");
   const [isLading, setIsLoading] = useState(false);
-  const { cart, country, clearCart, mainCurrency } = useContext(SessionContext);
+  const { cart, country, clearCart, session } = useContext(SessionContext);
   const [cartTotal, setCartTotal] = useState(0);
-  const [CurrencyToPay, setCurrencyToPay] = useState("");
   const [steps, setSteps] = useState(1);
   const [processingFee, setProcessinFee] = useState(0);
   const navigate = useNavigate();
-  // const history = useHistory();
+  const [reference] = useState(() => `DSG-${nanoid(14)}`);
+  const currentUserId = session?.user?.id || null;
+  const normalizedUserType = currentUserId ? "user" : "guest";
 
-  let totalAmount = 0;
-  // if (country === "GH") {
-  //   totalAmount = parseFloat(amount);
-  // } else {
-  //   totalAmount = parseFloat(currencyInUsd);
-  // }
+  const buildCryptoFulfillmentPayload = () => ({
+    transaction: {
+      reference,
+      products: cartItems,
+      amount: cartTotal,
+      country: country.country,
+      email: userEmail,
+      user: currentUserId,
+      user_type: normalizedUserType,
+      payment_method: "crypto",
+    },
+    payment_details: {
+      message: "Awaiting ERC20 stablecoin payment",
+      status: "pending",
+      transaction: reference,
+      trxref: reference,
+    },
+    user_device: {
+      ip_address: localStorage.getItem("ip") || "",
+    },
+    payment_currency: PAYMENT_CURRENCY,
+  });
+
+  const createCryptoOrder = async () => {
+    setIsLoading(true);
+
+    try {
+      const fulfillmentPayload = buildCryptoFulfillmentPayload();
+      const response = await axios.post(
+        `${api_endpoint}/api/payments/orders/`,
+        {
+          amount: cartTotal,
+          token_symbol: "USDC",
+          fulfillment_type: "giftcard",
+          fulfillment_payload: fulfillmentPayload,
+        },
+        session?.accessToken
+          ? {
+              headers: {
+                Authorization: `Bearer ${session.accessToken}`,
+              },
+            }
+          : undefined,
+      );
+
+      localStorage.setItem(
+        `digishelf:topup-payment:${response.data.order_id}`,
+        JSON.stringify({
+          orderId: response.data.order_id,
+          reference,
+          fulfillmentPayload,
+          createdAt: new Date().toISOString(),
+        }),
+      );
+
+      navigate(`/gift-card/payment/${response.data.order_id}`);
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.error ||
+          "Could not create crypto payment order. Check payment settings and try again.",
+      );
+      setIsLoading(false);
+    }
+  };
 
   const HandleRelease = async (UserData) => {
     try {
       const response = await axios.post(
         `${api_endpoint}/api/process-payment/`,
-        UserData
+        UserData,
       );
       if (response.data) {
         setIsLoading(false);
@@ -66,7 +133,7 @@ export default function GiftCardPaymentSteps2() {
       }
     } catch (error) {
       toast.info(
-        "Your transaction has been submitted successfully. However, we are currently experiencing network issues. Please contact our support team for assistance."
+        "Your transaction has been submitted successfully. However, we are currently experiencing network issues. Please contact our support team for assistance.",
       );
       setIsLoading(false);
     }
@@ -93,7 +160,8 @@ export default function GiftCardPaymentSteps2() {
         amount: cartTotal,
         country: country.country,
         email: userEmail,
-        user_type: "guest",
+        user: currentUserId,
+        user_type: normalizedUserType,
         payment_method: paymentMethodSelect,
       },
       payment_details: {
@@ -119,15 +187,20 @@ export default function GiftCardPaymentSteps2() {
     reference: `DSB-${nanoid(14)}`,
     email: userEmail,
     amount: Math.round(cartTotal * 100), // Amount in kobo
-    currency: "GHS",
+    currency: PAYMENT_CURRENCY,
     publicKey: import.meta.env.VITE_APP_PAYSTACK_PUBLIC_KEY,
   };
 
   const initializePayment = usePaystackPayment(config);
 
-  const HandlePayment = async (e) => {
+  const HandlePayment = async () => {
     if (userEmail === "") {
       toast.error("Please enter your email address.");
+      return;
+    }
+
+    if (emailError) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 
@@ -137,18 +210,13 @@ export default function GiftCardPaymentSteps2() {
     }
 
     if (paymentMethodSelect === "cbc") {
-      // handleCall(testing_data);
-      setReference(nanoid(10));
-      const reference = nanoid(10);
-      setReference(reference);
-
       initializePayment({
         onSuccess: handleSuccess,
         onClose: handleClose,
         config: config,
       });
     } else if (paymentMethodSelect === "crypto") {
-      console.log("crypto payment ");
+      await createCryptoOrder();
     } else {
       toast.error("Please select payment method");
     }
@@ -169,11 +237,13 @@ export default function GiftCardPaymentSteps2() {
   };
 
   useEffect(() => {
-    console.log(cart);
-    console.log(mainCurrency, "this is the main currency");
-    if (country.country === "GH") {
-      setCurrencyToPay("GHS");
+    if (session?.user?.email) {
+      setUserEmail(session.user.email);
+      setEmailError("");
     }
+  }, [session]);
+
+  useEffect(() => {
     if (cart && cart.length > 0) {
       // const processing fee =
       const processing_fee = cart.reduce(
@@ -181,514 +251,420 @@ export default function GiftCardPaymentSteps2() {
           acc +
           ProcessingFeeCalculation(
             item.AmountToPay,
-            mainCurrency,
-            item.processing_fee
+            PAYMENT_CURRENCY,
+            item.processing_fee,
           ) *
             item.quantity,
-        0
+        0,
       );
 
       setProcessinFee(processing_fee);
 
       const total = cart.reduce(
         (acc, item) => acc + item.AmountToPay * item.quantity,
-        0
+        0,
       );
 
       setCartTotal((total + processing_fee).toFixed(2));
     }
-  }, [cart, country]);
+  }, [cart]);
+
+  useEffect(() => {
+    if (country?.country !== "GH" && paymentMethodSelect === "cbc") {
+      setPaymentMethodSelect("crypto");
+    }
+  }, [country?.country, paymentMethodSelect]);
+
+  useEffect(() => {
+    onStepChange?.(steps);
+  }, [onStepChange, steps]);
+
+  const formatMoney = (value, currency) =>
+    new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(Number(value || 0));
+
+  const cartItems = cart || [];
+  const orderSubtotal = cartItems.reduce(
+    (acc, item) =>
+      acc + Number(item.AmountToPay || 0) * Number(item.quantity || 1),
+    0,
+  );
+  const canContinueToPayment = cartItems.length > 0;
+  const hasAccountEmail = Boolean(session?.user?.email);
+  const getItemFee = (item) =>
+    ProcessingFeeCalculation(
+      item.AmountToPay,
+      PAYMENT_CURRENCY,
+      item.processing_fee,
+    ) * item.quantity;
 
   return (
-    <div>
+    <div className="checkout-flow">
       <ToastContainer position="top-center" theme="colored" />
-      {isLading && (
+      {cartItems.length > 0 ? (
         <>
-          <Loader />
-        </>
-      )}
-      {cart && cart.length > 0 ? (
-        <>
-          <section className="flight__onewaysection pb__60">
-            <div className="container gift-card-step-2 ">
-              <div className="row justify-content-center">
-                <div className="col-lg-5 col-md-7 shadow-lg p-0">
-                  {/* Stage 1: Gift Card Details */}
-                  {steps === 1 && (
-                    <>
-                      <div className="card p-2 mb-3 border-0">
-                        <div className="card-body">
-                          <h5 className="card-title mb-4">Product</h5>
-                          {console.log(cart.length)}
-                          {Number(cart.length) < 2 && (
-                            <>
-                              <div className="d-flex justify-content-between mb-2">
-                                <span className="fs-6 text-muted">Product</span>
-                                <span className="fs-6">
-                                  <b>{cart[0].productName}</b>
-                                </span>
-                              </div>
-                              <div className="d-flex justify-content-between mb-2">
-                                <span className="fs-6 text-muted b">
-                                  Amount to receive
-                                </span>
-                                <span className="fs-6">
-                                  <b>
-                                    <IntlProvider defaultLocale="en">
-                                      <FormattedNumber
-                                        value={cart[0].recipientAmount}
-                                        style="currency"
-                                        currency={cart[0].recipientCurrency}
-                                      />
-                                    </IntlProvider>
-                                  </b>
-                                </span>
-                              </div>
-                              <div className="d-flex justify-content-between mb-2">
-                                <span className="fs-6 text-muted ">
-                                  Quantity
-                                </span>
-                                <span className="fs-6">
-                                  <b>{cart[0].quantity}</b>
-                                </span>
-                              </div>
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-6">
+            <div className="overflow-hidden rounded-md border border-[#eadfe7] bg-white shadow-[0_22px_70px_rgba(33,23,34,0.08)]">
+              <div className="border-b border-[#eadfe7] bg-[#211722] p-5 text-white sm:p-8">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-[#9ff1dd]">
+                      {steps === 1 ? "Order review" : "Payment details"}
+                    </p>
+                    <h2 className="mb-0 text-xl font-black tracking-[-0.04em] !text-white sm:text-3xl">
+                      {steps === 1
+                        ? "Confirm your gift cards"
+                        : "Where should we send the cards?"}
+                    </h2>
+                  </div>
 
-                              <div className="d-flex justify-content-between mb-2">
-                                <span className="fs-6 text-muted b">
-                                  Gift card Fee
-                                </span>
-                                <span className="fs-6">
-                                  <b>
-                                    <IntlProvider defaultLocale="en">
-                                      <FormattedNumber
-                                        value={
-                                          ProcessingFeeCalculation(
-                                            cart[0].AmountToPay,
-                                            mainCurrency,
-                                            cart[0].processing_fee
-                                          ) * cart[0].quantity
-                                        }
-                                        style="currency"
-                                        currency={mainCurrency}
-                                      />
-                                    </IntlProvider>
-                                  </b>
-                                </span>
-                              </div>
-                              <div className="d-flex justify-content-between mb-2">
-                                <span className="fs-6 text-muted ">
-                                  Amount to Pay
-                                </span>
-                                <span className="fs-6">
-                                  <b>
-                                    <IntlProvider defaultLocale="en">
-                                      <FormattedNumber
-                                        value={cart[0].AmountToPay}
-                                        style="currency"
-                                        currency={mainCurrency}
-                                      />
-                                    </IntlProvider>
-                                  </b>
-                                </span>
-                              </div>
-                            </>
-                          )}
-
-                          {cart.length > 1 && (
-                            <>
-                              <div className="accordion" id="accordionExample">
-                                {cart.map((item, index) => {
-                                  const headingId = `heading${index}`;
-                                  const collapseId = `collapse${index}`;
-                                  return (
-                                    <div
-                                      key={item.id}
-                                      className="accordion-item"
-                                    >
-                                      <h2
-                                        className="accordion-header"
-                                        id={headingId}
-                                      >
-                                        <button
-                                          className="accordion-button collapsed"
-                                          type="button"
-                                          data-bs-toggle="collapse"
-                                          data-bs-target={`#${collapseId}`}
-                                          aria-expanded="true"
-                                          aria-controls={collapseId}
-                                        >
-                                          <div className="d-flex justify-content-between mb-2">
-                                            <span className="fs-6 ">
-                                              {item.productName}&nbsp;
-                                              <b>
-                                                {item.recipientAmount}&nbsp;
-                                                {item.recipientCurrency}
-                                              </b>
-                                            </span>
-                                          </div>
-                                        </button>
-                                      </h2>
-                                      <div
-                                        id={collapseId}
-                                        className={
-                                          index === 0
-                                            ? "accordion-collapse collapse show"
-                                            : "accordion-collapse collapse"
-                                        }
-                                        aria-labelledby={headingId}
-                                        data-bs-parent="#accordionExample"
-                                      >
-                                        <div className="accordion-body">
-                                          <div
-                                            key={item.id}
-                                            className="d-flex justify-content-between mb-2"
-                                          >
-                                            <span className="fs-6 text-muted">
-                                              Product
-                                            </span>
-                                            <span className="fs-6">
-                                              <b>{item.productName}</b>
-                                            </span>
-                                          </div>
-                                          <div className="d-flex justify-content-between mb-2">
-                                            <span className="fs-6 text-muted b">
-                                              Amount to receive
-                                            </span>
-                                            <span className="fs-6">
-                                              <b>
-                                                <IntlProvider defaultLocale="en">
-                                                  <FormattedNumber
-                                                    value={item.recipientAmount}
-                                                    style="currency"
-                                                    currency={
-                                                      item.recipientCurrency
-                                                    }
-                                                  />
-                                                </IntlProvider>
-                                              </b>
-                                            </span>
-                                          </div>
-                                          <div className="d-flex justify-content-between mb-2">
-                                            <span className="fs-6 text-muted ">
-                                              Quantity
-                                            </span>
-                                            <span className="fs-6">
-                                              <b>{item.quantity}</b>
-                                            </span>
-                                          </div>
-
-                                          <div className="d-flex justify-content-between mb-2">
-                                            <span className="fs-6 text-muted ">
-                                              Amount to Pay
-                                            </span>
-                                            <span className="fs-6">
-                                              <b>
-                                                <IntlProvider defaultLocale="en">
-                                                  <FormattedNumber
-                                                    value={parseFloat(
-                                                      item.AmountToPay
-                                                    ).toFixed(2)}
-                                                    style="currency"
-                                                    currency={mainCurrency}
-                                                  />
-                                                </IntlProvider>
-                                              </b>
-                                            </span>
-                                          </div>
-
-                                          <div className="d-flex justify-content-between mb-2">
-                                            <span className="fs-6 text-muted b">
-                                              Gift card Fee
-                                            </span>
-                                            <span className="fs-6">
-                                              <b>
-                                                <IntlProvider defaultLocale="en">
-                                                  <FormattedNumber
-                                                    value={
-                                                      ProcessingFeeCalculation(
-                                                        item.AmountToPay,
-                                                        mainCurrency,
-                                                        item.processing_fee
-                                                      ) * item.quantity
-                                                    }
-                                                    style="currency"
-                                                    currency={mainCurrency}
-                                                  />
-                                                </IntlProvider>
-                                              </b>
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )}
-
-                          <div className="d-flex justify-content-between ">
-                            <span className="mt-4 fs-3">Total:</span>
-                            <span className="mt-4 fs-3">
-                              <b>
-                                {/* {cartTotal}&nbsp;{mainCurrency} */}
-                                <IntlProvider defaultLocale="en">
-                                  <FormattedNumber
-                                    value={cartTotal}
-                                    style="currency"
-                                    currency={mainCurrency}
-                                  />
-                                </IntlProvider>
-                              </b>
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-center">
-                          <a
-                            href="#"
-                            className="cmn__btn mb-2 mt-5 "
-                            style={{ width: "95%" }}
-                            onClick={() => {
-                              setSteps(2);
-                            }}
-                          >
-                            <span>Next</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="19"
-                              height="19"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-                            </svg>
-                          </a>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  {/* <hr className="mt-3 mb-2 w-70" /> */}
-                  {/* Stage 2: Email */}
-                  {steps === 2 && (
-                    <>
-                      <div className="card p-2 border-0">
-                        <div className=" justify-content-center p-3 pt-4 pb-4 text-center">
-                          <span
-                            className="mt-4 mb-4 fs-1 text-center basecolor_custom"
-                            style={{ fontFamily: "Sans-serif" }}
-                          >
-                            <b>
-                              <IntlProvider defaultLocale="en">
-                                <FormattedNumber
-                                  value={cartTotal}
-                                  style="currency"
-                                  currency={mainCurrency}
-                                />
-                              </IntlProvider>
-                            </b>
-                          </span>
-                        </div>
-
-                        <div className="card-body">
-                          <h5 className="card-title mb-2 fs-6">
-                            Email address
-                          </h5>
-                          <form>
-                            <div className="mb-0 col-lg-12 col-md-12 col-sm-12">
-                              <input
-                                type="email"
-                                className="form-control form-control-lg pt-3 pb-3"
-                                id="email"
-                                aria-describedby="emailHelp"
-                                placeholder="Enter email address"
-                                style={{
-                                  width: "100%!important",
-                                  fontSize: "14px",
-                                }}
-                                value={userEmail}
-                                onChange={handleEmailChange}
-                              />
-                              {emailError && (
-                                <div
-                                  id="emailHelp"
-                                  className="form-text text-danger"
-                                >
-                                  {emailError}
-                                </div>
-                              )}
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-
-                      {/* Stage 3: Payment */}
-                      <div className="card border-0 p-4 pt-0 mt-0">
-                        <div className="card-body p-0 mt-0">
-                          <h5 className="card-title mb-2 fs-6">
-                            Choose Payment
-                          </h5>
-                          {country.country === "GH" && (
-                            <div
-                              className={`form-check border pt-2 pb-2 pl-5 mb-2 d-flex justify-content-between align-items-center ${
-                                paymentMethodSelect === "cbc"
-                                  ? "selected shadow-sm"
-                                  : ""
-                              }`}
-                              onClick={() => handlePaymentChange("cbc")}
-                              style={{ cursor: "pointer" }}
-                            >
-                              <div className="d-flex align-items-center">
-                                <label
-                                  className="form-check-label"
-                                  htmlFor="flexRadioDefault1"
-                                >
-                                  Debit/Credit cards
-                                </label>
-                                <img
-                                  src={visa}
-                                  alt="visa"
-                                  className="ml-2 payment-icon"
-                                />
-                                <img
-                                  src={mastercard}
-                                  alt="mastercard"
-                                  className="ml-2 payment-icon"
-                                />
-                                <img
-                                  src={discover}
-                                  alt="discover"
-                                  className="ml-2 payment-icon"
-                                />
-                                <img
-                                  src={ae}
-                                  alt="ae"
-                                  className="ml-2 payment-icon"
-                                />
-                              </div>
-                              {paymentMethodSelect === "cbc" && (
-                                <span className="pr-2">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="21"
-                                    height="21"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                  </svg>
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          <div
-                            className={`form-check border pt-2 pb-2 pl-3 mb-2 d-flex justify-content-between align-items-center ${
-                              paymentMethodSelect === "crypto" ? "selected" : ""
-                            }`}
-                            onClick={() => handlePaymentChange("crypto")}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <div className="d-flex align-items-center">
-                              <label
-                                className="form-check-label"
-                                htmlFor="flexRadioDefault2"
-                              >
-                                Crypto Currency
-                              </label>
-                              <img
-                                src={bitcoin}
-                                alt="bitcoin"
-                                className="ml-2 payment-icon"
-                              />
-                              <img
-                                src={coins}
-                                alt="ethereum"
-                                className="ml-2 payment-icon"
-                              />
-                            </div>
-                            {paymentMethodSelect === "crypto" && (
-                              <span>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="21"
-                                  height="21"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <a
-                            href="#"
-                            className="cmn__btn mb-2 mt-5 form-control"
-                            onClick={HandlePayment}
-                          >
-                            <span>Pay</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="19"
-                              height="19"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-                            </svg>
-                          </a>
-
-                          <button
-                            className="form-control btn btn-secondary btn-outline mb-4 pt-3 pb-3"
-                            style={{ border: "1px solid lightgray!important" }}
-                            onClick={() => {
-                              setSteps(1);
-                            }}
-                          >
-                            Back
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black">
+                    {cartItems.length} item{cartItems.length > 1 ? "s" : ""}
+                  </div>
                 </div>
               </div>
+
+              <div className="p-4 sm:p-8">
+                {steps === 1 && (
+                  <>
+                    <div className="grid gap-4">
+                      {cartItems.map((item) => {
+                        const itemFee = getItemFee(item);
+                        const image = Array.isArray(item.img)
+                          ? item.img[0]
+                          : item.img;
+
+                        return (
+                          <div
+                            key={item.id || item.productId}
+                            className="grid gap-4 rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-4 sm:grid-cols-[110px_minmax(0,1fr)] sm:items-center"
+                          >
+                            <div className="flex h-24 items-center justify-center overflow-hidden rounded-md bg-white sm:h-28">
+                              {image ? (
+                                <img
+                                  src={image}
+                                  alt={item.productName}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <ShoppingBag className="h-9 w-9 text-[#551839]" />
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <p className="mb-1 text-xs font-black uppercase tracking-[0.2em] text-[#a196a3]">
+                                    Gift card
+                                  </p>
+                                  <h3 className="mb-0 text-lg font-black text-[#211722] sm:text-xl">
+                                    {item.productName}
+                                  </h3>
+                                </div>
+                                <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-[#551839]">
+                                  Qty {item.quantity}
+                                </span>
+                              </div>
+
+                              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                                <div>
+                                  <p className="mb-1 text-xs font-black uppercase tracking-[0.14em] text-[#a196a3]">
+                                    Receives
+                                  </p>
+                                  <p className="mb-0 font-black text-[#3d3440]">
+                                    {formatMoney(
+                                      item.recipientAmount,
+                                      item.recipientCurrency,
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="mb-1 text-xs font-black uppercase tracking-[0.14em] text-[#a196a3]">
+                                    Fee
+                                  </p>
+                                  <p className="mb-0 font-black text-[#3d3440]">
+                                    {formatMoney(itemFee, PAYMENT_CURRENCY)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="mb-1 text-xs font-black uppercase tracking-[0.14em] text-[#a196a3]">
+                                    Price
+                                  </p>
+                                  <p className="mb-0 font-black text-[#3d3440]">
+                                    {formatMoney(
+                                      item.AmountToPay,
+                                      PAYMENT_CURRENCY,
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 py-4 text-base font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d] disabled:opacity-60"
+                      disabled={!canContinueToPayment}
+                      onClick={() => setSteps(2)}
+                    >
+                      Continue to payment
+                      <PackageCheck className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+
+                {steps === 2 && (
+                  <div className="grid gap-6">
+                    <button
+                      type="button"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#eadfe7] bg-white px-4 py-3 text-sm font-black text-[#665b67] transition hover:border-[#551839]/30 hover:text-[#551839] sm:w-fit sm:justify-start sm:py-2"
+                      onClick={() => setSteps(1)}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Back to order
+                    </button>
+
+                    {hasAccountEmail ? (
+                      <div className="rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-4">
+                        <p className="mb-2 text-sm font-black text-[#211722]">
+                          Delivery email
+                        </p>
+                        <div className="flex items-start gap-3 rounded-md bg-white px-4 py-4 sm:items-center">
+                          <Mail className="h-5 w-5 shrink-0 text-[#551839]" />
+                          <div>
+                            <p className="mb-0 text-base font-black text-[#211722]">
+                              {userEmail}
+                            </p>
+                            <p className="mb-0 mt-1 text-sm font-bold text-[#665b67]">
+                              Using your signed-in account email for gift-card
+                              delivery.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label
+                          htmlFor="email"
+                          className="mb-2 block text-sm font-black text-[#211722]"
+                        >
+                          Delivery email
+                        </label>
+                        <div className="relative">
+                          <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8c7f8d]" />
+                          <input
+                            type="email"
+                            className="h-14 w-full rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] pl-12 pr-4 text-base font-bold text-[#211722] outline-none transition placeholder:text-[#9c919d] focus:border-[#551839] focus:bg-white focus:ring-4 focus:ring-[#551839]/10"
+                            id="email"
+                            aria-describedby="emailHelp"
+                            placeholder="name@example.com"
+                            value={userEmail}
+                            onChange={handleEmailChange}
+                          />
+                        </div>
+                        {emailError && (
+                          <div
+                            id="emailHelp"
+                            className="mt-2 text-sm font-bold text-red-600"
+                          >
+                            {emailError}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <h3 className="mb-3 text-lg font-black text-[#211722]">
+                        Payment method
+                      </h3>
+                      <div className="grid gap-3">
+                        <button
+                          type="button"
+                          className={`flex w-full items-center justify-between gap-4 rounded-md border p-4 text-left transition ${
+                            paymentMethodSelect === "crypto"
+                              ? "border-[#551839] bg-[#fff7fb] shadow-[0_14px_35px_rgba(85,24,57,0.08)]"
+                              : "border-[#eadfe7] bg-[#fbf8f4] hover:border-[#551839]/30"
+                          }`}
+                          onClick={() => handlePaymentChange("crypto")}
+                        >
+                          <span className="flex min-w-0 items-center gap-3">
+                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#551839]">
+                              <Wallet className="h-5 w-5" />
+                            </span>
+                            <span>
+                              <span className="block font-black text-[#211722]">
+                                Crypto currency
+                              </span>
+                              <span className="mt-1 flex items-center gap-2 text-sm font-bold text-[#665b67]">
+                                <img
+                                  src={bitcoin}
+                                  alt=""
+                                  className="h-4 w-auto"
+                                />
+                                <img
+                                  src={coins}
+                                  alt=""
+                                  className="h-4 w-auto"
+                                />
+                                Pay with digital assets
+                              </span>
+                            </span>
+                          </span>
+                          {paymentMethodSelect === "crypto" && (
+                            <BadgeCheck className="h-5 w-5 shrink-0 text-[#10ac84]" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 py-4 text-base font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d] disabled:cursor-not-allowed disabled:opacity-70"
+                      disabled={isLading}
+                      onClick={HandlePayment}
+                    >
+                      {isLading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          Preparing payment...
+                        </>
+                      ) : (
+                        <>
+                          Pay {formatMoney(cartTotal, PAYMENT_CURRENCY)}
+                          <ShieldCheck className="h-5 w-5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </section>
+
+            <aside className="order-first rounded-md border border-[#eadfe7] bg-white p-5 shadow-[0_22px_70px_rgba(33,23,34,0.08)] sm:p-6 lg:order-none lg:sticky lg:top-28">
+              <p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
+                Order total
+              </p>
+              <div className="text-3xl font-black tracking-[-0.05em] text-[#211722] sm:text-4xl">
+                {formatMoney(cartTotal, PAYMENT_CURRENCY)}
+              </div>
+
+              <div className="mt-6 grid gap-3 border-t border-[#eadfe7] pt-6">
+                <div className="flex items-center justify-between gap-4 text-sm font-bold text-[#665b67]">
+                  <span>Subtotal</span>
+                  <span className="text-[#211722]">
+                    {formatMoney(orderSubtotal, PAYMENT_CURRENCY)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 text-sm font-bold text-[#665b67]">
+                  <span>Processing fees</span>
+                  <span className="text-[#211722]">
+                    {formatMoney(processingFee, PAYMENT_CURRENCY)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 rounded-md bg-[#fbf8f4] p-4 text-base font-black text-[#211722]">
+                  <span>Total due</span>
+                  <span>{formatMoney(cartTotal, PAYMENT_CURRENCY)}</span>
+                </div>
+              </div>
+
+              {steps === 2 ? (
+                <div className="mt-6 overflow-hidden rounded-md border border-[#eadfe7]">
+                  <div className="flex items-center gap-3 bg-[#211722] px-5 py-4 text-white">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-md bg-white/10">
+                      <Receipt className="h-5 w-5 text-[#9ff1dd]" />
+                    </span>
+                    <div>
+                      <p className="mb-1 text-[11px] font-black uppercase tracking-[0.2em] text-[#9ff1dd]">
+                        Product summary
+                      </p>
+                      <h3 className="mb-0 text-lg font-black !text-white">
+                        {cartItems.length} item{cartItems.length > 1 ? "s" : ""}{" "}
+                        in this order
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="divide-y divide-[#eadfe7] bg-white">
+                    {cartItems.map((item) => (
+                      <div
+                        key={item.id || item.productId}
+                        className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                      >
+                        <div className="min-w-0">
+                          <p className="mb-1 text-sm font-black text-[#211722]">
+                            {item.productName}
+                          </p>
+                          <p className="mb-0 text-sm font-bold text-[#665b67]">
+                            Qty {item.quantity} ·{" "}
+                            {formatMoney(
+                              item.recipientAmount,
+                              item.recipientCurrency,
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <p className="mb-1 text-sm font-black text-[#211722]">
+                            {formatMoney(
+                              item.AmountToPay * item.quantity,
+                              PAYMENT_CURRENCY,
+                            )}
+                          </p>
+                          <p className="mb-0 text-xs font-black uppercase tracking-[0.14em] text-[#9a8b97]">
+                            Fee{" "}
+                            {formatMoney(getItemFee(item), PAYMENT_CURRENCY)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-6 rounded-md bg-[#211722] p-5 text-white">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#9ff1dd]" />
+                  <div>
+                    <h3 className="mb-1 text-base font-black">
+                      Secure checkout
+                    </h3>
+                    <p className="mb-0 text-sm font-medium leading-6 text-white/70">
+                      Your order details stay protected while we prepare the
+                      gift-card delivery.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
         </>
       ) : (
         <>
-          <div className="text-center mb-5 " style={{ marginTop: "20vh" }}>
-            <img
-              src={emptycart}
-              alt="empty cart"
-              style={{ width: "200px", height: "auto" }}
-            />
+          <div className="mx-auto max-w-xl rounded-md border border-[#eadfe7] bg-white p-6 text-center shadow-[0_22px_70px_rgba(33,23,34,0.08)] sm:p-8">
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[#fbf8f4]">
+              <img src={emptycart} alt="empty cart" className="h-14 w-14" />
+            </div>
 
-            <p className="mt-4 mb-5">
-              <b className="text-muted">Your cart is currently empty</b>
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
+              Empty cart
+            </p>
+            <h2 className="mb-3 text-3xl font-black tracking-[-0.04em] text-[#211722]">
+              Your cart is empty.
+            </h2>
+            <p className="mx-auto mb-7 max-w-sm text-base font-medium leading-7 text-[#665b67]">
+              Choose a gift card first, then return here to complete checkout.
             </p>
 
-            <div className="mt-4">
-              <Link to="/gift-cards" className="cmn__btn">
-                Keep Shopping
+            <div>
+              <Link
+                to="/gift-cards"
+                className="inline-flex items-center justify-center rounded-full bg-[#551839] px-6 py-3 text-sm font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d]"
+              >
+                Browse gift cards
               </Link>
             </div>
           </div>

@@ -1,0 +1,205 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,900&family=Sora:wght@400;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+	.font-display {
+		font-family: "DM Sans", "Sora", sans-serif;
+	}
+
+	.modern-step-help {
+		color: #665b67;
+		font-size: 0.98rem;
+		line-height: 1.65;
+	}
+
+	.mobile__recharge h5,
+	.top-up-container h5 {
+		color: #211722;
+		font-family: "DM Sans", "Sora", sans-serif;
+		font-size: clamp(1.45rem, 2.4vw, 2rem);
+		font-weight: 900;
+		letter-spacing: -0.04em;
+	}
+
+	.topup-phone-field {
+		width: 100%;
+		display: block;
+		position: relative;
+		z-index: 20;
+	}
+
+	.topup-phone-field input,
+	.topup-phone-field input[type="tel"],
+	.topup-phone-field input[type="text"] {
+		width: 100% !important;
+		height: auto !important;
+		margin-top: 0 !important;
+		margin-bottom: 0 !important;
+		border: 1px solid #c9b2bf !important;
+		border-radius: 1rem !important;
+		padding: 1rem 1rem 1rem 3.75rem !important;
+		font-size: clamp(1.1rem, 2.1vw, 1.45rem) !important;
+		line-height: 1.35 !important;
+		font-weight: 800 !important;
+		color: #211722 !important;
+		background-color: #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.topup-phone-field .selected-flag {
+		width: 3rem !important;
+		border-radius: 1rem 0 0 1rem;
+	}
+
+	.topup-phone-field .flag-container {
+		padding: 0 !important;
+	}
+
+	.topup-phone-field .selected-flag .iti-flag,
+	.topup-phone-field .selected-flag .flag {
+		transform: scale(0.95);
+	}
+
+	.topup-phone-field input::placeholder {
+		color: #9ca3af !important;
+		font-weight: 500 !important;
+	}
+
+	.topup-phone-field input:focus,
+	.topup-phone-field input[type="tel"]:focus,
+	.topup-phone-field input[type="text"]:focus {
+		border-color: #551839 !important;
+		box-shadow: 0 0 0 4px rgba(85, 24, 57, 0.08) !important;
+		outline: none !important;
+	}
+
+	.topup-phone-field .country-list {
+		border: 1px solid #eadfe7 !important;
+		border-radius: 1rem !important;
+		box-shadow: 0 24px 70px rgba(33, 23, 34, 0.18) !important;
+		margin-top: 0.5rem !important;
+		max-width: min(24rem, 88vw) !important;
+		z-index: 9999 !important;
+	}
+
+	.topup-phone-field .country-list.hide {
+		display: none !important;
+	}
+
+	.topup-phone-field .country-list .country {
+		font-family: "DM Sans", "Sora", sans-serif;
+		padding: 0.75rem 1rem !important;
+	}
+
+	.topup-phone-field .country-list .country.highlight,
+	.topup-phone-field .country-list .country:hover {
+		background-color: #fbf8f4 !important;
+	}
+
+	.topup-continue-button {
+		width: 100%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.625rem;
+		border: none;
+		border-radius: 999px;
+		background: #551839;
+		color: #ffffff;
+		font-weight: 900;
+		font-size: 1.125rem;
+		padding: 1rem 1.35rem;
+		transition: background-color 0.2s ease, transform 0.2s ease;
+	}
+
+	.topup-continue-button:hover {
+		background: #44122d;
+	}
+
+	.topup-continue-button:disabled {
+		pointer-events: none;
+	}
+
+	.topup-network-modal .modal-content {
+		border: 0;
+		border-radius: 2rem;
+		box-shadow: 0 30px 90px rgba(33, 23, 34, 0.22);
+		overflow: hidden;
+	}
+
+	.topup-network-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 0.85rem;
+	}
+
+	.topup-network-card {
+		position: relative;
+		display: flex;
+		min-height: 150px;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.8rem;
+		border: 1px solid #eadfe7;
+		border-radius: 1.35rem;
+		background: #fbf8f4;
+		color: #211722;
+		font-family: "DM Sans", "Sora", sans-serif;
+		font-weight: 900;
+		padding: 1.1rem;
+		transition: transform 0.18s ease, border-color 0.18s ease,
+			background-color 0.18s ease, box-shadow 0.18s ease;
+	}
+
+	.topup-network-card:hover {
+		transform: translateY(-2px);
+		border-color: rgba(85, 24, 57, 0.35);
+		background: #ffffff;
+		box-shadow: 0 18px 40px rgba(33, 23, 34, 0.1);
+	}
+
+	.topup-network-card img {
+		max-height: 52px;
+		max-width: 82px;
+		object-fit: contain;
+	}
+
+	.topup-network-card-active {
+		border-color: #551839;
+		background: #551839;
+		color: #ffffff;
+		box-shadow: 0 18px 45px rgba(85, 24, 57, 0.22);
+	}
+
+	.topup-network-check {
+		position: absolute;
+		right: 0.8rem;
+		top: 0.8rem;
+		color: #10ac84;
+	}
+
+	.auth-form {
+		display: flex !important;
+		width: 100% !important;
+		flex-direction: column !important;
+		align-items: stretch !important;
+		gap: 1rem !important;
+	}
+
+	.auth-form label,
+	.auth-form .auth-input-wrap,
+	.auth-form input,
+	.auth-form button {
+		width: 100% !important;
+	}
+
+	.auth-form input {
+		border: 1px solid #eadfe7 !important;
+		padding: 0 3rem !important;
+	}
+
+}

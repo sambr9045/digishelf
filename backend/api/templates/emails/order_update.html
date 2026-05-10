@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ subject }}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f7f1e8;font-family:'DM Sans',Arial,sans-serif;color:#211722;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f1e8;padding:28px 14px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border:1px solid #eadfe7;border-radius:20px;overflow:hidden;">
+            <tr>
+              <td style="background:#211722;padding:22px 26px;">
+                <p style="margin:0;font-size:11px;letter-spacing:0.22em;font-weight:700;text-transform:uppercase;color:#9ff1dd;">{{ site_name }}</p>
+                <h1 style="margin:10px 0 0;font-size:26px;line-height:1.2;font-weight:800;color:#ffffff;">{{ heading }}</h1>
+                <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:rgba(255,255,255,0.72);">{{ preheader }}</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:22px 26px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                  {% for row in rows %}
+                  <tr>
+                    <td style="padding:10px 0;border-bottom:1px solid #f0e7ee;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9a8b97;">{{ row.label }}</td>
+                    <td style="padding:10px 0;border-bottom:1px solid #f0e7ee;font-size:14px;font-weight:700;color:#332834;text-align:right;">{{ row.value }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+
+                {% if product_items %}
+                <div style="margin-top:18px;">
+                  <p style="margin:0 0 12px;font-size:12px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#9a8b97;">Products</p>
+                  {% for item in product_items %}
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:12px;border:1px solid #eadfe7;border-radius:16px;background:#fbf8f4;">
+                    <tr>
+                      <td style="padding:14px;vertical-align:middle;width:84px;">
+                        {% if item.product_image %}
+                        <img src="{{ item.product_image }}" alt="{{ item.product_name }}" width="64" height="64" style="display:block;width:64px;height:64px;object-fit:cover;border-radius:14px;border:1px solid #eadfe7;background:#ffffff;" />
+                        {% else %}
+                        <div style="width:64px;height:64px;border-radius:14px;border:1px solid #eadfe7;background:#ffffff;"></div>
+                        {% endif %}
+                      </td>
+                      <td style="padding:14px 14px 14px 0;vertical-align:middle;">
+                        <p style="margin:0;font-size:15px;font-weight:800;color:#211722;">{{ item.product_name }}</p>
+                        <p style="margin:6px 0 0;font-size:13px;line-height:1.5;color:#665b67;">
+                          Qty {{ item.quantity|default:"1" }}
+                          {% if item.recipient_amount and item.recipient_currency %}
+                          · Recipient gets {{ item.recipient_amount }} {{ item.recipient_currency }}
+                          {% endif %}
+                          {% if item.amount_to_pay and item.currency_to_pay_in %}
+                          · Paid {{ item.amount_to_pay }} {{ item.currency_to_pay_in }}
+                          {% endif %}
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                  {% endfor %}
+                </div>
+                {% endif %}
+
+                <div style="margin-top:16px;display:inline-block;padding:8px 12px;border-radius:999px;background:#f7f1e8;border:1px solid #eadfe7;font-size:12px;font-weight:800;color:#551839;letter-spacing:0.12em;text-transform:uppercase;">
+                  {{ status_label }}
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:18px 26px 24px;background:#fbf8f4;border-top:1px solid #efe7ed;">
+                <p style="margin:0;font-size:13px;line-height:1.7;color:#665b67;">
+                  Need help with your order? Contact us at
+                  <a href="mailto:{{ support_email }}" style="color:#551839;text-decoration:none;font-weight:700;">{{ support_email }}</a>.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

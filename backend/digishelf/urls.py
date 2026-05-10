@@ -16,8 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from api import views as api_views
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("sitemap.xml", api_views.SitemapXmlView.as_view(), name="sitemap_xml"),
+    path("robots.txt", api_views.RobotsTxtView.as_view(), name="robots_txt"),
     path('api-auth/', include('rest_framework.urls')),
     path('api/', include('api.urls')),
+    path('api/payments/', include('payments.urls')),
 ]

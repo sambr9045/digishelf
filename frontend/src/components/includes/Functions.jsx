@@ -35,17 +35,44 @@ export const exchangeRateConverter = (currency, amount) => {
     countryCurrencyRate,
     percentage,
     sellAmountInLocalCurrency,
-    amount
+    amount,
   );
 
   // Return the result formatted to 2 decimal places
   return sellAmountUsd.toFixed(2);
 };
 
+export const topupExchangeRateConverter = (mainCurrency, amountInGHS) => {
+  const exchangeRateData = localStorage.getItem("exchangeRate");
+
+  // If exchange rates haven't been fetched yet, return the amount as-is
+  if (!exchangeRateData) {
+    return parseFloat(amountInGHS || 0).toFixed(2);
+  }
+
+  try {
+    const localRate = JSON.parse(exchangeRateData);
+
+    // Check if required rates exist
+    if (!localRate["GHS"] || !localRate[mainCurrency]) {
+      return parseFloat(amountInGHS || 0).toFixed(2);
+    }
+
+    const localRateInGHS = localRate["GHS"];
+    const AmountInUSD = parseFloat(amountInGHS) / parseFloat(localRateInGHS);
+    const AmouintInUserCureency =
+      parseFloat(AmountInUSD) * parseFloat(localRate[mainCurrency]);
+    return AmouintInUserCureency.toFixed(2);
+  } catch (error) {
+    console.error("Error converting exchange rate:", error);
+    return parseFloat(amountInGHS || 0).toFixed(2);
+  }
+};
+
 export const giftcardDetailsCalculation = (
   amount,
   localCurrency,
-  recipientCurrency
+  recipientCurrency,
 ) => {
   const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));
 
@@ -88,11 +115,11 @@ export const ProcessingFeeCalculation = (amount, currency, giftcardFee) => {
   let proccessingFeeAmount = 0;
   if (amount < 500) {
     proccessingFeeAmount = parseFloat(
-      (processingFeePercentage / 100) * amount + giftcardFee
+      (processingFeePercentage / 100) * amount + giftcardFee,
     ).toFixed(2);
   } else {
     proccessingFeeAmount = parseFloat(
-      (processingFeePercentage / 100) * amount - giftcardFee
+      (processingFeePercentage / 100) * amount - giftcardFee,
     ).toFixed(2);
   }
   // console.log(
@@ -110,7 +137,7 @@ export const TopupExchangeRateConverter = (
   senderCountry,
   Amount,
   receiverCurrency,
-  receiveFxRate
+  receiveFxRate,
 ) => {
   const amountToPayInSenderCurrency = receiveFxRate * Amount;
 
@@ -127,13 +154,8 @@ export const TopupExchangeRateConverter = (
 export const TopUpAitimeFeeCalculatio = (amount, senderCountry) => {
   const percentage = localStorage.getItem("percentage");
   const amountToPay = parseFloat((percentage / 100) * amount).toFixed(2);
-  let currency = "USD";
-  if (senderCountry === "GH") {
-    currency = "GHS";
-  }
 
-  console.log(amountToPay, percentage, amount, "This is amount to pay");
-  return [amountToPay, currency];
+  return [amountToPay, "USD"];
 };
 
 export const ConvertGHStoUSD = (amount) => {

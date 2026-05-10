@@ -1,9 +1,11 @@
 import requests
 from django.core.cache import cache
 from . import urls
+import os
 
 class Reloady:
     TOKEN_EXPIRATION = 24 * 60 * 60  # 24 hours in seconds
+    REQUEST_TIMEOUT_SECONDS = int(os.getenv("RELOADLY_REQUEST_TIMEOUT_SECONDS", "5"))
 
     def __init__(self, public_key, secret_key, token_url):
         self.public_key = public_key
@@ -23,11 +25,15 @@ class Reloady:
             "Accept": "application/json"
         }
 
-        response = requests.post(self.token_url, json=payload, headers=headers)
+        response = requests.post(
+            self.token_url,
+            json=payload,
+            headers=headers,
+            timeout=self.REQUEST_TIMEOUT_SECONDS,
+        )
         response.raise_for_status()
         response_data = response.json()
         access_token = response_data.get('access_token')
-        print(access_token)
         return access_token
 
     def get_token(self, audience):
@@ -48,9 +54,18 @@ class Reloady:
         }
 
         if method == 'GET':
-            response = requests.get(api_endpoint, headers=headers)
+            response = requests.get(
+                api_endpoint,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
+            )
         elif method == 'POST':
-            response = requests.post(api_endpoint, headers=headers, json=data)
+            response = requests.post(
+                api_endpoint,
+                headers=headers,
+                json=data,
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
+            )
         response.raise_for_status()
         return response.json()
     

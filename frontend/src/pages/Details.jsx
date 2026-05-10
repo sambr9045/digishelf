@@ -1,521 +1,714 @@
-import React, { useState, useEffect, useContext } from "react";
-import Header from "../components/Header/Header";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, CheckCircle2, ShoppingBag } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+
 import GiftCardBanner from "../components/GiftCardBanner";
 import Footer from "../components/Footer/Footer";
-import { useParams } from "react-router-dom";
-import axios from "axios";
 import { api_endpoint } from "../components/constant";
-import Loader from "../components/includes/Loader";
-import { ToastContainer, toast } from "react-toastify";
-import GiftCardPaymentSteps2 from "../components/includes/steps/GiftCardPaymentSteps2";
 import { SessionContext } from "../components/sessionContext";
-import { useNavigate } from "react-router-dom";
 import { giftcardDetailsCalculation } from "../components/includes/Functions";
-// id
-// productName
-// productId
-// quantity
-// recipientAmount
-// recipientCurrency
-// AmountToPay
-// currencyToPayIn
-// img
+import { sendAnalyticsEvents, trackAnalyticsEvent } from "../utils/analytics";
 
-export default function Details() {
-  const { name, productId } = useParams();
-  const [productIdData, setProductIdData] = useState();
-  const [isloading, setIsloading] = useState(true);
-  const [selectedKey, setSelectedKey] = useState(null);
-  const [selectedValue, setSelectedValue] = useState(0);
-  const [customAmountError, setCustomAmountError] = useState("");
-  const [customAmount, setCustomAmount] = useState(0);
-  const [customAmountValue, setCustomAmountValue] = useState(parseFloat(0));
-  const [steps, setSteps] = useState(1);
-  const [stepTwoError, setStepTwoError] = useState();
-  const {
-    country,
-    cart,
-    addToCart,
-    removeFromCart,
-    clearCart,
-    updateCartItem,
-    mainCurrency,
-    setMainCurrency,
-  } = useContext(SessionContext);
-  const [details_status, setDetails_status] = useState(false);
-  const navigate = useNavigate();
+function getLogoUrl(product) {
+  if (!product?.logoUrls) {
+    return "";
+  }
 
-  //
+  return Array.isArray(product.logoUrls)
+    ? product.logoUrls[0]
+    : product.logoUrls;
+}
 
-  const HandleBuyNow = async (e) => {
-    e.preventDefault();
-    const amountToAdd = selectedKey ? selectedKey : customAmount;
+function updateSeoTags({ title, description, image, url, keywords, schema }) {
+  document.title = title;
 
-    // Check if the amount exceeds the maximum allowed value
-    if (
-      parseFloat(amountToAdd) >
-      parseFloat(productIdData.maxRecipientDenomination)
-    ) {
-      toast.error(
-        `The amount exceeds the maximum allowed value of ${productIdData.maxRecipientDenomination}.`
-      );
-      return; // Prevent adding to cart
+  const setMeta = (selector, attributes) => {
+    let element = document.head.querySelector(selector);
+
+    if (!element) {
+      element = document.createElement("meta");
+      element.setAttribute("data-digishelf-seo", "true");
+      document.head.appendChild(element);
     }
-    addToCart({
-      id: productIdData.productId,
-      productName: productIdData.productName,
-      productId: productIdData.productId,
-      quantity: 1,
-      recipientAmount: selectedKey ? selectedKey : customAmount,
-      recipientCurrency: productIdData.recipientCurrencyCode,
-      AmountToPay: selectedValue ? selectedValue : customAmountValue,
-      currencyToPayIn: mainCurrency,
-      img: productIdData.logoUrls,
-      processing_fee: country.country === "GH" ? productIdData.senderFee : 2,
+
+    Object.entries(attributes).forEach(([key, value]) => {
+      element.setAttribute(key, value);
     });
-
-    navigate("/checkout");
   };
 
-  const handleGoBack = async (e) => {
-    setSteps(1);
-    setDetails_status(false);
-  };
+  setMeta('meta[name="description"]', {
+    name: "description",
+    content: description,
+  });
+  setMeta('meta[name="keywords"]', {
+    name: "keywords",
+    content: keywords,
+  });
+  setMeta('meta[property="og:title"]', {
+    property: "og:title",
+    content: title,
+  });
+  setMeta('meta[property="og:description"]', {
+    property: "og:description",
+    content: description,
+  });
+  setMeta('meta[property="og:image"]', {
+    property: "og:image",
+    content: image,
+  });
+  setMeta('meta[property="og:url"]', {
+    property: "og:url",
+    content: url,
+  });
+  setMeta('meta[property="og:type"]', {
+    property: "og:type",
+    content: "product",
+  });
+  setMeta('meta[name="twitter:card"]', {
+    name: "twitter:card",
+    content: "summary_large_image",
+  });
 
-  const handleSelect = (key, value) => {
-    setSelectedKey(key);
-    setSelectedValue(
-      giftcardDetailsCalculation(
-        key,
-        mainCurrency,
-        productIdData.recipientCurrencyCode
-      )
-    );
-    // add or remove sender fees here
-  };
+  let canonical = document.head.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.setAttribute("rel", "canonical");
+    canonical.setAttribute("data-digishelf-seo", "true");
+    document.head.appendChild(canonical);
+  }
+  canonical.setAttribute("href", url);
 
-  const HandleCustomAmount = (e, min, max) => {
-    const amount = e.target.value;
-    setCustomAmount(amount);
-    // Check if the amount is not a number or is empty
-    // Convert amount to a number for range checking
-    const numericAmount = parseFloat(amount);
+  let schemaTag = document.head.querySelector(
+    'script[type="application/ld+json"][data-digishelf-seo="true"]',
+  );
+  if (!schemaTag) {
+    schemaTag = document.createElement("script");
+    schemaTag.setAttribute("type", "application/ld+json");
+    schemaTag.setAttribute("data-digishelf-seo", "true");
+    document.head.appendChild(schemaTag);
+  }
+  schemaTag.textContent = JSON.stringify(schema);
+}
 
-    // Check if the amount is outside the allowed range
-    if (numericAmount > parseFloat(max) || numericAmount < parseFloat(min)) {
-      setCustomAmountError(`The amount must be between ${min} and ${max}.`);
-    } else if (isNaN(amount) || amount === "") {
-      setCustomAmountError("Please enter a valid amount");
-    } else {
-      setCustomAmountError("");
-    }
-
-    if (numericAmount <= parseFloat(max) && numericAmount >= parseFloat(min)) {
-      setCustomAmountValue(
-        giftcardDetailsCalculation(
-          numericAmount,
-          mainCurrency,
-          productIdData.recipientCurrencyCode
-        )
-      );
-    }
-  };
-
-  // get fetch product by from reloady api
-  const getProductById = async () => {
-    try {
-      const response = await axios.get(`${api_endpoint}/api/giftcards/`, {
-        params: {
-          productId: productId,
-        },
-      });
-      if (response.data) {
-        setProductIdData(response.data.data);
-        setIsloading(false);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const HandleAddtoCard = async () => {};
-
-  const Handledata = async () => {
-    const data = await getProductById();
-    console.log(data);
-    if (data) {
-      setProductIdData(data);
-    }
-  };
-  useEffect(() => {
-    Handledata();
-    console.log(productIdData);
-    if (productIdData && productIdData.fixedRecipientToSenderDenominationsMap) {
-      const denomMap = productIdData.fixedRecipientToSenderDenominationsMap;
-      const firstKey = Object.keys(denomMap)[0]; // "29.99"
-
-      if (firstKey) {
-        setSelectedKey(firstKey); // string: "29.99"
-        setSelectedValue(
-          giftcardDetailsCalculation(
-            firstKey, // amount is in recipient currency
-            mainCurrency,
-            productIdData.recipientCurrencyCode
-          )
-        );
-      }
-    }
-  }, []);
+function DetailsSkeleton() {
   return (
-    <div>
-      <GiftCardBanner type={name} details={details_status} />
-
-      <section className="flight__onewaysection pb__60">
-        <div className="container">
-          <div className="cars__gridwrapper">
-            <div className="row g-4 justify-content-center">
-              <div className="row">
-                {/* <div className="col-lg-6">Back</div>
-                <div className="col-lg-6 ">Flag</div> */}
-              </div>
-
-              {isloading ? (
-                <>
-                  <Loader beforeLoaderContent={true} />
-                </>
-              ) : (
-                <>
-                  {steps === 1 && (
-                    <>
-                      <section className="step1">
-                        <div className="row">
-                          <div className="col-md-4 mt-5 mb-5">
-                            <div className="giftcard_detail">
-                              <img
-                                src={productIdData.logoUrls}
-                                alt="alt"
-                                className="img-fluid rounded"
-                              />
-                            </div>
-                          </div>
-                          <div className="col-md-8 ">
-                            <div className="card border-0">
-                              <div className="card-body">
-                                <h1 className="card-title display-4">
-                                  {productIdData.productName} eGift Card
-                                </h1>
-                                <div className="row mt-4 mb-4 ">
-                                  {productIdData.fixedRecipientToSenderDenominationsMap ? (
-                                    <>
-                                      <p className="mt-2 mb-4 text-muted">
-                                        {" "}
-                                        Choose Amount :
-                                      </p>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <p className="mt-2 mb-4 text-muted">
-                                        {" "}
-                                        Enter Amount:
-                                      </p>
-                                    </>
-                                  )}
-                                  <div className="div-flex-con">
-                                    {productIdData.fixedRecipientToSenderDenominationsMap ? (
-                                      Object.entries(
-                                        productIdData.fixedRecipientToSenderDenominationsMap
-                                      ).map(([key, value], index) => (
-                                        <div
-                                          key={index}
-                                          className={`item ${
-                                            selectedKey === key
-                                              ? "giftcard_details_selected"
-                                              : ""
-                                          }`}
-                                          onClick={() =>
-                                            handleSelect(
-                                              key,
-                                              giftcardDetailsCalculation(
-                                                key,
-                                                mainCurrency,
-                                                productIdData.recipientCurrencyCode
-                                              )
-                                            )
-                                          }
-                                        >
-                                          {/* Render your item properties here */}
-
-                                          <div
-                                            className="card d-block list-card-price shadow-sm"
-                                            data-value={giftcardDetailsCalculation(
-                                              key,
-                                              mainCurrency,
-                                              productIdData.recipientCurrencyCode
-                                            )}
-                                          >
-                                            {key}&nbsp;
-                                            {
-                                              productIdData.recipientCurrencyCode
-                                            }
-                                          </div>
-                                        </div>
-                                      ))
-                                    ) : (
-                                      <>
-                                        <div className="col-lg-4 col-md-4 col-sm-6">
-                                          <div className="input-group ">
-                                            <div className="input-group-prepend">
-                                              <span className="input-group-text pt-3 pb-3">
-                                                {
-                                                  productIdData.recipientCurrencyCode
-                                                }
-                                              </span>
-                                            </div>
-                                            <input
-                                              type="text"
-                                              className="form-control"
-                                              aria-label="Amount (to the nearest dollar)"
-                                              onChange={(e) =>
-                                                HandleCustomAmount(
-                                                  e,
-                                                  productIdData.minRecipientDenomination,
-                                                  productIdData.maxRecipientDenomination
-                                                )
-                                              }
-                                              value={customAmount}
-                                              placeholder={`Min:${productIdData.minRecipientDenomination} - Max: ${productIdData.maxRecipientDenomination}`}
-                                              min={
-                                                productIdData.minRecipientDenomination
-                                              }
-                                              max={
-                                                productIdData.maxRecipientDenomination
-                                              }
-                                            />
-                                            {/* <div className="input-group-append">
-                                      <span className="input-group-text">
-                                        .00
-                                      </span>
-                                    </div> */}
-                                          </div>
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                                {customAmountError && (
-                                  <>
-                                    <p className="text-danger mt-0 mb-4">
-                                      {customAmountError}
-                                    </p>
-                                  </>
-                                )}
-                                {/* <p className="card-text lead">crazy world</p> */}
-                                <h3 className="mt-2 mb-2">
-                                  {productIdData.fixedRecipientToSenderDenominationsMap ? (
-                                    <>
-                                      {selectedValue}&nbsp;
-                                      {mainCurrency}
-                                    </>
-                                  ) : (
-                                    <>
-                                      {giftcardDetailsCalculation(
-                                        customAmount,
-                                        mainCurrency,
-                                        productIdData.recipientCurrencyCode
-                                      )}
-                                      &nbsp;
-                                      {mainCurrency}
-                                    </>
-                                  )}
-                                </h3>
-                                <a
-                                  href="#"
-                                  className="cmn__btn mb-5 mt-5 outline__btn "
-                                  style={{
-                                    opacity: isloading ? 0.5 : 1,
-                                    cursor: isloading
-                                      ? "not-allowed"
-                                      : "pointer",
-                                  }}
-                                  onClick={() => {
-                                    const amountToAdd = selectedKey
-                                      ? selectedKey
-                                      : customAmount;
-
-                                    // Check if the amount exceeds the maximum allowed value
-                                    if (
-                                      parseFloat(amountToAdd) >
-                                      parseFloat(
-                                        productIdData.maxRecipientDenomination
-                                      )
-                                    ) {
-                                      toast.error(
-                                        `The amount exceeds the maximum allowed value of ${productIdData.maxRecipientDenomination}.`
-                                      );
-                                      return; // Prevent adding to cart
-                                    }
-
-                                    // Proceed to add to cart if the amount is valid
-                                    addToCart({
-                                      id: productIdData.productId,
-                                      productName: productIdData.productName,
-                                      productId: productIdData.productId,
-                                      quantity: 1,
-                                      recipientAmount: amountToAdd,
-                                      recipientCurrency:
-                                        productIdData.recipientCurrencyCode,
-                                      AmountToPay: selectedValue
-                                        ? selectedValue
-                                        : customAmountValue,
-                                      currencyToPayIn: mainCurrency,
-                                      img: productIdData.logoUrls,
-                                      processing_fee:
-                                        country.country === "GH"
-                                          ? productIdData.senderFee
-                                          : 2,
-                                    });
-                                  }}
-                                >
-                                  {!isloading && (
-                                    <>
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="21"
-                                        height="21"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <circle cx="10" cy="20.5" r="1" />
-                                        <circle cx="18" cy="20.5" r="1" />
-                                        <path d="M2.5 2.5h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6l1.6-8.4H7.1" />
-                                      </svg>
-                                      &nbsp;
-                                      <span>Add to cart</span>
-                                    </>
-                                  )}
-
-                                  {isloading && (
-                                    <>
-                                      <span>Processing...</span>
-                                    </>
-                                  )}
-                                </a>
-                                &nbsp; &nbsp; &nbsp; &nbsp;
-                                <a
-                                  href="#"
-                                  className="cmn__btn mb-5 mt-5 "
-                                  onClick={HandleBuyNow}
-                                  style={{
-                                    marginLeft: "10px!important",
-                                    opacity: isloading ? 0.5 : 1,
-                                    cursor: isloading
-                                      ? "not-allowed"
-                                      : "pointer",
-                                  }}
-                                >
-                                  {!isloading && (
-                                    <>
-                                      <span>Continue to Payment</span>
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="19"
-                                        height="19"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-                                      </svg>
-                                    </>
-                                  )}
-
-                                  {isloading && (
-                                    <>
-                                      <span>Processing...</span>
-                                    </>
-                                  )}
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <hr className="mt-5 mb-5" />
-                        <h5>Redeem Instractions</h5>
-                        <ul>
-                          <li className="text-muted mb-2">
-                            {productIdData.redeemInstruction.concise}
-                          </li>
-                          <li className="text-muted">
-                            {productIdData.redeemInstruction.verbose}
-                          </li>
-                        </ul>
-                      </section>
-                    </>
-                  )}
-
-                  {steps === 2 && (
-                    <>
-                      {country && country.country === "GH" ? (
-                        <>
-                          {/* <GiftCardPaymentSteps2
-                            productName={productIdData.productName}
-                            amountToreceive={
-                              selectedKey ? selectedKey : customAmount
-                            }
-                            amount={
-                              selectedValue ? selectedValue : customAmountValue
-                            }
-                            currencyInUsd={selectedKey}
-                            LocalCurrency={productIdData.senderCurrencyCode}
-                            receiverCurrencyCode={
-                              productIdData.recipientCurrencyCode
-                            }
-                            country={country.country}
-                            fees={productIdData.senderFee}
-                            productId={productIdData.productId}
-                            GoBack={handleGoBack}
-                          /> */}
-                        </>
-                      ) : (
-                        <>
-                          {/* <GiftCardPaymentSteps2
-                            productName={productIdData.productName}
-                            amountToreceive={
-                              selectedKey ? selectedKey : customAmount
-                            }
-                            amount={
-                              selectedKey ? selectedKey : customAmountValue
-                            }
-                            currencyInUsd={selectedKey}
-                            LocalCurrency={productIdData.senderCurrencyCode}
-                            receiverCurrencyCode={
-                              productIdData.recipientCurrencyCode
-                            }
-                            country={country.country}
-                            fees={productIdData.senderFee}
-                            productId={productIdData.productId}
-                            GoBack={handleGoBack}
-                          /> */}
-                        </>
-                      )}
-                    </>
-                  )}
-                </>
-              )}
+    <section className="bg-white py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="aspect-[4/3] animate-pulse rounded-[2rem] bg-[#f4eee8]" />
+          <div className="space-y-5">
+            <div className="h-14 w-3/4 animate-pulse rounded-full bg-[#eadfe7]" />
+            <div className="h-5 w-1/2 animate-pulse rounded-full bg-[#eadfe7]" />
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[0, 1, 2].map((item) => (
+                <div
+                  key={item}
+                  className="h-20 animate-pulse rounded-2xl bg-[#f4eee8]"
+                />
+              ))}
+            </div>
+            <div className="h-14 w-56 animate-pulse rounded-full bg-[#eadfe7]" />
+            <div className="flex gap-3">
+              <div className="h-14 w-40 animate-pulse rounded-full bg-[#f4eee8]" />
+              <div className="h-14 w-48 animate-pulse rounded-full bg-[#eadfe7]" />
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
+
+function buildInstructionBlocks(text) {
+  if (!text) {
+    return [];
+  }
+
+  const normalized = text
+    .replace(/\s*•\s*/g, "\n• ")
+    .replace(/\s+(\d+\.)\s+/g, "\n$1 ")
+    .replace(
+      /\.\s+(?=(Important Information:|Scam Warning:|Restrictions:|Terms and Support:|How to Redeem|Where You Can Use))/g,
+      ".\n",
+    )
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  const lines = normalized
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const blocks = [];
+
+  lines.forEach((line) => {
+    if (/^•\s+/.test(line)) {
+      const value = line.replace(/^•\s+/, "");
+      const previous = blocks[blocks.length - 1];
+      if (previous?.type === "bullet-list") {
+        previous.items.push(value);
+      } else {
+        blocks.push({ type: "bullet-list", items: [value] });
+      }
+      return;
+    }
+
+    if (/^\d+\.\s+/.test(line)) {
+      const value = line.replace(/^\d+\.\s+/, "");
+      const previous = blocks[blocks.length - 1];
+      if (previous?.type === "ordered-list") {
+        previous.items.push(value);
+      } else {
+        blocks.push({ type: "ordered-list", items: [value] });
+      }
+      return;
+    }
+
+    blocks.push({ type: "paragraph", content: line });
+  });
+
+  return blocks;
+}
+
+export default function Details() {
+  const { name, productId } = useParams();
+  const [productIdData, setProductIdData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedKey, setSelectedKey] = useState(null);
+  const [selectedValue, setSelectedValue] = useState(0);
+  const [customAmountError, setCustomAmountError] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const [customAmountValue, setCustomAmountValue] = useState(0);
+  const { country, addToCart, mainCurrency, session } = useContext(SessionContext);
+  const navigate = useNavigate();
+  const viewStartRef = useRef(0);
+
+  const denominationMap =
+    productIdData?.fixedRecipientToSenderDenominationsMap || null;
+  const denominationOptions = useMemo(
+    () => (denominationMap ? Object.keys(denominationMap) : []),
+    [denominationMap],
+  );
+
+  const logoUrl = getLogoUrl(productIdData);
+  const selectedRecipientAmount = selectedKey || customAmount;
+  const selectedLocalAmount = selectedValue || customAmountValue;
+  const canContinue =
+    Boolean(productIdData) &&
+    Boolean(selectedRecipientAmount) &&
+    !customAmountError &&
+    parseFloat(selectedRecipientAmount) > 0;
+
+  const conciseInstructionBlocks = useMemo(
+    () => buildInstructionBlocks(productIdData?.redeemInstruction?.concise),
+    [productIdData?.redeemInstruction?.concise],
+  );
+
+  const verboseInstructionBlocks = useMemo(
+    () => buildInstructionBlocks(productIdData?.redeemInstruction?.verbose),
+    [productIdData?.redeemInstruction?.verbose],
+  );
+
+  useEffect(() => {
+    const getProductById = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(`${api_endpoint}/api/giftcards/`, {
+          params: {
+            productId,
+          },
+        });
+
+        setProductIdData(response.data?.data || null);
+      } catch (error) {
+        console.log(error);
+        toast.error("Unable to load this gift card. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getProductById();
+  }, [productId]);
+
+  useEffect(() => {
+    if (!productIdData || !denominationOptions.length) {
+      return;
+    }
+
+    const firstAmount = denominationOptions[0];
+    setSelectedKey(firstAmount);
+    setSelectedValue(
+      giftcardDetailsCalculation(
+        firstAmount,
+        mainCurrency,
+        productIdData.recipientCurrencyCode,
+      ),
+    );
+  }, [denominationOptions, mainCurrency, productIdData]);
+
+  useEffect(() => {
+    if (!productIdData) {
+      return;
+    }
+
+    const productName = productIdData.productName;
+    const currency = productIdData.recipientCurrencyCode;
+    const amounts = denominationOptions.length
+      ? denominationOptions.join(", ")
+      : `${productIdData.minRecipientDenomination || ""}-${
+          productIdData.maxRecipientDenomination || ""
+        }`;
+    const title = `${productName} eGift Card | Digishelves`;
+    const description = `Buy ${productName} gift card online. Available ${currency} values: ${amounts}. Fast digital checkout on Digishelves.`;
+    const keywords = [
+      productName,
+      `${productName} gift card`,
+      `${productName} eGift card`,
+      currency,
+      productIdData.country?.name,
+      productIdData.brand?.brandName,
+      ...denominationOptions.map((amount) => `${amount} ${currency}`),
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const url = window.location.href;
+    const schema = [
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: `${productName} eGift Card`,
+        image: logoUrl ? [logoUrl] : undefined,
+        description,
+        brand: {
+          "@type": "Brand",
+          name: productIdData.brand?.brandName || productName,
+        },
+        category: "Gift Card",
+        sku: String(productIdData.productId),
+        offers: denominationOptions.length
+          ? denominationOptions.map((amount) => ({
+              "@type": "Offer",
+              price: giftcardDetailsCalculation(
+                amount,
+                mainCurrency,
+                productIdData.recipientCurrencyCode,
+              ),
+              priceCurrency: mainCurrency,
+              availability: "https://schema.org/InStock",
+              url,
+            }))
+          : {
+              "@type": "AggregateOffer",
+              lowPrice: giftcardDetailsCalculation(
+                productIdData.minRecipientDenomination || 0,
+                mainCurrency,
+                productIdData.recipientCurrencyCode,
+              ),
+              highPrice: giftcardDetailsCalculation(
+                productIdData.maxRecipientDenomination || 0,
+                mainCurrency,
+                productIdData.recipientCurrencyCode,
+              ),
+              priceCurrency: mainCurrency,
+              availability: "https://schema.org/InStock",
+              url,
+            },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: `${window.location.origin}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Gift Cards",
+            item: `${window.location.origin}/gift-cards`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: productName,
+            item: url,
+          },
+        ],
+      },
+    ];
+
+    updateSeoTags({
+      title,
+      description,
+      image: logoUrl,
+      url,
+      keywords,
+      schema,
+    });
+  }, [denominationOptions, logoUrl, mainCurrency, productIdData]);
+
+  useEffect(() => {
+    if (!productIdData) {
+      return;
+    }
+
+    const startedAt = Date.now();
+    viewStartRef.current = startedAt;
+
+    return () => {
+      const durationSeconds = Math.max(Math.round((Date.now() - startedAt) / 1000), 1);
+      sendAnalyticsEvents(
+        [
+          {
+            event_type: "giftcard_view_duration",
+            product_id: String(productIdData.productId || ""),
+            product_name: productIdData.productName || "Gift card",
+            duration_seconds: durationSeconds,
+            metadata: {
+              recipient_currency: productIdData.recipientCurrencyCode || "",
+              country: productIdData.country?.name || "",
+            },
+          },
+        ],
+        {
+          token: session?.accessToken || null,
+          keepalive: true,
+        },
+      );
+    };
+  }, [productIdData, session?.accessToken]);
+
+  const handleSelect = (amount) => {
+    setCustomAmount("");
+    setCustomAmountError("");
+    setSelectedKey(amount);
+    setSelectedValue(
+      giftcardDetailsCalculation(
+        amount,
+        mainCurrency,
+        productIdData.recipientCurrencyCode,
+      ),
+    );
+    trackAnalyticsEvent(
+      {
+        event_type: "giftcard_amount_selected",
+        product_id: String(productIdData.productId || ""),
+        product_name: productIdData.productName || "Gift card",
+        metadata: {
+          selected_amount: amount,
+          recipient_currency: productIdData.recipientCurrencyCode || "",
+        },
+      },
+      { token: session?.accessToken || null },
+    );
+  };
+
+  const handleCustomAmount = (event) => {
+    const amount = event.target.value;
+    const min = parseFloat(productIdData.minRecipientDenomination);
+    const max = parseFloat(productIdData.maxRecipientDenomination);
+    const numericAmount = parseFloat(amount);
+
+    setSelectedKey(null);
+    setSelectedValue(0);
+    setCustomAmount(amount);
+
+    if (!amount || Number.isNaN(numericAmount)) {
+      setCustomAmountError("Please enter a valid amount.");
+      setCustomAmountValue(0);
+      return;
+    }
+
+    if (numericAmount > max || numericAmount < min) {
+      setCustomAmountError(`The amount must be between ${min} and ${max}.`);
+      setCustomAmountValue(0);
+      return;
+    }
+
+    setCustomAmountError("");
+    setCustomAmountValue(
+      giftcardDetailsCalculation(
+        numericAmount,
+        mainCurrency,
+        productIdData.recipientCurrencyCode,
+      ),
+    );
+  };
+
+  const buildCartItem = () => ({
+    id: productIdData.productId,
+    productName: productIdData.productName,
+    productId: productIdData.productId,
+    quantity: 1,
+    recipientAmount: selectedRecipientAmount,
+    recipientCurrency: productIdData.recipientCurrencyCode,
+    AmountToPay: selectedLocalAmount,
+    currencyToPayIn: mainCurrency,
+    img: productIdData.logoUrls,
+    processing_fee: country.country === "GH" ? productIdData.senderFee : 2,
+  });
+
+  const validateSelection = () => {
+    if (!canContinue) {
+      toast.error("Please select or enter a valid amount.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleAddToCart = () => {
+    if (!validateSelection()) {
+      return;
+    }
+
+    addToCart(buildCartItem());
+  };
+
+  const handleBuyNow = () => {
+    if (!validateSelection()) {
+      return;
+    }
+
+    trackAnalyticsEvent(
+      {
+        event_type: "giftcard_buy_now",
+        product_id: String(productIdData.productId || ""),
+        product_name: productIdData.productName || "Gift card",
+        quantity: 1,
+        metadata: {
+          selected_amount: selectedRecipientAmount,
+          recipient_currency: productIdData.recipientCurrencyCode || "",
+          amount_to_pay: selectedLocalAmount,
+          currency_to_pay_in: mainCurrency,
+        },
+      },
+      { token: session?.accessToken || null },
+    );
+    addToCart(buildCartItem());
+    navigate("/checkout");
+  };
+
+  return (
+    <div>
+      <GiftCardBanner
+        type={productIdData?.productName || name}
+        details={false}
+      />
+
+      {isLoading ? (
+        <DetailsSkeleton />
+      ) : (
+        <section className="bg-white py-16 sm:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+              <div className="overflow-hidden rounded-[2rem] border border-[#eadfe7] bg-[#fbf8f4] shadow-sm">
+                {logoUrl && (
+                  <img
+                    src={logoUrl}
+                    alt={`${productIdData.productName} gift card`}
+                    className="aspect-[4/3] h-full w-full object-cover"
+                  />
+                )}
+              </div>
+
+              <div>
+                <span className="inline-flex rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#551839]">
+                  Digital gift card
+                </span>
+                <h1 className="mt-5 text-5xl font-black leading-[0.96] tracking-[-0.055em] text-[#211722] sm:text-6xl">
+                  {productIdData.productName} eGift Card
+                </h1>
+                <p className="mb-0 mt-4 max-w-2xl text-lg leading-8 text-[#665b67]">
+                  Choose a value, add it to your cart, or continue directly to
+                  checkout with secure Digishelves payment.
+                </p>
+
+                <div className="mt-8">
+                  {denominationOptions.length > 0 ? (
+                    <>
+                      <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-[#9a8b97]">
+                        Choose amount
+                      </p>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {denominationOptions.map((amount) => {
+                          const isSelected = selectedKey === amount;
+                          return (
+                            <button
+                              key={amount}
+                              type="button"
+                              onClick={() => handleSelect(amount)}
+                              className={`rounded-[1.25rem] border p-4 text-left transition ${
+                                isSelected
+                                  ? "border-[#551839] bg-[#551839] text-white shadow-lg shadow-[#551839]/15"
+                                  : "border-[#eadfe7] bg-[#fbf8f4] text-[#211722] hover:border-[#551839]/30 hover:bg-white"
+                              }`}
+                            >
+                              <span
+                                className={`text-2xl font-black tracking-[-0.04em] ${
+                                  isSelected ? "text-white" : "text-[#211722]"
+                                }`}
+                              >
+                                {amount}
+                              </span>
+                              <span className="ml-2 text-sm font-black opacity-70">
+                                {productIdData.recipientCurrencyCode}
+                              </span>
+                              <p
+                                className={`mb-0 mt-2 text-sm font-bold ${
+                                  isSelected
+                                    ? "text-white/70"
+                                    : "text-[#665b67]"
+                                }`}
+                              >
+                                {giftcardDetailsCalculation(
+                                  amount,
+                                  mainCurrency,
+                                  productIdData.recipientCurrencyCode,
+                                )}{" "}
+                                {mainCurrency}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <label
+                        htmlFor="gift-card-amount"
+                        className="mb-3 block text-sm font-black uppercase tracking-[0.16em] text-[#9a8b97]"
+                      >
+                        Enter amount
+                      </label>
+                      <div className="flex max-w-md overflow-hidden rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] focus-within:border-[#551839] focus-within:ring-4 focus-within:ring-[#551839]/10">
+                        <span className="flex items-center border-r border-[#eadfe7] px-4 text-sm font-black text-[#551839]">
+                          {productIdData.recipientCurrencyCode}
+                        </span>
+                        <input
+                          id="gift-card-amount"
+                          type="number"
+                          className="h-14 w-full bg-transparent px-4 text-lg font-black text-[#211722] outline-none"
+                          value={customAmount}
+                          placeholder={`Min ${productIdData.minRecipientDenomination} - Max ${productIdData.maxRecipientDenomination}`}
+                          onChange={handleCustomAmount}
+                        />
+                      </div>
+                      {customAmountError && (
+                        <p className="mb-0 mt-2 text-sm font-bold text-red-600">
+                          {customAmountError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-8 rounded-[1.5rem] border border-[#eadfe7] bg-[#fbf8f4] p-5">
+                  <p className="mb-1 text-sm font-black uppercase tracking-[0.16em] text-[#9a8b97]">
+                    You pay
+                  </p>
+                  <p className="mb-0 text-3xl font-black tracking-[-0.05em] text-[#211722]">
+                    {parseFloat(selectedLocalAmount || 0).toFixed(2)}{" "}
+                    {mainCurrency}
+                  </p>
+                </div>
+
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    className="inline-flex h-14 items-center justify-center gap-2 rounded-full border border-[#eadfe7] bg-white px-7 text-base font-black text-[#551839] transition hover:border-[#551839]/30 hover:bg-[#fbf8f4]"
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    Add to cart
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[#551839] px-7 text-base font-black text-white shadow-lg shadow-[#551839]/15 transition hover:bg-[#44122d]"
+                  >
+                    Continue to payment
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {productIdData.redeemInstruction && (
+              <div className="mt-14 border-t border-[#eadfe7] pt-8">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-[#10ac84]" />
+                  <h2 className="mb-0 text-2xl font-black tracking-[-0.04em] text-[#211722]">
+                    Redeem instructions
+                  </h2>
+                </div>
+                <div className="mt-4 max-w-4xl space-y-5 text-base leading-7 text-[#665b67]">
+                  {conciseInstructionBlocks.length > 0 && (
+                    <div className="space-y-4">
+                      {conciseInstructionBlocks.map((block, index) => (
+                        <InstructionBlock
+                          key={`concise-${index}`}
+                          block={block}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {verboseInstructionBlocks.length > 0 && (
+                    <div className="space-y-4 border-t border-[#eadfe7] pt-5">
+                      {verboseInstructionBlocks.map((block, index) => (
+                        <InstructionBlock
+                          key={`verbose-${index}`}
+                          block={block}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <Footer />
     </div>
+  );
+}
+
+function InstructionBlock({ block }) {
+  if (block.type === "bullet-list") {
+    return (
+      <ul className="mb-0 space-y-2 pl-5 marker:text-[#551839]">
+        {block.items.map((item, index) => (
+          <li key={index} className="text-base leading-7 text-[#665b67]">
+            {item}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (block.type === "ordered-list") {
+    return (
+      <ol className="mb-0 space-y-2 pl-5 marker:font-black marker:text-[#551839]">
+        {block.items.map((item, index) => (
+          <li key={index} className="text-base leading-7 text-[#665b67]">
+            {item}
+          </li>
+        ))}
+      </ol>
+    );
+  }
+
+  return (
+    <p className="mb-0 text-base leading-7 text-[#665b67]">{block.content}</p>
   );
 }

@@ -1,58 +1,106 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import Header from "../Header/Header";
+import React, { useContext } from "react";
+import { Gift, UserRound, WalletCards } from "lucide-react";
 import { Link } from "react-router-dom";
+
 import AccountBanner from "./AccountBanner";
-import SidePanel from "./SidePanel";
-import share from "../../assets/images/svg/share.svg";
 import RecentActivities from "./details/RecentActivities";
 import Footer from "../Footer/Footer";
+import Seo from "../Seo";
+import { SessionContext } from "../sessionContext";
+import { createWebPageSchema } from "../../utils/seo";
+
 export default function MyAccount() {
-  const [transactionHistory, setTransactionHistory] = useState([]);
-  const [contactInformation, setContactInformation] = useState({});
-  // fetch transaction history
-  // saved contact information
-  //
-  useEffect(() => {}, []);
+  const { session } = useContext(SessionContext);
+  const firstName = session?.user?.first_name || session?.user?.username;
+  const email = session?.user?.email;
+
   return (
     <>
+      <Seo
+        title="My Account"
+        description="Manage your Digishelves account activity, saved details, and repeat purchases."
+        path="/account"
+        robots="noindex,nofollow"
+        schema={createWebPageSchema({
+          title: "Digishelves My Account",
+          description: "Manage your Digishelves account activity, saved details, and repeat purchases.",
+          path: "/account",
+        })}
+      />
       <AccountBanner title="Account" />
-      <section className="personal__information pt__60 pb__60">
-        <div className="container">
-          <div className="row justify-content-center">
-            {/* <SidePanel /> */}
-            {/* col-xxl-8 col-xl-8 col-lg-10 */}
-            <div className="col-xxl-12 col-xl-12 col-lg-12">
-              <div className="">
-                <div className="row g-3">
-                  <RecentActivities />
 
-                  <div className="col-md-4 border-1 g-1 ">
-                    <div className="card p-4 shadow-sm border-0 text-center h-100">
-                      <div className="card-body">
-                        <img
-                          src={share}
-                          alt="Celebration"
-                          width={169}
-                          className="mb-5 not-visited:"
-                        />
-                        ;<h5 className="card-title">Refer a friend</h5>
-                        <p className="card-text text-muted fs-6">
-                          Make 5 top-ups to invite friends and get a discount
-                        </p>
-                        <a href="#" className="text-primary">
-                          Read more &gt;
-                        </a>
-                      </div>
-                    </div>
-                  </div>
+      <main className="bg-[#fbf8f4] py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 rounded-[2rem] border border-[#eadfe7] bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-[#551839] text-2xl font-black text-white">
+                  {(email || firstName || "U").charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="mb-1 text-sm font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                    Welcome back
+                  </p>
+                  <h2 className="mb-0 text-3xl font-black tracking-[-0.05em] text-[#211722]">
+                    {firstName || "Your Digishelves account"}
+                  </h2>
+                  {email && (
+                    <p className="mb-0 mt-1 text-sm font-bold text-[#665b67]">
+                      {email}
+                    </p>
+                  )}
                 </div>
               </div>
+
+              <Link
+                to="/profile-settings"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#eadfe7] bg-[#fbf8f4] px-5 text-sm font-black text-[#551839] transition hover:border-[#551839]/30 hover:bg-white"
+              >
+                <UserRound className="h-4 w-4" />
+                Edit profile
+              </Link>
             </div>
           </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1fr_0.42fr]">
+            <RecentActivities />
+
+            <aside className="space-y-6">
+              <div className="rounded-[2rem] border border-[#eadfe7] bg-[#211722] p-6 text-white shadow-2xl shadow-[#551839]/15">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#10ac84] text-[#13251f]">
+                  <Gift className="h-6 w-6" />
+                </div>
+                <h3 className="mb-0 mt-5 text-2xl font-black tracking-[-0.04em] text-white">
+                  Refer a friend
+                </h3>
+                <p className="mb-0 mt-2 text-sm leading-6 text-white/65">
+                  Make 5 top-ups to unlock friend invites and discount rewards.
+                </p>
+                <Link
+                  to="/"
+                  className="mt-5 inline-flex text-sm font-black text-[#9ff1dd] transition hover:text-white"
+                >
+                  Start with a top-up
+                </Link>
+              </div>
+
+              <div className="rounded-[2rem] border border-[#eadfe7] bg-white p-6 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fbf8f4] text-[#551839]">
+                  <WalletCards className="h-6 w-6" />
+                </div>
+                <h3 className="mb-0 mt-5 text-2xl font-black tracking-[-0.04em] text-[#211722]">
+                  Faster checkout
+                </h3>
+                <p className="mb-0 mt-2 text-sm leading-6 text-[#665b67]">
+                  Your account keeps activity and profile details ready for
+                  repeat top-ups and gift-card purchases.
+                </p>
+              </div>
+            </aside>
+          </div>
         </div>
-      </section>
-      <section className="personal__information pt__60 pb__60"></section>
+      </main>
+
       <Footer />
     </>
   );

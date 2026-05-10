@@ -13,6 +13,8 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Button from "@mui/material/Button";
 import creditCard from "../../assets/images/svg/credit-card.svg";
+import Seo from "../Seo";
+import { createWebPageSchema } from "../../utils/seo";
 
 export default function ProfileSettings() {
   const [isEditing, setIsEditing] = useState(false);
@@ -130,6 +132,17 @@ export default function ProfileSettings() {
 
   return (
     <>
+      <Seo
+        title="Profile Settings"
+        description="Update your Digishelves profile details and account settings."
+        path="/profile-settings"
+        robots="noindex,nofollow"
+        schema={createWebPageSchema({
+          title: "Digishelves Profile Settings",
+          description: "Update your Digishelves profile details and account settings.",
+          path: "/profile-settings",
+        })}
+      />
       <AccountBanner title="Profile Settings" />
 
       <section className="personal__information pt__60 pb__60">

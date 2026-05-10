@@ -22,7 +22,7 @@ const ExchangeRateConverter = ({
       ];
     }
   } else {
-    return amountToPayInSenderCurrency;
+    return [amountToPayInSenderCurrency.toFixed(2), ` ${receiverCurrencyCode}`];
   }
 
   // const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));

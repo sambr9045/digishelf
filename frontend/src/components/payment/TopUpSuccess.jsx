@@ -1,278 +1,249 @@
-import React, { useState, useContext, useEffect } from "react";
-
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { api_endpoint } from "../constant";
-import GiftCardBanner from "../GiftCardBanner";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Copy,
+  Mail,
+  Phone,
+  Radio,
+  Receipt,
+  RefreshCw,
+} from "lucide-react";
+import { toast } from "react-toastify";
+
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 import Loader from "../includes/Loader";
-import order_completed from "../../assets/images/order_completed.svg";
-import server_down from "../../assets/images/topup/server_down.svg";
+import Seo from "../Seo";
+import { api_endpoint } from "../constant";
+import { createWebPageSchema } from "../../utils/seo";
 
 function formatDate(datetimeString) {
+  if (!datetimeString) {
+    return "N/A";
+  }
+
   const date = new Date(datetimeString);
-  const formattedDate = date.toISOString().split("T")[0];
-  return formattedDate;
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function SummaryCard({ icon: Icon, label, value, helper }) {
+  return (
+    <article className="rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-md bg-white">
+          <Icon className="h-5 w-5 text-[#551839]" />
+        </span>
+        <div className="min-w-0">
+          <p className="mb-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#9a8b97]">
+            {label}
+          </p>
+          <p className="mb-0 break-words text-lg font-black text-[#211722]">
+            {value || "N/A"}
+          </p>
+          {helper ? (
+            <p className="mt-1 mb-0 text-sm font-bold text-[#665b67]">
+              {helper}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export default function TopUpSuccess() {
   const { reference } = useParams();
   const [isLoading, setIsLoading] = useState(true);
-  const [orderData, setOrderData] = useState([]);
+  const [orderData, setOrderData] = useState(null);
 
   const fetchOrderData = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${api_endpoint}/api/airtime-topup-order/`,
         {
-          reference: reference,
-        }
+          reference,
+        },
       );
-      if (response.data) {
-        console.log(response.data);
-        setOrderData(response.data);
-
-        setIsLoading(false);
-      }
+      setOrderData(response.data || null);
     } catch (error) {
-      console.log(error);
-      setIsLoading(false);
       setOrderData(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRequest = async () => {
-    await fetchOrderData();
+  const copyReference = async () => {
+    if (!orderData?.reference) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(orderData.reference);
+    toast.success("Transaction ID copied.");
   };
 
   useEffect(() => {
-    handleRequest();
-  }, []);
+    fetchOrderData();
+  }, [reference]);
+
   return (
-    <div>
-      <GiftCardBanner type={name} details={true} />
-      {isLoading && (
-        <>
-          <Loader />
-        </>
-      )}
-      <section className="flight__onewaysection pb__60">
-        <div className="container">
-          <div className="cars__gridwrapper">
-            <div className="row g-4 ">
-              <div className="container gift-card-step-2 ">
-                <div className="row justify-content-center">
-                  <div className="col-lg-6 ">
-                    <div className=" p-2 mb-3 border-0">
-                      <div className="payment__success__inner">
-                        {!isLoading && orderData !== null ? (
-                          <>
-                            <div className="payment__success__header">
-                              <div className="">
-                                {/* <i className="material-symbols-outlined">
-                                                      done
-                                                    </i> */}
-                                <img
-                                  src={order_completed}
-                                  alt="success"
-                                  style={{
-                                    width: "150px",
-                                    height: "auto",
-                                  }}
-                                  className="mt-5 mb-5"
-                                />
-                              </div>
-                              <h4 className="basecolor_custom mb-2">
-                                Top-up Sent
-                              </h4>
-                              <div>Airtime top-up completed successfully!</div>
-                            </div>
-                            <div className="payment__success__body shadow-sm p-1">
-                              <ul className="p-0">
-                                <li>
-                                  <span> Transactions ID </span>
-                                  <span className="textbo">
-                                    <b>{orderData.reference}</b>
-                                  </span>
-                                </li>
-                                <li>
-                                  <span> Date </span>
-                                  <span className="textbo">
-                                    <b>{formatDate(orderData.created_at)}</b>
-                                  </span>
-                                </li>
-                                <li>
-                                  <span> Phone Number </span>
-                                  <span className="textbo">
-                                    <b> {orderData.phone_number}</b>
-                                  </span>
-                                </li>
-                                <li>
-                                  <span> Network </span>
-                                  <span className="textbo">
-                                    <b> {orderData.operator}</b>
-                                  </span>
-                                </li>
-                                <li>
-                                  <span> Amount Sent </span>
-                                  <span className="textbo">
-                                    <b>
-                                      {" "}
-                                      {orderData.receiver_amount}&nbsp;
-                                      {orderData.receiver_currency_code}
-                                    </b>
-                                  </span>
-                                </li>
-                                <li>
-                                  <span> Email </span>
-                                  <span className="textbo">
-                                    <b> {orderData.email}</b>
-                                  </span>
-                                </li>
-                              </ul>
-                            </div>
-                            {/* <div className="payment__success__body shadow-sm table-responsive p-1">
-                              {redeemLoading ? (
-                                <>
-                                  <div className="loading text-center pt-4 pb-4">
-                                    <h6> Processing card... </h6>
-                                    <div className="fs-6 text-muted">
-                                      <p className="fs-6">
-                                        Please wait while we process your
-                                        transaction.
-                                      </p>
-                                      <p className="fs-6">
-                                        Refreshe in a few seconds...
-                                      </p>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="btn btn-outline-secondary mt-4"
-                                      onClick={handleRequest}
-                                    >
-                                      Refresh
-                                    </button>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <table className="table table-borderless ">
-                                    <thead>
-                                      <tr>
-                                        <th scope="col"> Product </th>
-                                        <th scope="col"> Card </th>
-                                        <th scope="col"> Pin </th>
-                                      </tr>
-                                    </thead>
-                                    {orderData.transactionData.map((item) => (
-                                      <>
-                                        <tbody key={item.id}>
-                                          {item.redeem_data &&
-                                            JSON.parse(item.redeem_data).map(
-                                              (redeem) => (
-                                                <>
-                                                  <tr>
-                                                    <td className="fs-8">
-                                                      {
-                                                        JSON.parse(item.product)
-                                                          .productName
-                                                      }
-                                                      & nbsp; (
-                                                      <b className="fs-8">
-                                                        {
-                                                          JSON.parse(
-                                                            item.product
-                                                          ).unitPrice
-                                                        }
-                                                        & nbsp;
-                                                        {
-                                                          JSON.parse(
-                                                            item.product
-                                                          ).currencyCode
-                                                        }
-                                                      </b>
-                                                      ) & nbsp;
-                                                    </td>
-                                                    <td>{redeem.cardNumber}</td>
-                                                    <td> {redeem.pinCode} </td>
-                                                  </tr>
-                                                </>
-                                              )
-                                            )}
-                                        </tbody>
-                                      </>
-                                    ))}
-                                  </table>
-                                </>
-                              )}
-                            </div>
-                            <div className="payment__success__footer">
-                              <div className="payment-success__footer-inner">
-                                <a href="javascript:void(0)">
-                                  <span className="icon">
-                                    <i className="material-symbols-outlined">
-                                      download
-                                    </i>
-                                  </span>
-                                  <span> Download </span>
-                                </a>
-                                <a href="javascript:void(0)">
-                                  <span className="icon">
-                                    <i className="material-symbols-outlined">
-                                      print
-                                    </i>
-                                  </span>
-                                  <span> Print Receipt </span>
-                                </a>
-                                <a href="hotel-email.html">
-                                  <span className="icon">
-                                    <i className="material-symbols-outlined">
-                                      drafts
-                                    </i>
-                                  </span>
-                                  <span> Email Receipt </span>
-                                </a>
-                              </div>
-                              <div className="dbutton">
-                                <a href="/gift-cards" className="cmn__btn">
-                                  <span> Keep Shoping </span>
-                                </a>
-                              </div>
-                            </div> */}
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-center mt-4 mb-4">
-                              <div>
-                                <img
-                                  src={server_down}
-                                  alt="failed"
-                                  style={{
-                                    width: "150px",
-                                    height: "auto",
-                                  }}
-                                  className="mt-5 mb-5"
-                                />
-                              </div>
-                              <h3 className="text-muted fs-4">
-                                Failed to Fetch Order
-                              </h3>
-                              <p className="text-muted pl-4 pr-4">
-                                Oops, it seems like we couldn't fetch your order
-                                at this time! <br /> Please try again later.
-                              </p>
-                            </div>
-                          </>
-                        )}
-                      </div>
+    <>
+      <Seo
+        title="Top-up Complete"
+        description="View your completed Digishelves airtime top-up and transaction details."
+        path={`/top-up/success/${reference}`}
+        robots="noindex,nofollow"
+        schema={createWebPageSchema({
+          title: "Digishelves Top-up Complete",
+          description:
+            "View your completed Digishelves airtime top-up and transaction details.",
+          path: `/top-up/success/${reference}`,
+        })}
+      />
+      <Header />
+      {isLoading ? <Loader /> : null}
+
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(85,24,57,0.08),_transparent_34%),linear-gradient(180deg,#fbf8f4_0%,#fffdfb_100%)] pt-28">
+        <section className="px-4 pb-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="overflow-hidden rounded-md border border-[#eadfe7] bg-white shadow-[0_28px_90px_rgba(33,23,34,0.12)]">
+              <div className="bg-[#211722] px-6 py-8 text-white sm:px-8 sm:py-10">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="mb-3 text-xs font-black uppercase tracking-[0.24em] text-[#9ff1dd]">
+                      Top-up completed
+                    </p>
+                    <h1 className="mb-0 text-4xl font-black tracking-[-0.06em] sm:text-5xl">
+                      Airtime sent successfully
+                    </h1>
+                    <p className="mt-3 mb-0 max-w-xl text-sm font-bold leading-6 text-white/72 sm:text-base">
+                      Your payment was confirmed and the airtime order has been
+                      completed.
+                    </p>
+                  </div>
+
+                  <div className="inline-flex items-center gap-3 self-start rounded-full bg-white/10 px-4 py-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dff8ef]">
+                      <CheckCircle2 className="h-5 w-5 text-[#067a5f]" />
+                    </span>
+                    <div>
+                      <p className="mb-0 text-xs font-black uppercase tracking-[0.18em] text-white/60">
+                        Status
+                      </p>
+                      <p className="mb-0 text-sm font-black text-white">
+                        Completed
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <div className="grid gap-6 p-5 sm:p-8 lg:grid-cols-[minmax(0,1.15fr)_340px]">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <SummaryCard
+                    icon={Receipt}
+                    label="Transaction ID"
+                    value={orderData?.reference}
+                    helper="Keep this for support and order tracking."
+                  />
+                  <SummaryCard
+                    icon={CalendarDays}
+                    label="Completed on"
+                    value={formatDate(orderData?.created_at)}
+                  />
+                  <SummaryCard
+                    icon={Phone}
+                    label="Phone number"
+                    value={orderData?.phone_number}
+                  />
+                  <SummaryCard
+                    icon={Radio}
+                    label="Network"
+                    value={orderData?.operator}
+                  />
+                  <SummaryCard
+                    icon={CheckCircle2}
+                    label="Recipient gets"
+                    value={
+                      orderData
+                        ? `${orderData.receiver_amount} ${orderData.receiver_currency_code}`
+                        : "N/A"
+                    }
+                  />
+                  <SummaryCard
+                    icon={Mail}
+                    label="Receipt email"
+                    value={orderData?.email}
+                  />
+                </div>
+
+                <aside className="rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-5">
+                  <p className="mb-2 text-[11px] font-black uppercase tracking-[0.24em] text-[#9a8b97]">
+                    Completion summary
+                  </p>
+                  <h2 className="mb-0 text-2xl font-black tracking-[-0.04em] text-[#211722]">
+                    Top-up completed
+                  </h2>
+                  <p className="mt-3 text-sm font-bold leading-6 text-[#665b67]">
+                    Your airtime has been delivered successfully. You can close
+                    this page now. A confirmation email has also been sent.
+                  </p>
+
+                  <div className="mt-6 rounded-md bg-white p-4">
+                    <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                      Reference
+                    </p>
+                    <p className="mb-0 break-all text-base font-black text-[#211722]">
+                      {orderData?.reference || reference}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 grid gap-3">
+                    <button
+                      type="button"
+                      onClick={copyReference}
+                      disabled={!orderData?.reference}
+                      className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#551839] px-5 text-sm font-black text-white disabled:opacity-60"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy transaction ID
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={fetchOrderData}
+                      className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#eadfe7] bg-white px-5 text-sm font-black text-[#551839]"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refresh status
+                    </button>
+
+                    <Link
+                      to="/top-up"
+                      className="inline-flex h-12 items-center justify-center rounded-full border border-[#eadfe7] bg-transparent px-5 text-sm font-black text-[#665b67]"
+                    >
+                      Start another top-up
+                    </Link>
+                  </div>
+                </aside>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-      {/* <Footer /> */}
-    </div>
+        </section>
+      </main>
+
+      <Footer />
+    </>
   );
 }

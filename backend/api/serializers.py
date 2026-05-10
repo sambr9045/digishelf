@@ -82,10 +82,52 @@ class CartSerializer(serializers.ModelSerializer):
         user = self.context['request'].user  # Get user from request context
         validated_data['user'] = user  # Assign the current user to the instance before saving
         return super().create(validated_data)
-    
+
+
+class AnalyticsEventSerializer(serializers.Serializer):
+    session_key = serializers.CharField(max_length=120)
+    event_type = serializers.CharField(max_length=64)
+    page_path = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
+    page_title = serializers.CharField(max_length=250, required=False, allow_blank=True, allow_null=True)
+    product_id = serializers.CharField(max_length=120, required=False, allow_blank=True, allow_null=True)
+    product_name = serializers.CharField(max_length=250, required=False, allow_blank=True, allow_null=True)
+    quantity = serializers.IntegerField(required=False, min_value=0, default=0)
+    duration_seconds = serializers.IntegerField(required=False, min_value=0, default=0)
+    cart_item_count = serializers.IntegerField(required=False, min_value=0, default=0)
+    cart_total_quantity = serializers.IntegerField(required=False, min_value=0, default=0)
+    cart_total_value = serializers.DecimalField(required=False, max_digits=12, decimal_places=2, default="0.00")
+    metadata = serializers.JSONField(required=False, default=dict)
+
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Contact
-        fields= '__all__'
+        fields = ("name", "email", "message")
+
+
+class AdminContactSerializer(serializers.ModelSerializer):
+    is_new = serializers.SerializerMethodField()
+    is_replied = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Contact
+        fields = (
+            "id",
+            "name",
+            "email",
+            "message",
+            "read_at",
+            "reply_message",
+            "replied_at",
+            "replied_by",
+            "created_at",
+            "is_new",
+            "is_replied",
+        )
+
+    def get_is_new(self, obj):
+        return obj.read_at is None
+
+    def get_is_replied(self, obj):
+        return obj.replied_at is not None
         

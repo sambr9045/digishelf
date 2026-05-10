@@ -1,0 +1,441 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --brand-primary: #551839;
+  --brand-primary-hover: #44122d;
+  --brand-accent: #10ac84;
+  --bg-page: #f7f7fa;
+  --bg-surface: #ffffff;
+  --text-primary: #231b2a;
+  --text-secondary: #615768;
+  --border-soft: #e4dfe8;
+  --shadow-soft: 0 6px 18px rgba(28, 18, 32, 0.06);
+}
+
+.modern-hero-shell,
+.modern-home-process,
+.modern-home-support,
+.modern-home-refer {
+  font-family: "Inter", "Poppins", "Roboto", sans-serif;
+}
+
+.modern-hero-shell {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-page);
+  padding-top: 8px;
+}
+
+.modern-hero-shell .header-section {
+  background: var(--bg-surface);
+  box-shadow: none;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.modern-hero-shell .header-wrapper {
+  min-height: 72px;
+}
+
+.modern-hero-shell .main-menu {
+  gap: 30px;
+}
+
+.modern-hero-shell .main-menu li a {
+  color: #5f5666;
+  font-weight: 500;
+}
+
+.modern-hero-shell .main-menu li a.menu-active {
+  color: var(--brand-primary);
+}
+
+.modern-hero-shell .sigin__grp .outline__btn {
+  border-radius: 10px;
+}
+
+.modern-hero-shell .container {
+  position: relative;
+  z-index: 2;
+}
+
+.modern-hero-grid {
+  margin-top: 0;
+  padding-top: 24px;
+}
+
+.modern-hero-copy {
+  color: var(--text-primary);
+}
+
+.modern-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--brand-primary);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.modern-hero-title {
+  max-width: 680px;
+  font-size: clamp(2.6rem, 5vw, 4.6rem);
+  line-height: 1.02;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.modern-hero-title .text-with-circle {
+  display: block;
+  color: var(--brand-accent);
+  margin-top: 2px;
+}
+
+.modern-hero-subtitle {
+  color: var(--text-secondary);
+  max-width: 560px;
+  font-size: 1.04rem;
+  line-height: 1.55;
+  margin-bottom: 20px;
+}
+
+.modern-feature-list {
+  margin-bottom: 18px;
+}
+
+.modern-feature-list .fade-in-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #2c2431;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.modern-feature-list .fade-in-item img {
+  width: 17px;
+  filter: invert(48%) sepia(63%) saturate(649%) hue-rotate(123deg)
+    brightness(92%) contrast(91%);
+}
+
+.modern-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 8px;
+}
+
+.modern-stat-item {
+  border-right: 1px solid #ddd6e1;
+  padding: 8px 20px;
+  min-width: 128px;
+}
+
+.modern-stat-item:last-child {
+  border-right: none;
+}
+
+.modern-stat-item strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.modern-stat-item span {
+  font-size: 0.85rem;
+  color: #7a6f80;
+}
+
+.modern-topup-card {
+  width: min(100%, 520px);
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.modern-step-indicator {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.modern-step-indicator span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7f7280;
+  background: #f4f1f6;
+  border-radius: 999px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.modern-step-indicator span.active {
+  color: #fff;
+  background: var(--brand-primary);
+}
+
+.modern-topup-card .mobile__recharge h5,
+.modern-topup-card .top-up-container h5 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #2d1f28;
+}
+
+.modern-step-help {
+  color: #665565;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.modern-topup-card .cmn__btn {
+  border: none;
+  border-radius: 10px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-weight: 600;
+  min-height: 50px;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.modern-topup-card .cmn__btn:hover {
+  background: var(--brand-primary-hover);
+  transform: translateY(-1px);
+}
+
+.modern-topup-card .selectCountryinput,
+.modern-topup-card input.form-control,
+.modern-topup-card .form-control {
+  border-radius: 10px;
+  border: 1px solid #d7ced8;
+  padding: 14px 16px;
+}
+
+.modern-topup-card .selectCountryinput:focus,
+.modern-topup-card input.form-control:focus,
+.modern-topup-card .form-control:focus {
+  border-color: #7f3b60;
+  box-shadow: 0 0 0 3px rgba(127, 59, 96, 0.1);
+}
+
+.modern-card-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: #6f6374;
+  margin-top: 12px;
+}
+
+.modern-lock-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #7f7280;
+}
+
+.modern-hero-divider {
+  height: 1px;
+  background: #dfd8e5;
+  margin-top: 24px;
+}
+
+.modern-section-kicker {
+  display: inline-block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #7b5a73;
+  background: #efe8ef;
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.modern-home-process {
+  background: #f8f7fb;
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+
+.modern-home-process .section__header h2,
+.modern-home-support .section__header h2,
+.modern-home-refer .section__header h2 {
+  font-family: "Inter", "Poppins", "Roboto", sans-serif;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.modern-home-process .section__header h2 {
+  font-size: clamp(2.3rem, 4vw, 3.5rem);
+}
+
+.modern-process-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--bg-surface);
+  border: 1px solid #e6dfeb;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.modern-process-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 0 18px;
+}
+
+.modern-process-step:not(:last-child) {
+  border-right: 1px solid #ece5f0;
+}
+
+.modern-process-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f1ebf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modern-process-icon img {
+  width: 30px;
+}
+
+.modern-process-content h5 {
+  font-size: 1.28rem;
+  margin: 0 0 6px;
+  color: #2f2434;
+}
+
+.modern-process-content p {
+  margin: 0;
+  color: #665b6b;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.modern-step-number {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.modern-home-support,
+.modern-home-refer {
+  background: #fbfbfd;
+}
+
+.modern-home-support .support__contentbox,
+.modern-home-refer .refer__item {
+  border: 1px solid #eadfea;
+  border-radius: 12px;
+  padding: 18px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(66, 21, 49, 0.04);
+}
+
+.modern-home-support .support__contentbox:hover,
+.modern-home-refer .refer__item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(66, 21, 49, 0.07);
+}
+
+.modern-home-refer .refer__item {
+  height: 100%;
+}
+
+.modern-home-refer .refer__item .content h5 a {
+  font-size: 1.1rem;
+}
+
+.modern-home-refer .cmn__btn {
+  border-radius: 10px;
+  background: var(--brand-primary);
+}
+
+.flower__shape,
+.working__3shape,
+.refercard,
+.referman {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .modern-hero-copy {
+    text-align: center;
+  }
+
+  .modern-hero-subtitle {
+    margin-inline: auto;
+  }
+
+  .modern-feature-list .fade-in-item {
+    justify-content: center;
+  }
+
+  .modern-hero-stats {
+    justify-content: center;
+  }
+
+  .modern-stat-item {
+    border-right: none;
+    border-bottom: 1px solid #ddd6e1;
+  }
+
+  .modern-stat-item:last-child {
+    border-bottom: none;
+  }
+
+  .modern-topup-card {
+    margin-inline: auto;
+  }
+
+  .modern-process-strip {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .modern-process-step {
+    padding: 0 6px 14px;
+  }
+
+  .modern-process-step:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid #ece5f0;
+  }
+}
+
+@media (max-width: 576px) {
+  .modern-step-indicator {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-topup-card {
+    padding: 18px 14px;
+  }
+
+  .modern-hero-title {
+    font-size: clamp(2.05rem, 8vw, 2.7rem);
+  }
+}

@@ -1,12 +1,13 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import IntlTelInput from "react-intl-tel-input";
-import { TopUpContext } from "../../components/Context/TopUpContext";
-import { ToastContainer, toast } from "react-toastify";
-import { api_endpoint } from "../../components/constant";
+import { toast } from "react-toastify";
 import axios from "axios";
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
-import { Card, Row, Col } from "react-bootstrap";
+import { CheckCircle2, ChevronsRight, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import { TopUpContext } from "../../components/Context/TopUpContext";
+import { api_endpoint } from "../../components/constant";
 
 export default function StepOne() {
   const {
@@ -16,6 +17,7 @@ export default function StepOne() {
     setisLoading,
     setPhoneError,
     operatoCountryData,
+    editNumber,
     setEditNumber,
     setOpararatorData,
     setSteps,
@@ -26,190 +28,329 @@ export default function StepOne() {
     setAutoDetected,
   } = useContext(TopUpContext);
 
+  const navigate = useNavigate();
+
   const [show, setShow] = useState(false);
-  const [FailedToDetectData, setFailedToDetectData] = useState({});
-  const [selected, setSelected] = useState("");
+  const [failedToDetectData, setFailedToDetectData] = useState([]);
+  const [selected, setSelected] = useState(null);
   const [networkSelectionError, setNetworkSelectionError] = useState("");
+  const defaultCountryCode = country.country?.toLowerCase() || "us";
+
+  useEffect(() => {
+    if (!country.country || !country.country_code) {
+      return;
+    }
+
+    setOperatorCountryData({
+      iso2: country.country.toLowerCase(),
+      dialCode: country.country_code,
+    });
+  }, [country.country, country.country_code, setOperatorCountryData]);
+
+  useEffect(() => {
+    if (!show) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [show]);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  const HandleSelection = (id) => {
-    setSelected(id);
-    setOpararatorData({ data: FailedToDetectData[id] });
-    setFx_rate(FailedToDetectData[id].fx);
-    setSuggestedAmountsMap(FailedToDetectData[id].suggestedAmountsMap);
+  const formatTopupPhoneNumber = (rawPhoneNumber, countryData) => {
+    const dialCode = String(
+      countryData?.dialCode || country.country_code || "",
+    ).replace(/\D/g, "");
+    let digits = String(rawPhoneNumber || "").replace(/\D/g, "");
+
+    if (!digits || !dialCode) {
+      return "";
+    }
+
+    if (digits.startsWith(dialCode) && digits.length > dialCode.length) {
+      digits = digits.slice(dialCode.length);
+    }
+
+    digits = digits.replace(/^0+/, "");
+
+    return `+${dialCode}${digits}`;
+  };
+
+  const handleSelection = (index) => {
+    const selectedNetwork = failedToDetectData[index];
+
+    setSelected(index);
+    setOpararatorData({ data: selectedNetwork });
+    setFx_rate(selectedNetwork.fx);
+    setSuggestedAmountsMap(selectedNetwork.suggestedAmountsMap);
     setNetworkSelectionError("");
   };
-  const HandleNetworkSelected = (e) => {
-    if (selected !== "") {
-      setSteps(2);
-    } else {
-      setNetworkSelectionError("Please select network provider to continue!!");
+
+  const handleNetworkSelected = () => {
+    if (selected !== null) {
+      const selectedNetwork = failedToDetectData[selected];
+      const formattedPhone = formatTopupPhoneNumber(
+        editNumber || number,
+        operatoCountryData,
+      );
+
+      navigate("/top-up/checkout", {
+        state: {
+          oparatorData: { data: selectedNetwork },
+          suggestedAmountsMap: selectedNetwork.suggestedAmountsMap,
+          fx_rate: selectedNetwork.fx,
+          editNumber: formattedPhone || editNumber,
+          operatorCountryData: operatoCountryData,
+          autoDetected: false,
+        },
+      });
+      handleClose();
+      return;
     }
+
+    setNetworkSelectionError("Please select a network provider to continue.");
   };
 
-  const HandleSteps2 = async (e) => {
-    e.preventDefault();
+  const handleSteps2 = async (event) => {
+    event.preventDefault();
 
     if (isNaN(number)) {
-      toast.error("Invalide phone number");
-    } else {
-      const result = await getOparator(number);
-      console.log(result);
+      toast.error("Invalid phone number");
+      return;
     }
+
+    await getOperator(number);
   };
 
-  const getOparator = async (number) => {
+  const getOperator = async (phoneNumber) => {
     setisLoading(true);
 
-    if (number === "") {
+    if (phoneNumber === "") {
       setPhoneError("Please enter a valid number");
       setisLoading(false);
       toast.error("Please enter a valid number");
-    } else {
-      let edit_number = 0;
-      if (number.startsWith("0")) {
-        edit_number = number.substring(1);
-      } else {
-        edit_number = number;
+      return;
+    }
+
+    const selectedCountryData = operatoCountryData || {
+      iso2: defaultCountryCode,
+      dialCode: country.country_code || "1",
+    };
+    const formattedPhone = formatTopupPhoneNumber(
+      phoneNumber,
+      selectedCountryData,
+    );
+
+    setEditNumber(formattedPhone);
+
+    const data = { phone: formattedPhone, country: selectedCountryData.iso2 };
+
+    try {
+      const response = await axios.post(
+        `${api_endpoint}/api/getoparator/`,
+        data,
+      );
+
+      if (!response.data) {
+        return;
       }
-      const phone_ = `+${operatoCountryData.dialCode}${edit_number}`;
-      setEditNumber(phone_);
-      const data = { phone: phone_, country: operatoCountryData.iso2 };
-      try {
-        const response = await axios.post(
-          `${api_endpoint}/api/getoparator/`,
-          data
-        );
-        if (response.data) {
-          console.log(response.data);
-          if (response.data.autoDetected === true) {
-            setOpararatorData(response.data);
-            console.log(operatoCountryData, "this is the oparator code");
-            setSteps(2);
-            setisLoading(false);
-            setSuggestedAmountsMap(response.data.data.suggestedAmountsMap);
-            setFx_rate(response.data.data.fx);
-          } else {
-            // setOpararatorData(response.data);
-            // setSteps(2);
-            setisLoading(false);
-            setFailedToDetectData(response.data.data);
-            console.log(response.data.data);
-            // setSuggestedAmountsMap(null);
-            // setFx_rate(null);
-            handleShow();
-          }
-        }
-      } catch (error) {
-        console.log(error);
-        if (
-          error.response.status === 400 &&
-          error.response.data.autoDetected === false
-        ) {
-          // Next steps
 
-          setAutoDetected(false);
-          setSteps(2);
-        } else {
-          toast.error(error.response.data.status);
-        }
-
+      if (response.data.autoDetected === true) {
+        setOpararatorData(response.data);
         setisLoading(false);
+        navigate("/top-up/checkout", {
+          state: {
+            oparatorData: response.data,
+            suggestedAmountsMap: response.data.data.suggestedAmountsMap,
+            fx_rate: response.data.data.fx,
+            editNumber: formattedPhone,
+            operatorCountryData: selectedCountryData,
+            autoDetected: true,
+          },
+        });
+        return;
       }
+
+      setisLoading(false);
+      setSelected(null);
+      setFailedToDetectData(response.data.data || []);
+      handleShow();
+    } catch (error) {
+      if (
+        error.response?.status === 400 &&
+        error.response?.data?.autoDetected === false
+      ) {
+        navigate("/top-up/checkout", {
+          state: {
+            oparatorData: null,
+            autoDetected: false,
+            editNumber: formattedPhone,
+            operatorCountryData: operatoCountryData,
+          },
+        });
+      } else {
+        toast.error(
+          error.response?.data?.status ||
+            "Unable to detect the network. Please try again.",
+        );
+      }
+
+      setisLoading(false);
     }
   };
 
-  const handlePhoneNumberChange = (status, value, countryData, number, id) => {
+  const handlePhoneNumberChange = (status, value, countryData) => {
     if (isNaN(value)) {
       setPhoneError("Invalid phone number");
       return;
-    } else {
-      setNumber(value);
-      setPhoneError("");
-      setOperatorCountryData(countryData);
     }
-    console.log(status, value, countryData, number, id);
+
+    setNumber(value);
+    setPhoneError("");
+    setOperatorCountryData(countryData);
   };
 
   return (
     <div>
-      <Modal show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Select Network</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {networkSelectionError !== "" && (
-            <>
-              <div className="alert alert-danger">{networkSelectionError}</div>
-            </>
-          )}
-          <div className="col-lg-12 d-flex">
-            {FailedToDetectData &&
-              FailedToDetectData.length > 0 &&
-              FailedToDetectData.map((item, index) => (
-                <>
-                  <div key={item.id} className="">
-                    <div
-                      onClick={() => HandleSelection(index)}
-                      className={`selectNetwork ${
-                        selected === index ? "selectNetwork-active" : ""
-                      }`}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <div className="card">
-                        <div>
-                          <img src={item.logoUrls[2]} alt="iamge" />
-                        </div>
-                        <b>{item.name}</b>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ))}
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
+      {show &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999]">
+            <div
+              className="absolute inset-0 bg-[#120b12]/72 backdrop-blur-[2px]"
+              onClick={handleClose}
+            />
 
-          <button
-            type="button"
-            className="cmn__btn py-2"
-            onClick={HandleNetworkSelected}
-          >
-            Continue
-          </button>
-        </Modal.Footer>
-      </Modal>
-      <div className="mobile__recharge ">
-        <h5 className=" mt-3 mb-2 text-left"> Ready to send top - up ? </h5>
-        <br />
+            <div className="relative flex min-h-screen items-center justify-center px-4 py-6 sm:px-6">
+              <div className="relative z-10 flex max-h-[calc(100vh-3rem)] w-full max-w-[36rem] flex-col overflow-hidden rounded-[2rem] border border-[#eadfe7] bg-white shadow-[0_32px_100px_rgba(18,11,18,0.35)]">
+                <div className="flex items-start justify-between gap-4 border-b border-[#eadfe7] px-6 py-5 sm:px-8">
+                  <div>
+                    <h3 className="mb-0 text-2xl font-black tracking-[-0.03em] text-[#211722]">
+                      Select network
+                    </h3>
+                    <p className="mb-0 mt-2 text-sm font-medium text-[#665b67]">
+                      We could not detect the provider automatically. Choose the
+                      right network to continue.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#eadfe7] bg-[#fbf8f4] text-[#665b67] transition hover:border-[#551839]/30 hover:text-[#551839]"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="overflow-y-auto px-6 py-5 sm:px-8">
+                  {networkSelectionError !== "" && (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                      {networkSelectionError}
+                    </div>
+                  )}
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {failedToDetectData.length > 0 &&
+                      failedToDetectData.map((item, index) => {
+                        const isSelected = selected === index;
+
+                        return (
+                          <button
+                            key={item.id || item.name}
+                            type="button"
+                            onClick={() => handleSelection(index)}
+                            className={`relative flex min-h-[88px] items-center gap-3 rounded-[1.25rem] border p-3 text-left transition ${
+                              isSelected
+                                ? "border-[#551839] bg-[#fff7fb] shadow-[0_12px_35px_rgba(85,24,57,0.12)]"
+                                : "border-[#eadfe7] bg-[#fbf8f4] hover:border-[#551839]/30 hover:bg-white"
+                            }`}
+                            aria-pressed={isSelected}
+                          >
+                            <span
+                              className={`absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border ${
+                                isSelected
+                                  ? "border-[#10ac84] bg-[#10ac84] text-white"
+                                  : "border-[#d8cfd6] bg-white text-transparent"
+                              }`}
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                            </span>
+
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-black/5">
+                              <img
+                                src={item.logoUrls?.[2] || item.logoUrls?.[0]}
+                                alt={`${item.name} logo`}
+                                className="h-full w-full object-contain"
+                              />
+                            </span>
+
+                            <span className="pr-8 text-sm font-black text-[#211722]">
+                              {item.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+
+                    {failedToDetectData.length === 0 && (
+                      <div className="rounded-2xl bg-[#fbf8f4] p-5 text-sm font-semibold text-[#665b67]">
+                        No providers were returned for this number. Close this
+                        dialog and check the phone number.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 border-t border-[#eadfe7] px-6 py-5 sm:flex-row sm:justify-end sm:px-8">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="rounded-full border border-[#eadfe7] bg-white px-5 py-2.5 text-sm font-black text-[#665b67] transition hover:border-[#551839]/30 hover:text-[#551839]"
+                  >
+                    Close
+                  </button>
+
+                  <button
+                    type="button"
+                    className="topup-continue-button w-full px-5 py-2.5 sm:w-auto"
+                    onClick={handleNetworkSelected}
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      <div className="mobile__recharge">
+        <h5 className="mt-0 mb-1 text-left">Start your top-up</h5>
+        <p className="modern-step-help mb-3">
+          Enter the recipient phone number. We will detect the network
+          automatically.
+        </p>
+
         <form
-          action="javascript:void(0)"
-          className="pb__40 mt-10 "
-          style={{
-            justifyContent: "left",
-          }}
+          className="pb__40 mt-10"
+          style={{ justifyContent: "left" }}
+          onSubmit={handleSteps2}
         >
-          <div
-            className="row"
-            style={{
-              width: "100%",
-            }}
-          >
-            <div className="">
+          <div className="row" style={{ width: "100%" }}>
+            <div>
               <IntlTelInput
+                key={defaultCountryCode}
                 preferredCountries={["us", "gb"]}
-                defaultCountry={
-                  country.country !== null
-                    ? country.country.toLowerCase()
-                    : "us"
-                }
-                containerClassName="intl-tel-input"
-                inputClassName="form-control selectCountryinput"
+                defaultCountry={defaultCountryCode}
+                containerClassName="intl-tel-input topup-phone-field"
+                inputClassName="topup-phone-input"
                 onPhoneNumberChange={handlePhoneNumberChange}
                 autoPlaceholder="aggressive"
                 placeholder="Enter your phone number"
@@ -219,10 +360,12 @@ export default function StepOne() {
             </div>
           </div>
         </form>
-        <a
-          href="#"
-          className="cmn__btn mb-5 form-control text-center"
-          onClick={HandleSteps2}
+
+        <button
+          type="button"
+          className="topup-continue-button mb-4"
+          onClick={handleSteps2}
+          disabled={isLoading}
           style={{
             opacity: isLoading ? 0.5 : 1,
             cursor: isLoading ? "not-allowed" : "pointer",
@@ -230,28 +373,12 @@ export default function StepOne() {
         >
           {!isLoading && (
             <>
-              <span> Continue recharge </span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="19"
-                height="19"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-              </svg>
+              <span>Continue to amount</span>
+              <ChevronsRight size={19} strokeWidth={2.5} />
             </>
           )}
-          {isLoading && (
-            <>
-              <span> Processing... </span>
-            </>
-          )}
-        </a>
+          {isLoading && <span>Detecting network...</span>}
+        </button>
       </div>
     </div>
   );

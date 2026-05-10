@@ -1,5 +1,6 @@
 // ContinueButton.js
 import React, { useContext } from "react";
+import { ArrowRight } from "lucide-react";
 import { TopUpContext } from "../../../components/Context/TopUpContext";
 import { validateEmail } from "../../../components/includes/Functions";
 import { toast } from "react-toastify";
@@ -25,26 +26,14 @@ const ContinueButton = () => {
     }
   };
   return (
-    <a
-      href="#"
-      className="cmn__btn mb-5 form-control text-center"
+    <button
+      type="button"
+      className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 text-base font-black text-white shadow-lg shadow-[#551839]/15 transition hover:bg-[#44122d] focus:outline-none focus:ring-4 focus:ring-[#551839]/15"
       onClick={handleSubmitStepTwo}
     >
-      <span> NEXT </span>{" "}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="19"
-        height="19"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-      </svg>{" "}
-    </a>
+      <span>Continue to payment</span>
+      <ArrowRight className="h-5 w-5" />
+    </button>
   );
 };
 

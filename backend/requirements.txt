@@ -50,4 +50,5 @@ tzdata==2024.1
 urllib3==2.2.1
 vine==5.1.0
 wcwidth==0.2.13
+web3==6.20.4
 yarl==1.9.4

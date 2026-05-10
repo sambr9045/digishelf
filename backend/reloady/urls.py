@@ -40,5 +40,5 @@ url = "https://giftcards-sandbox.reloadly.com/products?size=&page=&productName=&
 def get_giftcard_redeem_code(transactionId):
     return f"https://giftcards-sandbox.reloadly.com/orders/transactions/{transactionId}/cards"
 
-def get_giftcard_url_two(productName, countryCode, page):
-    return f"https://giftcards-sandbox.reloadly.com/products?size=24&page={page}&productName={productName}&countryCode={countryCode}&includeRange=true&includeFixed=true&sorted=false"
+def get_giftcard_url_two(productName, countryCode, page, size=24):
+    return f"https://giftcards-sandbox.reloadly.com/products?size={size}&page={page}&productName={productName}&countryCode={countryCode}&includeRange=true&includeFixed=true&sorted=false"

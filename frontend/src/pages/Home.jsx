@@ -1,309 +1,320 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  BadgeDollarSign,
+  BellRing,
+  Gift,
+  Globe2,
+  Headphones,
+  LockKeyhole,
+  Repeat2,
+  Send,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  WalletCards,
+  Zap,
+} from "lucide-react";
+
 import Footer from "../components/Footer/Footer";
 import Banner from "../components/Banner";
-
-import support from "../assets/images/refer/support.png";
-import support2 from "../assets/images/refer/support2.svg";
-
-import team from "../assets/images/refer/team.svg";
-import team2 from "../assets/images/refer/team2.svg";
-
-import redericon from "../assets/images/refer/redericon.png";
-import payicon from "../assets/images/refer/payicon.png";
-import payment from "../assets/images/refer/payment.png";
-import payment2 from "../assets/images/refer/payment2.png";
-
-import suppoticon from "../assets/images/refer/suppoticon.png";
-import flowerrefer from "../assets/images/refer/flowerrefer.png";
-
-import boxspeaker from "../assets/images/refer/boxspeaker.png";
-import boxregister from "../assets/images/refer/boxregister.png";
-import boxamount from "../assets/images/refer/boxamount.png";
-import boxwithdrow from "../assets/images/refer/boxwithdrow.png";
-import redercards from "../assets/images/refer/redercards.png";
-import referman from "../assets/images/refer/referman.png";
-
-import walletpro from "../assets/images/working/walletpro.png";
-import find from "../assets/images/working/find.png";
-import mobilepro from "../assets/images/working/mobilepro.png";
-import working3shape from "../assets/images/working/working3shape.png";
+import Seo from "../components/Seo";
 import { TopUpProvider } from "../components/Context/TopUpContext";
+import {
+  createBreadcrumbSchema,
+  createOrganizationSchema,
+  createWebPageSchema,
+  createWebsiteSchema,
+} from "../utils/seo";
+
+const processSteps = [
+  {
+    icon: Smartphone,
+    title: "Enter the number",
+    text: "Start with the recipient phone number and country. Digishelves checks the route before you pay.",
+  },
+  {
+    icon: BadgeDollarSign,
+    title: "Choose an amount",
+    text: "Pick a popular amount or enter a custom value with fees shown before checkout.",
+  },
+  {
+    icon: Send,
+    title: "Send securely",
+    text: "Confirm payment and track the top-up through a clean, guided final step.",
+  },
+];
+
+const benefits = [
+  {
+    icon: Zap,
+    title: "Fast checkout",
+    text: "A focused top-up flow keeps the page clear and removes avoidable steps.",
+  },
+  {
+    icon: Globe2,
+    title: "Global reach",
+    text: "Designed for cross-border airtime, gift cards, and digital payments.",
+  },
+  {
+    icon: LockKeyhole,
+    title: "Protected payments",
+    text: "Payment and recipient details stay inside a secure transaction flow.",
+  },
+  {
+    icon: Headphones,
+    title: "Human support",
+    text: "Support is available when a transaction needs attention or confirmation.",
+  },
+];
+
+const rewardSteps = [
+  "Share your referral link",
+  "Friends complete signup",
+  "You earn flexible credits",
+  "Use rewards or withdraw",
+];
+
+const sectionFade = {
+  hidden: { opacity: 0, y: 36 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.65, ease: "easeOut" },
+  },
+};
+
+const staggerGroup = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const fadeItem = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
 
 export default function Home() {
   return (
     <>
+      <Seo
+        title="Airtime Top-ups and Gift Cards"
+        description="Buy airtime top-ups and digital gift cards with a streamlined checkout flow on Digishelves."
+        keywords={[
+          "Digishelves",
+          "airtime top-up",
+          "digital gift cards",
+          "crypto checkout",
+          "mobile recharge",
+        ]}
+        path="/"
+        schema={[
+          createOrganizationSchema(),
+          createWebsiteSchema(),
+          createWebPageSchema({
+            title: "Digishelves Airtime Top-ups and Gift Cards",
+            description:
+              "Buy airtime top-ups and digital gift cards with a streamlined checkout flow on Digishelves.",
+            path: "/",
+          }),
+          createBreadcrumbSchema([{ name: "Home", path: "/" }]),
+        ]}
+      />
       <TopUpProvider>
         <Banner />
       </TopUpProvider>
 
-      <section className="working__section__three bgsection pt-120 pb-120">
-        <div className="container">
-          <div className="row justify-content-center ">
-            <div className="col-lg-6">
-              <div className="section__header section__center pb__40">
-                <h2>How It’s Work</h2>
-                <p>
-                  Discover the simple steps involved in using our service with
-                  our easy-to-follow guide.
+      <main className="bg-white font-display text-[#211722]">
+        <motion.section
+          className="relative overflow-hidden py-20 sm:py-24"
+          variants={sectionFade}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.22 }}
+        >
+          <div className="absolute inset-x-6 top-12 h-32 rounded-full bg-[#10ac84]/10 blur-3xl" />
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <motion.div className="mx-auto max-w-3xl text-center" variants={fadeItem}>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
+                <Sparkles className="h-4 w-4" />
+                How it works
+              </span>
+              <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
+                A cleaner top-up flow from number to payment.
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-[#665b67]">
+                The homepage now explains the product with short, scannable
+                steps and a checkout-first experience.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="mt-14 grid gap-5 lg:grid-cols-3"
+              variants={staggerGroup}
+            >
+              {processSteps.map((step, index) => {
+                const Icon = step.icon;
+
+                return (
+                  <motion.article
+                    key={step.title}
+                    variants={fadeItem}
+                    className="group relative rounded-[2rem] border border-[#efe7ed] bg-[#fbf8f4] p-7 transition duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-2xl hover:shadow-[#551839]/10"
+                  >
+                    <div className="mb-8 flex items-center justify-between">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#551839] text-white">
+                        <Icon className="h-6 w-6" strokeWidth={2.2} />
+                      </div>
+                      <span className="text-5xl font-black tracking-[-0.08em] text-[#e7dce5]">
+                        0{index + 1}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-black tracking-[-0.03em]">
+                      {step.title}
+                    </h3>
+                    <p className="mt-3 leading-7 text-[#675d68]">
+                      {step.text}
+                    </p>
+                  </motion.article>
+                );
+              })}
+            </motion.div>
+          </div>
+        </motion.section>
+
+        <motion.section
+          className="bg-[#211722] py-20 text-white sm:py-24"
+          variants={sectionFade}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.22 }}
+        >
+          <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+            <motion.div variants={fadeItem}>
+              <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#9ff0d9]">
+                Why Digishelves
+              </span>
+              <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+                Built for repeat transactions, not one-off landing page polish.
+              </h2>
+              <p className="mt-5 text-lg leading-8 text-white/68">
+                The refreshed page puts trust, speed, and product clarity in the
+                same place as the form, so users know what to do next.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  to="/gift-cards"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 font-black text-[#211722] transition hover:bg-[#f7f1e8]"
+                >
+                  Explore gift cards
+                  <Gift className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 font-black text-white transition hover:bg-white/10"
+                >
+                  Contact support
+                  <BellRing className="h-4 w-4" />
+                </Link>
+              </div>
+            </motion.div>
+
+            <motion.div className="grid gap-4 sm:grid-cols-2" variants={staggerGroup}>
+              {benefits.map((benefit) => {
+                const Icon = benefit.icon;
+
+                return (
+                  <motion.article
+                    key={benefit.title}
+                    variants={fadeItem}
+                    className="rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-6 backdrop-blur transition hover:bg-white/[0.1]"
+                  >
+                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#10ac84] text-[#13251f]">
+                      <Icon className="h-6 w-6" strokeWidth={2.2} />
+                    </div>
+                    <h3 className="text-xl font-black tracking-[-0.03em] text-white">
+                      {benefit.title}
+                    </h3>
+                    <p className="mt-3 leading-7 text-white/62">
+                      {benefit.text}
+                    </p>
+                  </motion.article>
+                );
+              })}
+            </motion.div>
+          </div>
+        </motion.section>
+
+        <motion.section
+          className="relative overflow-hidden py-20 sm:py-24"
+          variants={sectionFade}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.22 }}
+        >
+          <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#551839]/10 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#10ac84]/10 blur-3xl" />
+
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-10 rounded-[2.5rem] border border-[#efe7ed] bg-[#fbf8f4] p-6 shadow-2xl shadow-[#551839]/8 sm:p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-10">
+              <motion.div className="rounded-[2rem] bg-white p-8" variants={fadeItem}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#551839] text-white">
+                  <Repeat2 className="h-7 w-7" strokeWidth={2.2} />
+                </div>
+                <h2 className="mt-8 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
+                  Refer, earn, and keep more value in the wallet.
+                </h2>
+                <p className="mt-5 text-lg leading-8 text-[#665b67]">
+                  Referral rewards are easier to understand when the process is
+                  direct: share, onboard, earn, and use the credit.
                 </p>
-              </div>
-            </div>
-          </div>
-          <div className="row g-4 justify-content-center align-items-center">
-            <div className="col-lg-5 col-md-5">
-              <div className="working__wrapitems__three">
-                <div className="row justify-content-between">
-                  <div className="col-xl-12 working__space">
-                    <div className="working__itemstwo affter__one">
-                      <span className="list">01</span>
-                      <div className="icon">
-                        <img src={find} alt="find" />
-                      </div>
-                      <div className="content">
-                        <h5>Choose Network Provider </h5>
-                        <p>
-                          Select from a list of available network providers to
-                          ensure compatibility with your mobile service
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-xl-12">
-                    <div className="working__itemstwo affter__three">
-                      <span className="list">03</span>
-                      <div className="icon">
-                        <img src={mobilepro} alt="mobielpro" />
-                      </div>
-                      <div className="content">
-                        <h5>Choose payment method </h5>
-                        <p>
-                          Complete your transaction securely using
-                          cryptocurrency or a credit card for instant airtime
-                          credit.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-2 col-md-2">
-              <div className="borders"></div>
-            </div>
-            <div className="col-xl-5 col-md-5">
-              <div className="working__itemstwo affter__two">
-                <span className="list">02</span>
-                <div className="icon">
-                  <img src={walletpro} alt=" walletpro" />
-                </div>
-                <div className="content">
-                  <h5>Enter your number and amount </h5>
-                  <p>
-                    Input your mobile number and specify the amount of airtime
-                    you wish to purchase.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="working__3shape">
-          <img src={working3shape} alt="working3shape" />
-        </div>
-      </section>
+              </motion.div>
 
-      {/* support system */}
+              <motion.div className="grid content-center gap-4" variants={staggerGroup}>
+                {rewardSteps.map((step, index) => (
+                  <motion.div
+                    key={step}
+                    variants={fadeItem}
+                    className="flex items-center gap-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5"
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#10ac84]/15 text-lg font-black text-[#08745a]">
+                      {index + 1}
+                    </div>
+                    <p className="text-lg font-black tracking-[-0.02em]">
+                      {step}
+                    </p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
 
-      <section className="support__section pt-120 pb-120">
-        <div className="container">
-          <div className="row flex-row-reverse justify-content-between align-items-center">
-            <div className="col-xl-6 col-lg-6">
-              <div className="support__content">
-                <div className="section__header pb__40 wow fadeInDown">
-                  <h2>Enjoy our Speacial supports</h2>
-                  <p>
-                    Benefit from our exceptional support services tailored to
-                    meet your unique needs.
-                  </p>
-                </div>
-                <div className="row g-4">
-                  <div
-                    className="col-lg-6 col-md-6 col-sm-6 wow fadeInUp"
-                    data-wow-duration="0.8s"
-                  >
-                    <div className="support__contentbox">
-                      <div className="thumb">
-                        <img src={payment2} alt="payment" />
-                      </div>
-                      <h5>
-                        <a href="help-support.html">Secure Payment</a>
-                      </h5>
-                    </div>
-                  </div>
-                  <div
-                    className="col-lg-6 col-md-6 col-sm-6 wow fadeInUp"
-                    data-wow-duration="1s"
-                  >
-                    <div className="support__contentbox">
-                      <div className="thumb">
-                        <img src={redericon} alt="redericon" />
-                      </div>
-                      <h5>
-                        <a href="help-support.html">Refer & Earn</a>
-                      </h5>
-                    </div>
-                  </div>
-                  <div
-                    className="col-lg-6 col-md-6 col-sm-6 wow fadeInUp"
-                    data-wow-duration="1.4s"
-                  >
-                    <div className="support__contentbox">
-                      <div className="thumb">
-                        <img src={payicon} alt="payicon" />
-                      </div>
-                      <h5>
-                        <a href="help-support.html">Trust pay</a>
-                      </h5>
-                    </div>
-                  </div>
-                  <div
-                    className="col-lg-6 col-md-6 col-sm-6 wow fadeInUp"
-                    data-wow-duration="1.6s"
-                  >
-                    <div className="support__contentbox">
-                      <div className="thumb">
-                        <img src={suppoticon} alt="img" />
-                      </div>
-                      <h5>
-                        <a href="help-support.html">24X7 Support</a>
-                      </h5>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-5 col-lg-5">
-              <div className="support__thumb wow fadeInUp text-center">
-                <img
-                  src={support2}
-                  alt="support"
-                  style={{ width: "70%", margin: "" }}
-                />
-              </div>
-            </div>
+            <motion.div className="mt-8 grid gap-4 sm:grid-cols-3" variants={staggerGroup}>
+              <motion.div className="rounded-3xl bg-[#f7f1e8] p-6" variants={fadeItem}>
+                <WalletCards className="h-7 w-7 text-[#551839]" />
+                <p className="mt-4 font-black">Flexible reward usage</p>
+              </motion.div>
+              <motion.div className="rounded-3xl bg-[#e9f8f3] p-6" variants={fadeItem}>
+                <ShieldCheck className="h-7 w-7 text-[#08745a]" />
+                <p className="mt-4 font-black">Transparent redemption</p>
+              </motion.div>
+              <motion.div className="rounded-3xl bg-[#211722] p-6 text-white" variants={fadeItem}>
+                <Gift className="h-7 w-7 text-[#9ff0d9]" />
+                <p className="mt-4 font-black">Gift cards and top-ups</p>
+              </motion.div>
+            </motion.div>
           </div>
-        </div>
-        <div className="flower__shape">
-          <img src={flowerrefer} alt="flowerrefer" />
-        </div>
-      </section>
-
-      {/* refer and earn */}
-
-      <section className="refer__section__two pt-120 pb-120">
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-lg-6">
-              <div className="section__header section__center pb__40 wow fadeInDown">
-                <h2>Refer & Earn</h2>
-                <p>
-                  Refer your friends and earn up to $20. These rewards can be
-                  applied towards airtime top-ups, bill payments, or withdrawn
-                  as cash, providing you with versatile financial options
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="row pb__40 g-4 align-items-center">
-            <div
-              className="col-xl-3 col-lg-3 col-md-6 wow fadeInDown"
-              data-wow-duration="0.5s"
-            >
-              <div className="refer__item refer__item__grid">
-                <div className="icon">
-                  <img src={boxspeaker} alt="boxspeaker" />
-                </div>
-                <div className="content">
-                  <h5>
-                    <a href="help-support.html" className="dtext">
-                      Refer your friends
-                    </a>
-                  </h5>
-                  <p>Share your referral link with friends. Thry get &10.</p>
-                </div>
-              </div>
-            </div>
-            <div
-              className="col-xl-3 col-lg-3 col-md-6 wow fadeInDown"
-              data-wow-duration="0.9s"
-            >
-              <div className="refer__item refer__item__grid">
-                <div className="icon">
-                  <img src={boxregister} alt="boxregister" />
-                </div>
-                <div className="content">
-                  <h5>
-                    <a href="help-support.html" className="dtext">
-                      Register yor friends
-                    </a>
-                  </h5>
-                  <p>Your friends Register with using your referral link.</p>
-                </div>
-              </div>
-            </div>
-            <div
-              className="col-xl-3 col-lg-3 col-md-6 wow fadeInDown"
-              data-wow-duration="1s"
-            >
-              <div className="refer__item refer__item__grid">
-                <div className="icon">
-                  <img src={boxamount} alt="boxamount" />
-                </div>
-                <div className="content">
-                  <h5>
-                    <a href="help-support.html" className="dtext">
-                      Earn You
-                    </a>
-                  </h5>
-                  <p>$20. You can use these credits to take recharge.</p>
-                </div>
-              </div>
-            </div>
-            <div
-              className="col-xl-3 col-lg-3 col-md-6 wow fadeInDown"
-              data-wow-duration="1.5s"
-            >
-              <div className="refer__item refer__item__grid">
-                <div className="icon">
-                  <img src={boxwithdrow} alt="boxwithdrow" />
-                </div>
-                <div className="content">
-                  <h5>
-                    <a href="help-support.html" className="dtext">
-                      Withdrow
-                    </a>
-                  </h5>
-                  <p>$20. You can use these credits to take recharge.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            className="more text-center wow fadeInDown"
-            data-wow-duration="1.9s"
-          >
-            <a href="help-support.html" className="cmn__btn">
-              <span>Get Started Earn</span>
-            </a>
-          </div>
-        </div>
-        <div className="refercard">
-          <img src={redercards} alt="redercards" />
-        </div>
-        <div className="referman">
-          <img src={referman} alt="referman" />
-        </div>
-      </section>
+        </motion.section>
+      </main>
 
       <Footer />
     </>

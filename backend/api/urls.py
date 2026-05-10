@@ -2,6 +2,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import GoogleLogin, GoogleSignup, EmailSignUp
 from . import views
+from . import admin_api
 
 urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -19,6 +20,7 @@ urlpatterns = [
     path('giftcardorder/', views.GetGiftCardOrder.as_view(), name="giftcardorder"),
     path('giftcard-search/', views.GetSearchResult.as_view(), name="giftcardseach"),
     path('cart/', views.CartView.as_view(), name="cart"),
+    path('analytics/events/', views.AnalyticsEventView.as_view(), name="analytics_events"),
     path("aitimetopup/", views.AirtimeTopUpPurcahse.as_view(), name="airtime_top_up"),
     path("airtime-topup-order/", views.AirtimeSuccessOrder.as_view(), name="airtime_topup_order"),
     path("contact/", views.ContactView.as_view(), name="contact-us"),
@@ -26,6 +28,16 @@ urlpatterns = [
     path("account/update-profile/", views.UpdateProfile.as_view(), name="update_profile"),
     path('account/profile/', views.ProfileView.as_view(), name='profile'),
     path('account/delete/', views.AccountDeletionView.as_view(), name='delete_account'),
+    path("admin/login/", admin_api.AdminLoginView.as_view(), name="digishelf_admin_login"),
+    path("admin/configuration/", admin_api.AdminConfigurationView.as_view(), name="digishelf_admin_configuration"),
+    path("admin/dashboard/", admin_api.AdminDashboardView.as_view(), name="digishelf_admin_dashboard"),
+    path("admin/page-traffic/", admin_api.AdminPageTrafficView.as_view(), name="digishelf_admin_page_traffic"),
+    path("admin/users/<int:user_id>/", admin_api.AdminUserDetailView.as_view(), name="digishelf_admin_user_detail"),
+    path("admin/contacts/<int:contact_id>/read/", admin_api.AdminContactReadView.as_view(), name="digishelf_admin_contact_read"),
+    path("admin/contacts/<int:contact_id>/reply/", admin_api.AdminContactReplyView.as_view(), name="digishelf_admin_contact_reply"),
+    path("admin/payment-orders/<uuid:order_id>/approve/", admin_api.AdminApprovePaymentOrderView.as_view(), name="digishelf_admin_approve_order"),
+    path("admin/payment-orders/<uuid:order_id>/complete/", admin_api.AdminCompletePaymentOrderView.as_view(), name="digishelf_admin_complete_order"),
+    path("admin/payment-orders/<uuid:order_id>/", admin_api.AdminDeletePaymentOrderView.as_view(), name="digishelf_admin_delete_order"),
 
 
     

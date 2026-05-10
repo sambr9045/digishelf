@@ -1,418 +1,407 @@
 import React, { useContext, useState } from "react";
-import bitcoin from "../../assets/images/payment/bitcoin.png";
-import coins from "../../assets/images/payment/coins.png";
-import ae from "../../assets/images/payment/ae.png";
-import discover from "../../assets/images/payment/discover.png";
-import mastercard from "../../assets/images/payment/mastercard.png";
-import visa from "../../assets/images/payment/visa.png";
-import { TopUpContext } from "../../components/Context/TopUpContext";
-import ExchangeRateConverter from "../../components/ExchangeRateConverter";
-import { nanoid } from "nanoid";
-import { SessionContext } from "../../components/sessionContext";
-import { PaystackConsumer, usePaystackPayment } from "react-paystack";
-import { api_endpoint } from "../../components/constant";
-import {
-  TopUpAitimeFeeCalculatio,
-  ConvertGHStoUSD,
-} from "../../components/includes/Functions";
 import axios from "axios";
-import Loader from "../../components/includes/Loader";
+import { ArrowLeft, Copy, Loader2, Wallet } from "lucide-react";
+import { nanoid } from "nanoid";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+
+import { TopUpContext } from "../../components/Context/TopUpContext";
+import { SessionContext } from "../../components/sessionContext";
+import { api_endpoint } from "../../components/constant";
+import { TopUpAitimeFeeCalculatio } from "../../components/includes/Functions";
+import Loader from "../../components/includes/Loader";
+
+const TOPUP_PAYMENT_STORAGE_PREFIX = "digishelf:topup-payment:";
+
+const TOKENS = [
+  {
+    symbol: "USDC",
+    label: "USD Coin",
+    iconClass: "bg-[#2775ca]",
+  },
+  {
+    symbol: "USDT",
+    label: "Tether USD",
+    iconClass: "bg-[#26a17b]",
+  },
+];
+
+function formatTokenAmount(value) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) {
+    return "0.00";
+  }
+
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  });
+}
+
 export default function StepThree() {
   const {
     oparatorData,
     editNumber,
     setSteps,
     selectedOptinData,
-    paymentMethodSelect,
     fx_rate,
     country,
-    setPaymentMethodSelect,
-    setPaystackConfig,
     EmailAddress,
     operatorCountryData,
     isLoading,
-    setisLoading,
   } = useContext(TopUpContext);
   const { session } = useContext(SessionContext);
   const navigate = useNavigate();
 
-  const AmountPaid =
-    parseFloat(
-      TopUpAitimeFeeCalculatio(selectedOptinData.amount, country.country)[0]
-    ) + parseFloat(selectedOptinData.amount);
-  const handlePaymentProcessing = async (data) => {
-    const response = await processPayment(data);
-    if (response.status === "SUCCESSFUL") {
-      navigate(`/top-up/success/${response.customIdentifier}`);
-    }
+  const [paymentError, setPaymentError] = useState("");
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [selectedToken, setSelectedToken] = useState("USDC");
+  const [reference] = useState(() => nanoid(14));
+  const customerEmail = (EmailAddress || session?.user?.email || "").trim();
+
+  const payAmount = parseFloat(
+    selectedOptinData.payAmount || selectedOptinData.amount || 0,
+  );
+  const receiveAmount = parseFloat(
+    selectedOptinData.receiveAmount ||
+      (payAmount * parseFloat(fx_rate?.rate || 0)).toFixed(2),
+  );
+  const receiveCurrency =
+    selectedOptinData.receiveCurrency || fx_rate?.currencyCode;
+  const paymentCurrency = selectedOptinData.payCurrency || "USD";
+  const processingFee = parseFloat(
+    TopUpAitimeFeeCalculatio(payAmount, country.country)[0],
+  );
+  const amountPaid = processingFee + payAmount;
+  const paymentAmount = amountPaid.toFixed(6);
+  const tokenAmountLabel = `${formatTokenAmount(paymentAmount)} ${selectedToken}`;
+
+  const buildFulfillmentPayload = (order) => ({
+    transaction: {
+      reference,
+      payment_order_id: order.order_id,
+    },
+    paymentOrderId: order.order_id,
+    receiverAmount: receiveAmount.toFixed(2),
+    receiverCurrency: receiveCurrency,
+    ProcessingFee: processingFee.toFixed(2),
+    amountPaid: amountPaid.toFixed(2),
+    email: customerEmail,
+    userType: session && session.user !== null ? session.user : "guest",
+    PaymentCurreuncy: paymentCurrency,
+    PaymentMethod: "crypto",
+    ConvertedAmountToUsd: false,
+    oparatorData,
+    operatorCountryData,
+    editNumber,
+    ghana_cedis_rate: localStorage.getItem("exchangeRate")
+      ? JSON.parse(localStorage.getItem("exchangeRate")).GHS
+      : null,
+    country: country.country,
+  });
+
+  const savePendingPayment = (order) => {
+    localStorage.setItem(
+      `${TOPUP_PAYMENT_STORAGE_PREFIX}${order.order_id}`,
+      JSON.stringify({
+        orderId: order.order_id,
+        reference,
+        fulfillmentPayload: buildFulfillmentPayload(order),
+        createdAt: new Date().toISOString(),
+      }),
+    );
   };
 
-  console.log("handle payment is called");
+  const createCryptoOrder = async () => {
+    setPaymentError("");
+    if (!customerEmail) {
+      const message =
+        "Customer email is required before creating a crypto payment order.";
+      setPaymentError(message);
+      toast.error(message);
+      return;
+    }
+    setIsCreatingOrder(true);
 
-  const processPayment = async (data) => {
     try {
+      const fulfillmentPayload = buildFulfillmentPayload({ order_id: null });
       const response = await axios.post(
-        `${api_endpoint}/api/aitimetopup/`,
-        data
+        `${api_endpoint}/api/payments/orders/`,
+        {
+          amount: paymentAmount,
+          token_symbol: selectedToken,
+          fulfillment_type: "topup",
+          fulfillment_payload: fulfillmentPayload,
+        },
+        session?.accessToken
+          ? {
+              headers: {
+                Authorization: `Bearer ${session.accessToken}`,
+              },
+            }
+          : undefined,
       );
 
-      if (response.data) {
-        console.log(response.data.data);
-        // redirect to success page
-        setisLoading(false);
-
-        return response.data.data;
-      }
+      const order = response.data;
+      savePendingPayment(order);
+      navigate(`/top-up/payment/${order.order_id}`);
     } catch (error) {
-      console.log(error);
-      setisLoading(false);
-      toast.error("Something went wrong please try again!! Or contact suppose");
+      const message =
+        error?.response?.data?.error ||
+        "Could not create crypto payment order. Check backend payment configuration.";
+      setPaymentError(message);
+      toast.error(message);
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
-  const handleSuccess = (reference) => {
-    setisLoading(true);
 
-    // resposne
-
-    const data = {
-      transaction: reference,
-      receiverAmount: selectedOptinData.amount,
-      receiverCurrency: selectedOptinData.currency,
-      ProcessingFee: TopUpAitimeFeeCalculatio(
-        selectedOptinData.amount,
-        country.country
-      )[0],
-      amountPaid: AmountPaid,
-      email: EmailAddress,
-      userType: session && session.user !== null ? session.user : "guest",
-      PaymentCurreuncy: country.country === "GH" ? "GHS" : "USD",
-      PaymentMethod: paymentMethodSelect,
-      ConvertedAmountToUsd:
-        country.country == "GH"
-          ? ConvertGHStoUSD(selectedOptinData.amount)
-          : false,
-      oparatorData: oparatorData,
-      operatorCountryData: operatorCountryData,
-      editNumber: editNumber,
-      ghana_cedis_rate: localStorage.getItem("exchangeRate")
-        ? JSON.parse(localStorage.getItem("exchangeRate")).GHS
-        : null,
-      country: country.country,
-    };
-    console.log(data);
-    handlePaymentProcessing(data);
-  };
-
-  const handleClose = () => {
-    // implementation for  whatever you want to do when the Paystack dialog closed.
-    console.log("closed");
-    const data = {
-      receiverAmount: selectedOptinData.amount,
-      receiverCurrency: selectedOptinData.currency,
-      ProcessingFee: TopUpAitimeFeeCalculatio(
-        selectedOptinData.amount,
-        country.country
-      )[0],
-      amountPaid: AmountPaid,
-      email: EmailAddress,
-      userType: session && session.user !== null ? session.user : "guest",
-      PaymentCurreuncy: country.country === "GH" ? "GHS" : "USD",
-      PaymentMethod: paymentMethodSelect,
-      ConvertedAmountToUsd:
-        country.country == "GH"
-          ? ConvertGHStoUSD(selectedOptinData.amount)
-          : false,
-      oparatorData: oparatorData,
-      operatorCountryData: operatorCountryData,
-      editNumber: editNumber,
-      ghana_cedis_rate: localStorage.getItem("exchangeRate")
-        ? JSON.parse(localStorage.getItem("exchangeRate")).GHS
-        : null,
-    };
-  };
-
-  const config = {
-    reference: nanoid(14),
-    email: EmailAddress,
-    amount: Math.round(parseFloat(AmountPaid).toFixed(2) * 100), //Amount is in USD
-    currency: "GHS",
-    publicKey: "pk_test_2d258100e34a102a5137cdb2fae8f2e878f45b2d",
-  };
-  const initializePayment = usePaystackPayment(config);
-
-  const handlePaymentChange = (event) => {
-    setPaymentMethodSelect(event.target.value);
-  };
-
-  const HandlePayment = async () => {
-    initializePayment({
-      onSuccess: handleSuccess,
-      onClose: handleClose,
-      config: config,
-    });
+  const copyPaymentAmount = async () => {
+    try {
+      await navigator.clipboard.writeText(paymentAmount);
+      toast.success("Payment amount copied.");
+    } catch (error) {
+      toast.error("Could not copy payment amount.");
+    }
   };
 
   return (
     <>
-      {isLoading && (
-        <>
-          <Loader />
-        </>
-      )}
-      <div className=" p-0">
-        <div className="card border-0 p-0">
-          <div className="row align-items-center">
-            <div className="col-12 text-left mb-4">
-              <h5 className="font-weight-bold">
-                <span style={{ cursor: "pointer" }} onClick={() => setSteps(2)}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="21"
-                    height="21"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M19 12H6M12 5l-7 7 7 7" />
-                  </svg>
-                </span>
-                &nbsp;&nbsp; Your order
-              </h5>
+      {isLoading && <Loader />}
+
+      <div className="space-y-5">
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-full border border-[#eadfe7] bg-white px-4 py-2 text-sm font-black text-[#665b67] transition hover:border-[#551839]/30 hover:text-[#551839]"
+          onClick={() => setSteps(2)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to amount
+        </button>
+
+        <div className="md:overflow-hidden md:rounded md:border md:border-[#eadfe7] md:bg-white md:shadow-[0_22px_70px_rgba(33,23,34,0.08)]">
+          <div className="grid gap-5 p-0 md:p-5 lg:p-6">
+            <div className="flex items-center gap-3 rounded bg-[#211722] p-5 text-white">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#10ac84]">
+                <Wallet className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="mb-1 text-xs font-black uppercase tracking-[0.24em] text-[#9ff1dd]">
+                  Crypto payment
+                </p>
+                <p className="mb-0 text-sm font-bold text-white/70">
+                  Pay with Ethereum ERC20 stablecoins.
+                </p>
+              </div>
             </div>
 
-            <div className="col-md-12 mb-3 mb-md-0">
-              <div className="d-flex align-items-center justify-content-between">
-                <div className="d-flex align-items-center">
-                  <p className="mb-1 font-weight-bold mr-2">{editNumber}</p>
-                </div>
-
-                <div className="d-flex align-items-center">
-                  <img
-                    src={oparatorData.data.logoUrls[2]}
-                    alt="Vodafone"
-                    style={{
-                      width: "20px",
-                      marginRight: "10px",
-                    }}
-                  />
-
-                  <span
-                    onClick={() => {
-                      setSteps(1);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="21"
-                      height="21"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon>
-                    </svg>
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] xl:items-start">
+              <div className="self-start rounded border border-[#eadfe7] bg-[#fbf8f4] p-5 sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#eadfe7] pb-5">
+                  <div>
+                    <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-[#9a8b97]">
+                      Payment summary
+                    </p>
+                    <p className="mb-0 text-sm font-bold text-[#665b67]">
+                      Review the recipient and amount before continuing.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.18em] text-[#551839] shadow-sm">
+                    ERC20
                   </span>
                 </div>
-              </div>
 
-              <div className="mt-3">
-                <p className="text-muted mb-1">Receives</p>
-                <h4 className="font-weight-bold text__base">
-                  <ExchangeRateConverter
-                    receiverCurrencyCode={fx_rate.currencyCode}
-                    senderCountry={country.country}
-                    Amount={selectedOptinData.amount}
-                    fx_rate={fx_rate.rate}
-                  />
-                </h4>
-              </div>
-              <hr />
-              <div>
-                <div className="row">
-                  <div className="col-12">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <p className="mb-1 text-muted">Top-up subtotal</p>
-                      <b>
-                        <p className="mb-1 ">
-                          {selectedOptinData.amount}{" "}
-                          {selectedOptinData.currency}
+                <div className="mt-5 grid gap-4">
+                  <div className="border-b border-[#eadfe7] pb-4 sm:rounded sm:border sm:bg-white sm:p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                          Recipient number
                         </p>
-                      </b>
+                        <p className="mb-1 text-xl font-black tracking-[-0.03em] text-[#211722]">
+                          {editNumber}
+                        </p>
+                        <p className="mb-0 text-sm font-bold text-[#665b67]">
+                          {oparatorData?.data?.name || "Mobile network"}
+                        </p>
+                      </div>
+                      {oparatorData?.data?.logoUrls?.[2] && (
+                        <img
+                          src={oparatorData.data.logoUrls[2]}
+                          alt={oparatorData?.data?.name}
+                          className="h-10 w-auto object-contain"
+                        />
+                      )}
                     </div>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <p className="mb-1 text-muted">Top-up fee</p>
-                      <p className="mb-1 ">
-                        <b>
-                          {
-                            TopUpAitimeFeeCalculatio(
-                              selectedOptinData.amount,
-                              country.country
-                            )[0]
-                          }
-                          &nbsp;
-                          {
-                            TopUpAitimeFeeCalculatio(
-                              selectedOptinData.amount,
-                              country.country
-                            )[1]
-                          }
-                        </b>
-                      </p>
-                    </div>
+                  </div>
 
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <p className="mb-0 font-weight-bold text-muted">
-                        Your Total
-                      </p>
-                      <p className="mb-0 font-weight-bold ">
-                        <b>
-                          {(
-                            parseFloat(
-                              TopUpAitimeFeeCalculatio(
-                                selectedOptinData.amount,
-                                country.country
-                              )[0]
-                            ) + parseFloat(selectedOptinData.amount)
-                          ).toFixed(2)}
-                          &nbsp;
-                          {
-                            TopUpAitimeFeeCalculatio(
-                              selectedOptinData.amount,
-                              country.country
-                            )[1]
-                          }
-                        </b>
-                      </p>
+                  <div className="sm:rounded sm:border sm:border-[#eadfe7] sm:bg-white sm:p-4">
+                    <SummaryRow
+                      label="Recipient receives"
+                      value={`${receiveAmount.toFixed(2)} ${receiveCurrency}`}
+                    />
+                    <SummaryRow
+                      label="You pay"
+                      value={`${payAmount.toFixed(2)} ${paymentCurrency}`}
+                    />
+                    <SummaryRow
+                      label="Top-up fee"
+                      value={`${processingFee.toFixed(2)} ${paymentCurrency}`}
+                      withBorder={false}
+                    />
+
+                    <div className="mt-4 rounded bg-[#551839] px-4 py-4 text-white">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-white/60">
+                            Total due
+                          </p>
+                          <p className="mb-0 text-3xl font-black tracking-[-0.05em] text-white">
+                            {tokenAmountLabel}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                          onClick={copyPaymentAmount}
+                          aria-label="Copy payment amount"
+                          title="Copy amount"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <p className="mb-0 text-sm font-bold text-white/70">
+                          on Ethereum ERC20
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-2 choose_payment mt-2">
-                <div className="card border-0">
-                  <div className="card-header border-0 p-0">
-                    <h6>Choose Payment</h6>
-                  </div>
-                  <div className="card-body p-0 mt-4">
-                    <div className="form-check border pt-3 pb-3 pl-3 mb-2">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="flexRadioDefault"
-                        id="flexRadioDefault1"
-                        value="cbc"
-                        checked={paymentMethodSelect === "cbc" ? true : false}
-                        onChange={handlePaymentChange}
-                      />
-                      <label
-                        className="form-check-label"
-                        htmlFor="flexRadioDefault1"
-                      >
-                        Debit/Credit cards &nbsp;
-                        <img
-                          src={visa}
-                          alt="vida"
-                          className="ml-2 payment-icone"
-                        />
-                        &nbsp;
-                        <img
-                          src={mastercard}
-                          alt="mastercard"
-                          className="ml-2 payment-icone"
-                        />
-                        &nbsp;
-                        <img
-                          src={discover}
-                          alt="discover"
-                          className="ml-2 payment-icone"
-                        />
-                        &nbsp;
-                        <img src={ae} alt="ae" className="ml-2 payment-icone" />
-                      </label>
-                    </div>
+              <div className="rounded border border-[#eadfe7] bg-[#fbf8f4] p-5 sm:p-6">
+                <p className="mb-1 text-xs font-black uppercase tracking-[0.2em] text-[#9a8b97]">
+                  Payment token
+                </p>
+                <p className="mb-4 text-sm font-bold text-[#665b67]">
+                  Choose the stablecoin you want to send.
+                </p>
 
-                    <div className="form-check border pt-3 pb-3 pl-3 mb-2">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        value="crypto"
-                        name="flexRadioDefault"
-                        id="flexRadioDefault2"
-                        checked={
-                          paymentMethodSelect === "crypto" ? true : false
-                        }
-                        onChange={handlePaymentChange}
-                      />
-                      <label
-                        className="form-check-label"
-                        htmlFor="flexRadioDefault2"
-                      >
-                        Crypto Currency &nbsp;
-                        <img
-                          src={bitcoin}
-                          alt="bitcoin"
-                          className="ml-2 payment-icone"
-                        />
-                        <img
-                          src={coins}
-                          alt="ethereum"
-                          className="ml-2 payment-icone"
-                        />
-                      </label>
-                    </div>
-                  </div>
+                <div className="grid gap-3">
+                  {TOKENS.map((token) => (
+                    <button
+                      key={token.symbol}
+                      type="button"
+                      className={`rounded border p-4 text-left transition ${
+                        selectedToken === token.symbol
+                          ? "border-[#551839] bg-[#fff7fb] shadow-[0_14px_35px_rgba(85,24,57,0.08)]"
+                          : "border-[#eadfe7] bg-white hover:border-[#551839]/30"
+                      }`}
+                      onClick={() => setSelectedToken(token.symbol)}
+                    >
+                      <span className="flex items-center gap-3">
+                        <CoinIcon token={token} />
+                        <span className="min-w-0">
+                          <span className="block text-lg font-black text-[#211722]">
+                            {token.symbol}
+                          </span>
+                          <span className="mt-1 block text-sm font-bold text-[#665b67]">
+                            {token.label}
+                          </span>
+                          <span className="mt-1 block text-xs font-black uppercase tracking-[0.16em] text-[#9a8b97]">
+                            Ethereum ERC20
+                          </span>
+                        </span>
+                      </span>
+                    </button>
+                  ))}
                 </div>
+
+                <button
+                  type="button"
+                  className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 text-base font-black text-white shadow-lg shadow-[#551839]/15 transition hover:bg-[#44122d] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={createCryptoOrder}
+                  disabled={isCreatingOrder}
+                >
+                  {isCreatingOrder ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Creating payment page
+                    </>
+                  ) : (
+                    <>
+                      Continue to {selectedToken} payment
+                      <Wallet className="h-5 w-5" />
+                    </>
+                  )}
+                </button>
               </div>
             </div>
+
+            {paymentError && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+                {paymentError}
+              </div>
+            )}
           </div>
-          <a
-            href="#"
-            className="cmn__btn mb-2 mt-2 text-center"
-            onClick={HandlePayment}
-          >
-            {paymentMethodSelect === "cbc" && (
-              <>
-                <span>Pay with Debit/Credit cards</span>
-              </>
-            )}
-
-            {paymentMethodSelect === "crypto" && (
-              <>
-                <span>Pay with Crypto</span>
-              </>
-            )}
-
-            {!paymentMethodSelect && (
-              <>
-                <span>Continue to payment</span>
-              </>
-            )}
-
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
-            </svg>
-          </a>
         </div>
       </div>
     </>
+  );
+}
+
+function SummaryRow({ label, value, withBorder = true }) {
+  return (
+    <div
+      className={`flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
+        withBorder ? "border-b border-[#efe7ed]" : ""
+      }`}
+    >
+      <p className="mb-0 text-sm font-bold text-[#665b67]">{label}</p>
+      <p className="mb-0 text-left text-lg font-black tracking-[-0.03em] text-[#211722] sm:text-right">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function CoinIcon({ token }) {
+  if (token.symbol === "USDT") {
+    return (
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#26a17b] shadow-sm">
+        <svg
+          viewBox="0 0 48 48"
+          aria-hidden="true"
+          className="h-7 w-7"
+          fill="none"
+        >
+          <path
+            fill="#fff"
+            d="M35.8 12H12.2v5.7h8.9v3.5c-7.2.3-12.6 1.7-12.6 3.4s5.4 3.1 12.6 3.4v8h5.8v-8c7.2-.3 12.6-1.7 12.6-3.4s-5.4-3.1-12.6-3.4v-3.5h8.9V12Zm-11.8 14.2c-7.7 0-13.9-1.1-13.9-2.4 0-1.1 4.7-2.1 11-2.3v4.1c.9.1 1.9.1 2.9.1s2 0 2.9-.1v-4.1c6.3.2 11 1.2 11 2.3 0 1.3-6.2 2.4-13.9 2.4Z"
+          />
+        </svg>
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2775ca] shadow-sm">
+      <svg
+        viewBox="0 0 48 48"
+        aria-hidden="true"
+        className="h-7 w-7"
+        fill="none"
+      >
+        <path
+          fill="#fff"
+          d="M24 42C14.1 42 6 33.9 6 24S14.1 6 24 6s18 8.1 18 18-8.1 18-18 18Zm0-3.2c8.2 0 14.8-6.6 14.8-14.8S32.2 9.2 24 9.2 9.2 15.8 9.2 24 15.8 38.8 24 38.8Z"
+        />
+        <path
+          fill="#fff"
+          d="M22.4 34.4v-3c-3.1-.4-5.5-1.8-7.1-4.1l3.1-2.1c1.3 1.8 3.1 2.7 5.6 2.7 2.3 0 3.7-.8 3.7-2.2 0-1.2-.9-1.8-4.3-2.3-4.7-.7-7.1-2.5-7.1-5.8 0-3 2.4-5.2 6.1-5.7V9.6h3.1v2.5c2.5.4 4.4 1.5 5.8 3.4l-3 2.1c-1-1.4-2.4-2.1-4.5-2.1-2.2 0-3.4.8-3.4 2 0 1.1.9 1.7 4.2 2.2 4.8.7 7.2 2.5 7.2 5.9 0 3.2-2.5 5.4-6.3 5.9v2.9h-3.1Z"
+        />
+      </svg>
+    </span>
   );
 }

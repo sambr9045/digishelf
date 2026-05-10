@@ -6,8 +6,11 @@ import { api_endpoint } from "./constant";
 import { json } from "react-router-dom";
 import Loader from "./includes/Loader";
 import { ToastContainer, toast } from "react-toastify";
+import { buildCartAnalyticsSnapshot, trackAnalyticsEvent } from "../utils/analytics";
 const SessionContext = createContext();
 import countryToCurrency from "country-to-currency";
+
+const SESSION_REFRESH_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 const SessionProvider = ({ children }) => {
   const [session, setSession] = useState({
@@ -26,7 +29,7 @@ const SessionProvider = ({ children }) => {
   const [pc, setPc] = useState();
   const [gpc, setGpc] = useState();
   const [yps, setYps] = useState();
-  const [mainCurrency, setMainCurrency] = useState("");
+  const [mainCurrency, setMainCurrency] = useState("USD");
   // Get cart from database
   const FetchDataBaseCart = async (session) => {
     const response = await axios.get(`${api_endpoint}/api/cart/`, {
@@ -73,6 +76,29 @@ const SessionProvider = ({ children }) => {
     return cart.length > 0 ? Math.max(cart.map((item) => item.id)) + 1 : 1;
   };
 
+  const trackCartEvent = (eventType, item, itemsSnapshot) => {
+    if (!item?.productId && !item?.productName) {
+      return;
+    }
+
+    trackAnalyticsEvent(
+      {
+        event_type: eventType,
+        product_id: String(item.productId || ""),
+        product_name: item.productName || "Gift card",
+        quantity: Number(item.quantity || 0),
+        ...buildCartAnalyticsSnapshot(itemsSnapshot),
+        metadata: {
+          recipient_amount: item.recipientAmount || "",
+          recipient_currency: item.recipientCurrency || "",
+          amount_to_pay: item.AmountToPay || "",
+          currency_to_pay_in: item.currencyToPayIn || "",
+        },
+      },
+      { token: session?.accessToken || null },
+    );
+  };
+
   const addToCart = async (item) => {
     if (session.user) {
       const loading = toast.loading("Adding to cart");
@@ -86,12 +112,14 @@ const SessionProvider = ({ children }) => {
           },
         });
         if (response.data) {
+          const trackedCart = [...(Array.isArray(cart) ? cart : []), item];
           toast.update(loading, {
             render: "Item added to card successfully",
             type: "success",
             isLoading: false,
             autoClose: 5000,
           });
+          trackCartEvent("giftcard_add_to_cart", item, trackedCart);
           setCartUpdated(true);
         }
       } catch (error) {
@@ -131,6 +159,7 @@ const SessionProvider = ({ children }) => {
         const updatedCart = [...prevCart, newItem];
         localStorage.setItem("cart", JSON.stringify(updatedCart));
         toast.success("Item added to cart successfully !");
+        trackCartEvent("giftcard_add_to_cart", newItem, updatedCart);
         return updatedCart;
       });
     }
@@ -138,6 +167,8 @@ const SessionProvider = ({ children }) => {
 
   const removeFromCart = async (itemId) => {
     if (session && session.user) {
+      const removedItem = cart.find((item) => item.id === itemId);
+      const updatedCart = cart.filter((item) => item.id !== itemId);
       const response = await axios.delete(`${api_endpoint}/api/cart/`, {
         params: { id: itemId },
         headers: {
@@ -146,18 +177,34 @@ const SessionProvider = ({ children }) => {
         },
       });
       if (response.data) {
+        if (removedItem) {
+          trackCartEvent("cart_item_removed", removedItem, updatedCart);
+        }
         setCartUpdated(true);
       }
     } else {
       setCart((prevCart) => {
+        const removedItem = prevCart.find((item) => item.id === itemId);
         const updatedCart = prevCart.filter((item) => item.id !== itemId);
         localStorage.setItem("cart", JSON.stringify(updatedCart));
+        if (removedItem) {
+          trackCartEvent("cart_item_removed", removedItem, updatedCart);
+        }
         return updatedCart;
       });
     }
   };
   const updateCartItem = async (itemId, quantity) => {
     if (session && session.accessToken) {
+      const updatedCart = cart.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              quantity: quantity,
+            }
+          : item
+      );
+      const updatedItem = updatedCart.find((item) => item.id === itemId);
       const response = await axios.put(
         `${api_endpoint}/api/cart/`,
         { quantity: quantity },
@@ -171,6 +218,9 @@ const SessionProvider = ({ children }) => {
       );
 
       if (response.data) {
+        if (updatedItem) {
+          trackCartEvent("cart_quantity_updated", updatedItem, updatedCart);
+        }
         setCartUpdated(true);
       }
     } else {
@@ -185,6 +235,10 @@ const SessionProvider = ({ children }) => {
         );
         console.log(cart);
         localStorage.setItem("cart", JSON.stringify(updatedCart));
+        const updatedItem = updatedCart.find((item) => item.id === itemId);
+        if (updatedItem) {
+          trackCartEvent("cart_quantity_updated", updatedItem, updatedCart);
+        }
         return updatedCart;
       });
     }
@@ -242,30 +296,26 @@ const SessionProvider = ({ children }) => {
     try {
       const response = await axios.get(get_country_by_api);
       if (response.data) {
+        const detectedCountry =
+          response.data.country_code || response.data.country || "US";
+        const detectedCallingCode =
+          response.data.country_calling_code?.replace(/\+/g, "") || "1";
+
         localStorage.setItem("ip", response.data.ip);
-        const result = countries.filter((country) =>
-          country.alpha2Code
-            .toLowerCase()
-            .includes(response.data.country.toLowerCase())
-        );
 
         setCountry({
-          country: response.data.country_code,
-          country_code: response.data.country_calling_code.replace(/\+/g, ""),
+          country: detectedCountry.toUpperCase(),
+          country_code: detectedCallingCode,
         });
 
-        console.log(response.data.country);
-
-        // if (response.data.country === "GH") {
-        //   setMainCurrency("GHS");
-        // } else {
-        //   setMainCurrency("USD");
-        // }
-        const currency = response.data.currency || "USD"; // Fallback to USD
-        setMainCurrency(currency);
+        setMainCurrency("USD");
       }
     } catch (error) {
       console.log(error);
+      setCountry({
+        country: "US",
+        country_code: "1",
+      });
       setMainCurrency("USD");
     }
   };
@@ -286,7 +336,7 @@ const SessionProvider = ({ children }) => {
     if (session.accessToken) {
       const interval = setInterval(() => {
         refreshAccessToken();
-      }, 15 * 60 * 1000); // Refresh access token every 15 minutes
+      }, SESSION_REFRESH_INTERVAL_MS);
       return () => clearInterval(interval);
     }
   }, [session.accessToken, country]);

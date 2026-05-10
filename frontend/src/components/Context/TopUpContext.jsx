@@ -7,31 +7,36 @@ import { api_endpoint } from "../constant";
 
 const TopUpContext = createContext();
 
-const TopUpProvider = ({ children }) => {
+const TopUpProvider = ({ children, initialData = {} }) => {
   const [index, setIndex] = useState(0);
   const { country } = useContext(SessionContext);
   const [number, setNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
-  const [steps, setSteps] = useState(1);
-  const [oparatorData, setOpararatorData] = useState([]);
-  const [editNumber, setEditNumber] = useState();
+  const [steps, setSteps] = useState(initialData.steps ?? 1);
+  const [oparatorData, setOpararatorData] = useState(
+    initialData.oparatorData ?? [],
+  );
+  const [editNumber, setEditNumber] = useState(initialData.editNumber);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customAmount, setCustomAmount] = useState("");
   const [isLoading, setisLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState("mostPopular");
   const [selectedOptinData, setSelectedOptionData] = useState("");
-  const [paymentMethodSelect, setPaymentMethodSelect] = useState("cdc");
+  const [paymentMethodSelect, setPaymentMethodSelect] = useState("crypto");
   const [EmailAddress, setEmailAddress] = useState("");
   const [EmailError, setEmailError] = useState("");
-  const [paystackConfig, setPaystackConfig] = useState([]);
-  const [operatoCountryData, setOperatorCountryData] = useState();
-  const [suggestedAmountsMap, setSuggestedAmountsMap] = useState([]);
-  const [fx_rate, setFx_rate] = useState();
-  const [autoDetected, setAutoDetected] = useState(true);
+  const [operatoCountryData, setOperatorCountryData] = useState(
+    initialData.operatorCountryData,
+  );
+  const [suggestedAmountsMap, setSuggestedAmountsMap] = useState(
+    initialData.suggestedAmountsMap ?? [],
+  );
+  const [fx_rate, setFx_rate] = useState(initialData.fx_rate);
+  const [autoDetected, setAutoDetected] = useState(
+    initialData.autoDetected ?? true,
+  );
 
   const [selectedValue, setSelectedValue] = useState({ country });
-
-  // configuring object for paystack initialization
 
   const handleOptionClick = (option) => {
     setSelectedOption(option.name);
@@ -78,7 +83,7 @@ const TopUpProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    setPaymentMethodSelect("cbc");
+    setPaymentMethodSelect("crypto");
   }, []);
 
   return (
@@ -109,8 +114,6 @@ const TopUpProvider = ({ children }) => {
         setEmailError,
         EmailAddress,
         setEmailAddress,
-        paystackConfig,
-        setPaystackConfig,
         operatoCountryData,
         setOperatorCountryData,
         suggestedAmountsMap,

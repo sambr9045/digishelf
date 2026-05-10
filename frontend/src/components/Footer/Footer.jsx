@@ -1,177 +1,138 @@
 import React from "react";
-import logo from "../../assets/images/logo.png";
-import logo4 from "../../assets/images/NLogo/logo4.png";
-
-import twitter from "../../assets/images/svg/twitter.png";
-import facebook from "../../assets/images/svg/facebook.png";
-import ball from "../../assets/images/svg/ball.svg";
-import linkedin from "../../assets/images/svg/linkedin.svg";
+import { ArrowUpRight, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import XIcon from "@mui/icons-material/X";
+
+import logo5 from "../../assets/images/NLogo/logo5.png";
+
+const footerLinks = [
+  { label: "Top-up", to: "/" },
+  { label: "Gift Cards", to: "/gift-cards" },
+  { label: "About", to: "/about" },
+  { label: "Contact", to: "/contact" },
+];
+
+const supportLinks = [
+  { label: "Support", to: "/contact" },
+  { label: "Terms of Use", to: "/terms-of-use" },
+  { label: "Privacy Policy", to: "/privacy-policy" },
+];
+
+const socialLinks = [
+  {
+    label: "Facebook",
+    href: "https://facebook.com/digishelves",
+    Icon: FacebookIcon,
+  },
+  {
+    label: "LinkedIn",
+    href: "https://linkedin.com/company/digishelves",
+    Icon: LinkedInIcon,
+  },
+  { label: "X", href: "https://x.com/digishelves", Icon: XIcon },
+];
+
 export default function Footer() {
   return (
-    <>
-      <footer className="footer__section bgsection pt-120">
-        <div className="container">
-          <div className="footer__wrapper">
-            <div className="footer__top pb-120">
-              <div className="row gy-5 gx-5">
-                <div
-                  className="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 wow fadeInUp"
-                  data-wow-duration="1s"
-                >
-                  <div className="footer__widget">
-                    <div className="widget__head mb__20">
-                      <a href="index.html" className="footer__logo">
-                        <img
-                          src={logo4}
-                          alt="logo"
-                          style={{ width: "200px", height: "auto" }}
-                        />
-                      </a>
-                    </div>
-                    <p className="pratext mb__20 fz-18">
-                      Empowering Connectivity, Gifting Convenience, Settling
-                      Bills with Ease
-                    </p>
-                    <ul className="social d-flex gap-3">
-                      <li>
-                        <a href="javascript:void(0)" className="social__icon">
-                          <img src={facebook} alt="svg" />
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="social__icon">
-                          <img src={linkedin} alt="svg" />
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="social__icon">
-                          <img src={twitter} alt="svg" />
-                        </a>
-                      </li>
-                      {/* <li>
-                        <a href="javascript:void(0)" className="social__icon">
-                          <img src={ball} alt="svg" />
-                        </a>
-                      </li> */}
-                    </ul>
-                  </div>
-                </div>
-                <div
-                  className="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 wow fadeInUp"
-                  data-wow-duration="1.5s"
-                >
-                  <div className="footer__widget">
-                    <div className="widget__head mb__20">
-                      <h4 className="fz-24 pratext">Quick Links</h4>
-                    </div>
-                    <div className="widget__link">
-                      <Link to="/" className="link fz-18 pratext">
-                        Top-Up
-                      </Link>
-                      <Link to="/about" className="link fz-18 pratext">
-                        About
-                      </Link>
+    <footer className="relative overflow-hidden border-t border-[#551839]/20 bg-[#211722] font-display text-white">
+      <div className="absolute left-[-10rem] top-[-10rem] h-80 w-80 rounded-full bg-[#10ac84]/15 blur-3xl" />
+      <div className="absolute bottom-[-12rem] right-[-8rem] h-96 w-96 rounded-full bg-[#551839]/35 blur-3xl" />
 
-                      {/* <a href="index.html" className="link fz-18 pratext">
-                        Bill Payment
-                      </a> */}
+      <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.7fr_1.1fr]">
+          <div>
+            <Link to="/" className="inline-flex">
+              <img
+                src={logo5}
+                alt="Digishelves"
+                className="h-auto w-44 brightness-0 invert"
+              />
+            </Link>
 
-                      <Link to="/gift-cards" className="link fz-18 pratext">
-                        Gift cards
-                      </Link>
-                      <Link to="/contact" className="link fz-18 pratext">
-                        Contact
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 wow fadeInUp"
-                  data-wow-duration="1.7s"
-                >
-                  <div className="footer__widget">
-                    <div className="widget__head mb__20">
-                      <h4 className="fz-24 pratext">Address</h4>
-                    </div>
-                    <div className="widget__link">
-                      <a
-                        href="javascript:void(0)"
-                        className="link fz-18 pratext"
-                      >
-                        <span className="d-block">(480) 555-0103</span>
-                        <span>(406) 555-0120</span>
-                      </a>
-                      <a
-                        href="javascript:void(0)"
-                        className="link fz-18 pratext"
-                      >
-                        <span className="d-block">support@digishelf.com</span>
-                        <span>info@digishelf.com</span>
-                      </a>
-                      <a
-                        href="javascript:void(0)"
-                        className="link fz-18 pratext"
-                      >
-                        285 Great North Road, Grey Lynn, Auckland 1021
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 wow fadeInUp"
-                  data-wow-duration="1.9s"
-                >
-                  <div className="footer__widget">
-                    <div className="widget__head mb__20">
-                      <h4 className="fz-24 pratext">Newsletter</h4>
-                    </div>
-                    <div className="widget__link">
-                      <p className="fz-18 pratext mb__30">
-                        Subscribe our newsletter to get our latest update & news
-                      </p>
-                      <form
-                        action="javacript:void(0)"
-                        className="d-flex justify-content-between"
-                      >
-                        <input type="email" placeholder="Your mail address" />
-                        <button type="submit" className="cmn__btn">
-                          <span>
-                            <i className="material-symbols-outlined">
-                              rocket_launch
-                            </i>
-                          </span>
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="mb-0 mt-5 max-w-sm text-base leading-7 text-white/62">
+              Fast airtime top-ups, giflt card with crypto currency
+            </p>
 
-            <div className="footer__bottom d-flex">
-              <p className="fz-18 pratext">
-                Copyright &copy;2024
-                <a href="/" className="base">
-                  &nbsp;Digishelf.
+            <div className="mt-6 flex gap-3">
+              {socialLinks.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={item.label}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 transition hover:border-[#10ac84]/40 hover:bg-[#10ac84]/10 hover:text-[#9ff1dd]"
+                >
+                  <item.Icon sx={{ fontSize: 18 }} />
                 </a>
-                All Rights Reserved
-              </p>
-              <ul className="footer__bottom__link">
-                <li>
-                  <a href="help-support.html">Support</a>
-                </li>
-                <li>
-                  <a href="help-support.html">Terms of Use</a>
-                </li>
-                <li>
-                  <a href="help.html">Privacy Policy</a>
-                </li>
-              </ul>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-[0.22em] text-[#9ff1dd]">
+              Explore
+            </h3>
+            <div className="mt-5 grid gap-3">
+              {footerLinks.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className="group inline-flex items-center justify-between py-2 text-base font-black text-white/72 transition hover:text-white"
+                >
+                  {item.label}
+                  <ArrowUpRight className="h-4 w-4 opacity-0 transition group-hover:opacity-100" />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-[0.22em] text-[#9ff1dd]">
+              Contact
+            </h3>
+            <div className="mt-5 grid gap-4 text-white/75 sm:grid-cols-2 lg:grid-cols-1">
+              <a
+                href="mailto:info@digishelves.com"
+                className="flex gap-3 font-bold transition hover:text-white"
+              >
+                <Mail className="mt-0.5 h-5 w-5 shrink-0 text-[#9ff1dd]" />
+                <span>
+                  <span className="block">info@digishelves.com</span>
+                </span>
+              </a>
+
+              <div className="flex gap-3 font-bold sm:col-span-2 lg:col-span-1">
+                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#9ff1dd]" />
+                <span>285 Great North Road, Grey Lynn, Auckland 1021</span>
+              </div>
             </div>
           </div>
         </div>
-      </footer>
-    </>
+
+        <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm font-bold text-white/58 md:flex-row md:items-center md:justify-between">
+          <p className="mb-0">
+            Copyright &copy; {new Date().getFullYear()}{" "}
+            <Link to="/" className="text-white">
+              Digishelves.
+            </Link>{" "}
+            All rights reserved.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {supportLinks.map((item) => (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="transition hover:text-white"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }

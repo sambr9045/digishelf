@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
+from email.utils import formataddr
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +30,19 @@ SECRET_KEY = "django-insecure-=r8*1k*4y1au8cw_3n$8j$@-c4m0r0$$g7_=x==$*429w&s5xq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["b3a0-102-176-94-199.ngrok-free.app", "127.0.0.1","localhost:8000", "49ed-102-176-94-252.ngrok-free.app"]
+ALLOWED_HOSTS = [
+    "b3a0-102-176-94-199.ngrok-free.app",
+    "127.0.0.1",
+    "localhost",
+    "49ed-102-176-94-252.ngrok-free.app",
+]
+
+EXTRA_ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
+ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS)
 
 
 # Application definition
@@ -44,6 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     'rest_framework',
     'api',
+    'payments',
     'rest_framework_simplejwt',
     'social_django',
     'corsheaders',
@@ -60,8 +74,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=50),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=24),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
@@ -96,6 +110,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -103,12 +118,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'corsheaders.middleware.CorsMiddleware',  # Add this line
 ]
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
     'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'http://127.0.0.1:8000'
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -138,16 +154,26 @@ WSGI_APPLICATION = "digishelf.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-   "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "digishelf3",
-        "USER": "postgres",
-        "PASSWORD": "90454544",
-        "HOST": "localhost",  # Or your PostgreSQL server IP
-        "PORT": "5432",       # Or your PostgreSQL server port
+DB_ENGINE = os.getenv("DB_ENGINE", "sqlite").strip().lower()
+
+if DB_ENGINE in {"postgres", "postgresql", "django.db.backends.postgresql"}:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB", "digishelf"),
+            "USER": os.getenv("POSTGRES_USER", "postgres"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+            "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+            "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
@@ -198,3 +224,17 @@ CACHES = {
         'LOCATION': 'unique-snowflake',
     }
 }
+
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() == "true"
+DEFAULT_FROM_ADDRESS = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "info@digishelves.com")
+DEFAULT_FROM_NAME = os.getenv("DEFAULT_FROM_NAME", "DIGISHELVES")
+DEFAULT_FROM_EMAIL = formataddr((DEFAULT_FROM_NAME, DEFAULT_FROM_ADDRESS))

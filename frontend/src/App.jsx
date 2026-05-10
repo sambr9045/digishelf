@@ -1,81 +1,147 @@
-import { createBrowserRouter } from "react-router-dom";
-import Home from "./pages/Home";
+import { Outlet, createBrowserRouter } from "react-router-dom";
+
+import AnalyticsTracker from "./components/AnalyticsTracker";
+import MyAccount from "./components/accounts/MyAccount";
+import Checkout from "./components/payment/Checkout";
+import CryptoTopUpPayment from "./components/payment/CryptoTopUpPayment";
+import PaymentSuccess from "./components/payment/PaymentSuccess";
+import TopUpSuccess from "./components/payment/TopUpSuccess";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Details from "./pages/Details";
+import GiftcardType from "./pages/GiftcardType";
+import Giftcards from "./pages/Giftcards";
+import Home from "./pages/Home";
+import NotFound from "./pages/NotFound";
+import Search from "./pages/Search";
 import Signin from "./pages/Signin";
 import Signup from "./pages/Signup";
-import Giftcards from "./pages/Giftcards";
-import GiftcardType from "./pages/GiftcardType";
-import Details from "./pages/Details";
-import PaymentSuccess from "./components/payment/PaymentSuccess";
-import Checkout from "./components/payment/Checkout";
-import Search from "./pages/Search";
-import TopUpSuccess from "./components/payment/TopUpSuccess";
-import MyAccount from "./components/accounts/MyAccount";
+import TopUpCheckout from "./pages/TopUpCheckout";
+import TermsOfUse from "./pages/TermsOfUse";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProfileSettings from "./components/accounts/ProfileSettings";
 
-import "./assets/css/index.css";
+function RootEntry() {
+  if (window.location.hostname.startsWith("admin.")) {
+    return <AdminDashboard />;
+  }
+
+  return <Home />;
+}
+
+function RootLayout() {
+  return (
+    <>
+      <AnalyticsTracker />
+      <Outlet />
+    </>
+  );
+}
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
-  },
-  {
-    path: "/about",
-    element: <About />,
-  },
-  {
-    path: "/contact",
-    element: <Contact />,
-  },
-  {
-    path: "/signin",
-    element: <Signin />,
-  },
-  {
-    path: "/signup",
-    element: <Signup />,
-  },
-  {
-    path: "/gift-cards",
-    element: <Giftcards />,
-  },
-  {
-    path: "/gift-card/:type",
-    element: <GiftcardType />,
-  },
-  {
-    path: "/gift-card/:name/:productId",
-    element: <Details />,
-  },
-  {
-    path: "/gift-card/payment-complete/:reference",
-    element: <PaymentSuccess />,
-  },
-  {
-    path: "/checkout",
-    element: <Checkout />,
-  },
-  {
-    path: "/giftcard/search",
-    element: <Search />,
-  },
-  {
-    path: "/top-up/success/:reference",
-    element: <TopUpSuccess />,
-  },
-  {
-    path: "/top-up",
-    element: <Home />,
-  },
-  {
-    path: "/account",
-    element: <MyAccount />,
-  },
-  {
-    path: "/profile-settings",
-    element: <ProfileSettings />,
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <RootEntry />,
+      },
+      {
+        path: "about",
+        element: <About />,
+      },
+      {
+        path: "contact",
+        element: <Contact />,
+      },
+      {
+        path: "terms-of-use",
+        element: <TermsOfUse />,
+      },
+      {
+        path: "privacy-policy",
+        element: <PrivacyPolicy />,
+      },
+      {
+        path: "signin",
+        element: <Signin />,
+      },
+      {
+        path: "signup",
+        element: <Signup />,
+      },
+      {
+        path: "admin-login",
+        element: <AdminLogin />,
+      },
+      {
+        path: "admin",
+        element: <AdminDashboard />,
+      },
+      {
+        path: "gift-cards",
+        element: <Giftcards />,
+      },
+      {
+        path: "gift-card/:type",
+        element: <GiftcardType />,
+      },
+      {
+        path: "gift-card/:brandSlug/:countrySlug/:productSlug/:productId",
+        element: <Details />,
+      },
+      {
+        path: "gift-card/:name/:productId",
+        element: <Details />,
+      },
+      {
+        path: "gift-card/payment-complete/:reference",
+        element: <PaymentSuccess />,
+      },
+      {
+        path: "checkout",
+        element: <Checkout />,
+      },
+      {
+        path: "giftcard/search",
+        element: <Search />,
+      },
+      {
+        path: "top-up/success/:reference",
+        element: <TopUpSuccess />,
+      },
+      {
+        path: "top-up/payment/:orderId",
+        element: <CryptoTopUpPayment />,
+      },
+      {
+        path: "gift-card/payment/:orderId",
+        element: <CryptoTopUpPayment />,
+      },
+      {
+        path: "top-up/checkout",
+        element: <TopUpCheckout />,
+      },
+      {
+        path: "top-up",
+        element: <Home />,
+      },
+      {
+        path: "account",
+        element: <MyAccount />,
+      },
+      {
+        path: "profile-settings",
+        element: <ProfileSettings />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
+      },
+    ],
   },
 ]);
 

@@ -74,9 +74,21 @@ class Account(AbstractBaseUser, PermissionsMixin):
 
 
 class DigiShelfData(models.Model):
-        profit_percentage = models.DecimalField(max_digits=5, decimal_places=2) 
-        processing_fee = models.DecimalField(max_digits=5, decimal_places=2)
+        profit_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=5) 
+        processing_fee = models.DecimalField(max_digits=5, decimal_places=2, default=2)
         giftcard_processing_fee = models.DecimalField(max_digits=5, decimal_places=2, default=5)
+        order_mode = models.CharField(
+            max_length=20,
+            choices=(("auto", "Automatic"), ("manual", "Manual")),
+            default="auto",
+        )
+        
+        class Meta:
+            verbose_name = "DigiShelf Configuration"
+            verbose_name_plural = "DigiShelf Configuration"
+        
+        def __str__(self):
+            return "DigiShelf Platform Configuration"
         
 
 
@@ -190,12 +202,49 @@ class Cart(models.Model):
     processing_fee = models.DecimalField(max_digits=9, decimal_places=2, default=2.0)
     img = models.CharField(max_length=250, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class AnalyticsEvent(models.Model):
+    user = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        related_name='analytics_events',
+        null=True,
+        blank=True,
+    )
+    session_key = models.CharField(max_length=120, db_index=True)
+    event_type = models.CharField(max_length=64, db_index=True)
+    page_path = models.CharField(max_length=500, null=True, blank=True, db_index=True)
+    page_title = models.CharField(max_length=250, null=True, blank=True)
+    product_id = models.CharField(max_length=120, null=True, blank=True, db_index=True)
+    product_name = models.CharField(max_length=250, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=0)
+    duration_seconds = models.PositiveIntegerField(default=0)
+    cart_item_count = models.PositiveIntegerField(default=0)
+    cart_total_quantity = models.PositiveIntegerField(default=0)
+    cart_total_value = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    metadata = models.JSONField(default=dict, blank=True)
+    ip_address = models.CharField(max_length=64, null=True, blank=True)
+    user_agent = models.CharField(max_length=500, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     
 class Contact(models.Model):
     name = models.CharField(max_length=250, default=None)
     email = models.EmailField(default=None)
     message = models.TextField(default=None)
+    read_at = models.DateTimeField(null=True, blank=True)
+    reply_message = models.TextField(default=None, null=True, blank=True)
+    replied_at = models.DateTimeField(null=True, blank=True)
+    replied_by = models.EmailField(default=None, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class AdminLoginAudit(models.Model):
+    email = models.EmailField(db_index=True)
+    ip_address = models.CharField(max_length=64, blank=True, default="")
+    user_agent = models.CharField(max_length=500, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     
 
