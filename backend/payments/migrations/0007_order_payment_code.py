@@ -34,12 +34,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="order",
             name="payment_code",
-            field=models.CharField(blank=True, db_index=True, editable=False, max_length=12),
+            field=models.CharField(blank=True, editable=False, max_length=12),
         ),
         migrations.RunPython(backfill_payment_codes, migrations.RunPython.noop),
         migrations.AlterField(
             model_name="order",
             name="payment_code",
-            field=models.CharField(blank=True, db_index=True, editable=False, max_length=12, unique=True),
+            field=models.CharField(blank=True, editable=False, max_length=12, unique=True),
         ),
     ]

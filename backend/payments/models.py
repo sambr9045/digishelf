@@ -29,7 +29,7 @@ class Order(models.Model):
         FAILED = "failed", "Failed"
 
     public_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
-    payment_code = models.CharField(max_length=12, unique=True, editable=False, db_index=True, blank=True)
+    payment_code = models.CharField(max_length=12, unique=True, editable=False, blank=True)
     amount = models.DecimalField(max_digits=20, decimal_places=6)
     token_symbol = models.CharField(
         max_length=8,
