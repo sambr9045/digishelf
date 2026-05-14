@@ -14,8 +14,6 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY . /app
 
-RUN chmod +x /app/entrypoint.sh
-
 EXPOSE 8000
 
-CMD ["/app/entrypoint.sh"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn digishelf.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
