@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY . /app
 
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8000
 
 CMD ["/app/entrypoint.sh"]
