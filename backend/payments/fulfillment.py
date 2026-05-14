@@ -431,7 +431,7 @@ def complete_topup_order(order, *, actor="auto"):
         response = reloady_object.make_api_request(
             urls.airtime_top_up,
             "application/com.reloadly.topups-v1+json",
-            "https://topups-sandbox.reloadly.com",
+            urls.topups_audience,
             "POST",
             request_payload,
         )

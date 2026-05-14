@@ -339,7 +339,7 @@ def _build_giftcard_sitemap_entries():
             os.getenv("api_client_secret"),
             urls.token_url,
         )
-        audience = "https://giftcards-sandbox.reloadly.com"
+        audience = urls.giftcards_audience
         total_pages = None
         page = 1
 
@@ -347,11 +347,7 @@ def _build_giftcard_sitemap_entries():
             if total_pages is not None and page > total_pages:
                 break
 
-            giftcard_catalog_url = (
-                "https://giftcards-sandbox.reloadly.com/products"
-                f"?size={page_size}&page={page}&productName=&countryCode="
-                "&includeRange=true&includeFixed=true&sorted=false"
-            )
+            giftcard_catalog_url = urls.get_giftcard_url_two("", "", page, page_size)
             result = reloady_object.make_api_request(
                 giftcard_catalog_url,
                 "application/com.reloadly.giftcards-v1+json",
@@ -607,7 +603,7 @@ class GetOperator(APIView):
         try:
             reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
             oparator_urls = urls.auto_detect_oparator(phone, country.upper())
-            audience = "https://topups-sandbox.reloadly.com"
+            audience = urls.topups_audience
             
             try:
                 result= reloady_object.make_api_request(oparator_urls,"application/com.reloadly.topups-v1+json", audience )
@@ -700,7 +696,7 @@ class GetGistCard(APIView):
                 giftcard_url = urls.get_giftcard_url_two("", "", page, size)
 
             reloady_object = reloady.Reloady(os.getenv("api_clien"),os.getenv("api_client_secret"), urls.token_url)
-            audience = "https://giftcards-sandbox.reloadly.com"
+            audience = urls.giftcards_audience
 
             result = reloady_object.make_api_request(giftcard_url, "application/com.reloadly.giftcards-v1+json", audience)
             cache.set(cache_key, result, timeout=GIFT_CARD_CACHE_TIMEOUT_SECONDS)
@@ -871,7 +867,7 @@ class GetSearchResult(APIView):
             os.getenv("api_client_secret"),
             urls.token_url,
         )
-        audience = "https://giftcards-sandbox.reloadly.com"
+        audience = urls.giftcards_audience
 
         result = reloady_object.make_api_request(
             urls.get_giftcard_url_two(gift_card_name, country, page),
@@ -1114,7 +1110,7 @@ class AirtimeTopUpPurcahse(APIView):
                     },
                     
                 }
-                audience ="https://topups-sandbox.reloadly.com"
+                audience = urls.topups_audience
                 response = reloady_object.make_api_request(urls.airtime_top_up, "application/com.reloadly.topups-v1+json",audience, "POST", data)
                 
                 if response:

@@ -10,7 +10,7 @@ load_dotenv()
 def make_api_requests(product_data_request,index, transaction_data, transaction_id):
     transaction_ = models.GiftCardTransaction.objects.get(pk=transaction_id)
     reloady_object = reloady.Reloady(os.getenv("api_clien"), os.getenv("api_client_secret"), urls.token_url)
-    audience = "https://giftcards-sandbox.reloadly.com"
+    audience = urls.giftcards_audience
 
     data = {
         "productId": product_data_request["productId"],

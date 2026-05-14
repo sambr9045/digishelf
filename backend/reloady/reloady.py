@@ -70,35 +70,39 @@ class Reloady:
         return response.json()
     
     def get_balance(self):
-        balance = self.make_api_request(urls.balance_url, "application/com.reloadly.topups-v1+json", "https://topups-sandbox.reloadly.com")
+        balance = self.make_api_request(
+            urls.balance_url,
+            "application/com.reloadly.topups-v1+json",
+            urls.topups_audience,
+        )
         return balance
 
     def airtime_top_up(self, data):
         api_endpoint = 'https://www.sample.com/api/airtime-topup'
-        audience = "https://topups-sandbox.reloadly.com"  # Replace with the appropriate audience for airtime top-up
+        audience = urls.topups_audience
         accept_header = "application/com.reloadly.topups-v1+json"
         return self.make_api_request(api_endpoint, accept_header, audience, method='POST', data=data)
 
     def get_operators(self):
         api_endpoint = 'https://www.sample.com/api/getoperators'
-        audience = "https://operators-sandbox.reloadly.com"  # Replace with the appropriate audience for get operators
+        audience = urls.topups_audience
         accept_header = "application/com.reloadly.operators-v1+json"
         return self.make_api_request(api_endpoint, accept_header, audience)
 
     def bundle_top_up(self, data):
         api_endpoint = 'https://www.sample.com/api/bundletopup'
-        audience = "https://bundles-sandbox.reloadly.com"  # Replace with the appropriate audience for bundle top-up
+        audience = urls.topups_audience
         accept_header = "application/com.reloadly.bundles-v1+json"
         return self.make_api_request(api_endpoint, accept_header, audience, method='POST', data=data)
 
     def gift_cards(self, data):
         api_endpoint = 'https://www.sample.com/api/giftcards'
-        audience = "https://giftcards-sandbox.reloadly.com"  # Replace with the appropriate audience for gift cards
+        audience = urls.giftcards_audience
         accept_header = "application/com.reloadly.giftcards-v1+json"
         return self.make_api_request(api_endpoint, accept_header, audience, method='POST', data=data)
 
     def bill_payment(self, data):
         api_endpoint = 'https://www.sample.com/api/billpayment'
-        audience = "https://billpayment-sandbox.reloadly.com"  # Replace with the appropriate audience for bill payment
+        audience = urls.topups_audience
         accept_header = "application/com.reloadly.billpayment-v1+json"
         return self.make_api_request(api_endpoint, accept_header, audience, method='POST', data=data)
