@@ -8,6 +8,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/api': {
+        target: backendTarget,
+        changeOrigin: true,
+      },
+      '/api-auth': {
+        target: backendTarget,
+        changeOrigin: true,
+      },
+      '/admin': {
+        target: backendTarget,
+        changeOrigin: true,
+      },
       '/sitemap.xml': {
         target: backendTarget,
         changeOrigin: true,

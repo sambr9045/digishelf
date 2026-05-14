@@ -125,19 +125,19 @@ export default function CryptoTopUpPayment() {
   }, [storageKey]);
 
   const navigateToCompletion = useCallback(
-    (nextOrder, reference) => {
-      if (!reference) {
+    (nextOrder, completionToken) => {
+      if (!completionToken) {
         return;
       }
 
       localStorage.removeItem(storageKey);
 
       if (nextOrder.fulfillment_type === "giftcard") {
-        navigate(`/gift-card/payment-complete/${reference}`);
+        navigate(`/gift-card/payment-complete/${completionToken}`);
         return;
       }
 
-      navigate(`/top-up/success/${reference}`);
+      navigate(`/top-up/success/${completionToken}`);
     },
     [navigate, storageKey],
   );
@@ -159,11 +159,13 @@ export default function CryptoTopUpPayment() {
         const response = await axios.post(
           `${api_endpoint}/api/payments/orders/${paidOrder.order_id}/fulfill/`,
         );
+        const completionToken =
+          response.data?.data?.completion_token || paidOrder.completion_token;
 
         if (response.data?.data?.status === "completed") {
-          navigateToCompletion(paidOrder, response.data.data.reference);
+          navigateToCompletion(paidOrder, completionToken);
         } else if (response.data?.data?.status === "already_completed") {
-          navigateToCompletion(paidOrder, response.data.data.reference);
+          navigateToCompletion(paidOrder, completionToken);
         } else {
           setPaymentError(
             paidOrder.fulfillment_type === "giftcard"
@@ -265,9 +267,9 @@ export default function CryptoTopUpPayment() {
   useEffect(() => {
     if (
       order?.fulfillment_status === "completed" &&
-      order?.order_summary?.reference
+      order?.completion_token
     ) {
-      navigateToCompletion(order, order.order_summary.reference);
+      navigateToCompletion(order, order.completion_token);
     }
   }, [navigateToCompletion, order]);
 
