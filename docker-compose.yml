@@ -42,13 +42,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_ENDPOINT=
+        VITE_DEV_BACKEND_ORIGIN=http://backend:8000
     container_name: digishelf-frontend
-    environment:
-      - VITE_API_ENDPOINT=http://127.0.0.1:8009
-      - VITE_DEV_BACKEND_ORIGIN=http://127.0.0.1:8009
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     depends_on:
       - backend
     ports:

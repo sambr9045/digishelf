@@ -10,39 +10,66 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from pathlib import Path
-from dotenv import load_dotenv
-from email.utils import formataddr
 import os
+from datetime import timedelta
+from email.utils import formataddr
+from pathlib import Path
+from urllib.parse import urlparse
+
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 
-from datetime import timedelta
+
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name):
+    return [item.strip() for item in os.getenv(name, "").split(",") if item.strip()]
+
+
+def get_public_site_origin():
+    public_site_url = os.getenv("PUBLIC_SITE_URL", "").strip()
+    if not public_site_url:
+        return ""
+
+    parsed = urlparse(public_site_url)
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-=r8*1k*4y1au8cw_3n$8j$@-c4m0r0$$g7_=x==$*429w&s5xq"
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = [
-    "b3a0-102-176-94-199.ngrok-free.app",
-    "127.0.0.1",
-    "localhost",
-    "49ed-102-176-94-252.ngrok-free.app",
-]
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = (
+    os.getenv("DJANGO_SECRET_KEY")
+    or os.getenv("SECRET_KEY")
+    or ("django-insecure-=r8*1k*4y1au8cw_3n$8j$@-c4m0r0$$g7_=x==$*429w&s5xq" if DEBUG else "")
+)
+if not SECRET_KEY:
+    raise ValueError("Missing DJANGO_SECRET_KEY or SECRET_KEY")
 
-EXTRA_ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv("ALLOWED_HOSTS", "").split(",")
-    if host.strip()
-]
-ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS)
+public_site_origin = get_public_site_origin()
+public_site_host = urlparse(public_site_origin).hostname if public_site_origin else ""
+
+allowed_hosts = {"127.0.0.1", "localhost"}
+if public_site_host:
+    allowed_hosts.add(public_site_host)
+    if public_site_host.count(".") >= 1 and not public_site_host.startswith("www."):
+        allowed_hosts.add(f"www.{public_site_host}")
+allowed_hosts.update(env_list("ALLOWED_HOSTS"))
+ALLOWED_HOSTS = sorted(allowed_hosts)
 
 
 # Application definition
@@ -121,13 +148,24 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:8000'
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
+if public_site_origin:
+    CORS_ALLOWED_ORIGINS.append(public_site_origin)
+CORS_ALLOWED_ORIGINS.extend(
+    [origin for origin in env_list("CORS_ALLOWED_ORIGINS") if origin not in CORS_ALLOWED_ORIGINS]
+)
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = []
+if public_site_origin:
+    CSRF_TRUSTED_ORIGINS.append(public_site_origin)
+CSRF_TRUSTED_ORIGINS.extend(
+    [origin for origin in env_list("CSRF_TRUSTED_ORIGINS") if origin not in CSRF_TRUSTED_ORIGINS]
+)
 
 
 ROOT_URLCONF = "digishelf.urls"
@@ -218,12 +256,32 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+if os.getenv("DJANGO_CACHE_DIR"):
+    cache_location = os.getenv("DJANGO_CACHE_DIR", "")
+else:
+    cache_location = str(BASE_DIR / ".django_cache")
+
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": cache_location,
     }
 }
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", default=not DEBUG)
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", default=not DEBUG)
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", default=not DEBUG)
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000" if not DEBUG else "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS",
+    default=not DEBUG,
+)
+SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", default=False)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "same-origin"
 
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",

@@ -63,20 +63,17 @@ function SummaryCard({ icon: Icon, label, value, helper }) {
 }
 
 export default function TopUpSuccess() {
-  const { reference } = useParams();
+  const { reference: completionToken } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [orderData, setOrderData] = useState(null);
 
   const fetchOrderData = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post(
-        `${api_endpoint}/api/airtime-topup-order/`,
-        {
-          reference,
-        },
+      const response = await axios.get(
+        `${api_endpoint}/api/payments/completion/${completionToken}/`,
       );
-      setOrderData(response.data || null);
+      setOrderData(response.data?.data || null);
     } catch (error) {
       setOrderData(null);
     } finally {
@@ -95,20 +92,20 @@ export default function TopUpSuccess() {
 
   useEffect(() => {
     fetchOrderData();
-  }, [reference]);
+  }, [completionToken]);
 
   return (
     <>
       <Seo
         title="Top-up Complete"
         description="View your completed Digishelves airtime top-up and transaction details."
-        path={`/top-up/success/${reference}`}
+        path={`/top-up/success/${completionToken}`}
         robots="noindex,nofollow"
         schema={createWebPageSchema({
           title: "Digishelves Top-up Complete",
           description:
             "View your completed Digishelves airtime top-up and transaction details.",
-          path: `/top-up/success/${reference}`,
+          path: `/top-up/success/${completionToken}`,
         })}
       />
       <Header />
@@ -205,7 +202,7 @@ export default function TopUpSuccess() {
                       Reference
                     </p>
                     <p className="mb-0 break-all text-base font-black text-[#211722]">
-                      {orderData?.reference || reference}
+                      {orderData?.reference || completionToken}
                     </p>
                   </div>
 

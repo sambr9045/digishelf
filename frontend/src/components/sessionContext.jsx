@@ -251,7 +251,6 @@ const SessionProvider = ({ children }) => {
 
   // call and sace exchange rate
   const getExchangeRate = async () => {
-    console.log("calling this");
     try {
       const exchangeRate = JSON.parse(localStorage.getItem("exchangeRate"));
       const percentage = localStorage.getItem("percentage");
@@ -287,7 +286,7 @@ const SessionProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error("Failed to load exchange rate:", error);
     }
   };
 
@@ -311,7 +310,7 @@ const SessionProvider = ({ children }) => {
         setMainCurrency("USD");
       }
     } catch (error) {
-      console.log(error);
+      console.error("Failed to detect visitor country:", error);
       setCountry({
         country: "US",
         country_code: "1",
@@ -321,8 +320,7 @@ const SessionProvider = ({ children }) => {
   };
 
   const handleCountry = async () => {
-    const result = await getCountryAlpha2Code();
-    console.log(result);
+    await getCountryAlpha2Code();
   };
 
   // Set up an interval to refresh the access token
@@ -370,7 +368,6 @@ const SessionProvider = ({ children }) => {
       setSession(newSession);
       localStorage.setItem("session", JSON.stringify(newSession));
 
-      console.log(response);
     } catch (error) {
       console.error("Login error:", error);
       throw error;

@@ -1,7 +1,10 @@
+import os
 import uuid
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.core.cache import cache
+from django.core import signing
 from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -21,6 +24,11 @@ from .fulfillment import (
 )
 from .listener import StablecoinTransferListener
 from .notifications import send_admin_new_order_notification
+
+COMPLETION_TOKEN_SALT = "payments.completion"
+COMPLETION_TOKEN_MAX_AGE_SECONDS = int(
+    os.getenv("PAYMENT_COMPLETION_TOKEN_MAX_AGE_SECONDS", str(30 * 24 * 60 * 60))
+)
 
 
 def parse_usdc_amount(value):
@@ -85,6 +93,77 @@ def serialize_payment_activity(order):
         "amount_match_status": amount_match_status,
         "latest_transaction_hash": latest_transfer.transaction_hash if latest_transfer else "",
     }
+
+
+def make_completion_token(order):
+    return signing.dumps(
+        {
+            "order_id": str(order.public_id),
+            "fulfillment_type": order.fulfillment_type,
+        },
+        salt=COMPLETION_TOKEN_SALT,
+    )
+
+
+def get_order_from_completion_token(token):
+    data = signing.loads(
+        token,
+        salt=COMPLETION_TOKEN_SALT,
+        max_age=COMPLETION_TOKEN_MAX_AGE_SECONDS,
+    )
+    return Order.objects.get(public_id=data["order_id"])
+
+
+def serialize_completion_payload(order):
+    from api import models as api_models
+    from api import serializers as api_serializers
+
+    if order.fulfillment_status != Order.FulfillmentStatus.COMPLETED:
+        raise ValueError("Order fulfillment is not complete yet.")
+
+    summary = build_order_summary(order)
+    reference = summary.get("reference")
+    if not reference:
+        raise ValueError("Order completion reference is missing.")
+
+    base_payload = {
+        "order_id": order.payment_code,
+        "public_id": str(order.public_id),
+        "fulfillment_type": order.fulfillment_type,
+        "reference": reference,
+        "completion_token": make_completion_token(order),
+    }
+
+    if order.fulfillment_type == Order.FulfillmentType.GIFTCARD:
+        transaction = api_models.GiftCardTransaction.objects.filter(reference=reference).first()
+        if not transaction:
+            raise ValueError("Gift card transaction not found.")
+
+        transaction_products = api_models.TransactionProduct.objects.filter(
+            GiftCardTransaction=transaction
+        )
+        return {
+            **base_payload,
+            "data": {
+                "product_data": api_serializers.GiftCardTransactionSerializer(transaction).data,
+                "transactionData": api_serializers.TransactionProductSerializer(
+                    transaction_products,
+                    many=True,
+                ).data,
+            },
+        }
+
+    if order.fulfillment_type == Order.FulfillmentType.TOPUP:
+        topup = api_models.TopupTransaction.objects.filter(reference=reference).first()
+        if not topup:
+            raise ValueError("Top-up transaction not found.")
+
+        return {
+            **base_payload,
+            "data": api_serializers.AirtimTopUpSerializer(topup).data,
+        }
+
+    raise ValueError("Unsupported fulfillment type.")
 
 
 class CreateOrderView(APIView):
@@ -161,6 +240,11 @@ class CreateOrderView(APIView):
                 "network": "Ethereum ERC20",
                 "fulfillment_status": order.fulfillment_status,
                 "order_summary": build_order_summary(order),
+                "completion_token": (
+                    make_completion_token(order)
+                    if order.fulfillment_status == Order.FulfillmentStatus.COMPLETED
+                    else ""
+                ),
             },
             status=status.HTTP_201_CREATED,
         )
@@ -218,6 +302,11 @@ class OrderStatusView(APIView):
                 "created_at": order.created_at,
                 "paid_at": order.paid_at,
                 "payment_activity": serialize_payment_activity(order),
+                "completion_token": (
+                    make_completion_token(order)
+                    if order.fulfillment_status == Order.FulfillmentStatus.COMPLETED
+                    else ""
+                ),
             }
         )
 
@@ -236,9 +325,30 @@ class FulfillOrderView(APIView):
         try:
             order = get_order_by_identifier(order_id)
             result = complete_order(order, actor="auto")
+            order.refresh_from_db()
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"data": result}, status=status.HTTP_200_OK)
+        response_payload = {"data": result}
+        if order.fulfillment_status == Order.FulfillmentStatus.COMPLETED:
+            response_payload["data"]["completion_token"] = make_completion_token(order)
+
+        return Response(response_payload, status=status.HTTP_200_OK)
+
+
+class CompletionOrderView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        try:
+            order = get_order_from_completion_token(token)
+            payload = serialize_completion_payload(order)
+        except (signing.BadSignature, signing.SignatureExpired, Order.DoesNotExist, ValueError):
+            return Response(
+                {"error": "Completed order not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(payload, status=status.HTTP_200_OK)

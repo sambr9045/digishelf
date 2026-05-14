@@ -92,7 +92,7 @@ function SummaryCard({ icon: Icon, label, value, helper }) {
 }
 
 export default function PaymentSuccess() {
-  const { reference } = useParams();
+  const { reference: completionToken } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [orderData, setOrderData] = useState(null);
   const [fetchError, setFetchError] = useState("");
@@ -102,9 +102,9 @@ export default function PaymentSuccess() {
     setFetchError("");
 
     try {
-      const response = await axios.post(`${api_endpoint}/api/giftcardorder/`, {
-        reference,
-      });
+      const response = await axios.get(
+        `${api_endpoint}/api/payments/completion/${completionToken}/`,
+      );
       setOrderData(response.data?.data || null);
     } catch (error) {
       setOrderData(null);
@@ -117,7 +117,7 @@ export default function PaymentSuccess() {
   };
 
   const copyReference = async () => {
-    const nextReference = orderData?.product_data?.reference || reference;
+    const nextReference = orderData?.product_data?.reference || "";
     if (!nextReference) {
       return;
     }
@@ -128,7 +128,7 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     fetchOrderData();
-  }, [reference]);
+  }, [completionToken]);
 
   const productData = orderData?.product_data || {};
   const transactions = orderData?.transactionData || [];
@@ -184,13 +184,13 @@ export default function PaymentSuccess() {
       <Seo
         title="Gift Card Order Complete"
         description="View your Digishelves gift card order status and redeemed card details."
-        path={`/gift-card/payment-complete/${reference}`}
+        path={`/gift-card/payment-complete/${completionToken}`}
         robots="noindex,nofollow"
         schema={createWebPageSchema({
           title: "Digishelves Gift Card Order Complete",
           description:
             "View your Digishelves gift card order status and redeemed card details.",
-          path: `/gift-card/payment-complete/${reference}`,
+          path: `/gift-card/payment-complete/${completionToken}`,
         })}
       />
       <Header />
@@ -233,10 +233,10 @@ export default function PaymentSuccess() {
               <div className="grid gap-6 p-5 sm:p-8 lg:grid-cols-[minmax(0,1.15fr)_340px]">
                 <div className="space-y-6">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <SummaryCard
+                  <SummaryCard
                       icon={Receipt}
                       label="Transaction ID"
-                      value={productData.reference || reference}
+                      value={productData.reference || completionToken}
                       helper="Keep this for support and order tracking."
                     />
                     <SummaryCard
@@ -386,7 +386,7 @@ export default function PaymentSuccess() {
                       Reference
                     </p>
                     <p className="mb-0 break-all text-base font-black text-[#211722]">
-                      {productData.reference || reference}
+                      {productData.reference || completionToken}
                     </p>
                   </div>
 

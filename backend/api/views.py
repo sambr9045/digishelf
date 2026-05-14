@@ -753,121 +753,15 @@ class ProcessPayment(APIView):
     
     
     def post(self, request, *args, **kwargs):
-        start_time = time.time()
-        print("Starting executing code: ", start_time)
-        transaction_data = dict(request.data.get('transaction') or {})
-        payment_details_data = request.data.get('payment_details')
-        user_device_data = request.data.get('user_device')
-        order_product = transaction_data.get("products")
-        
-
-        try:
-            with transaction.atomic():  # Start an atomic transaction
-                # Create GiftCardTransaction
-                # threads = []
-                
-                # Check if my balance i hihgter then process with payment 
-                user_type = transaction_data.get("user_type")
-                if isinstance(user_type, dict):
-                    transaction_data["user"] = user_type.get("id")
-                    transaction_data["user_type"] = "user"
-                elif user_type == "guest" or not user_type:
-                    transaction_data["user_type"] = "guest"
-                else:
-                    transaction_data["user_type"] = str(user_type)
-                
-                transaction_serializer = serializers.GiftCardTransactionSerializer(data=transaction_data)
-                transaction_serializer.is_valid(raise_exception=True)
-                transaction_ = transaction_serializer.save()
-                
-                
-                # Ensure the transaction is committed before proceeding
-                transaction_.refresh_from_db()
-                
-                # create products
-                order_product_serializers = []
-                for product_data in order_product:
-                    product_data["GiftCardTransaction"] = transaction_.id
-                    del product_data["id"]
-                    product_data["img"] = str(product_data["img"])
-                    product_data['transaction'] = transaction_.id
-                    product_serializer = serializers.GiftCardTransactionOrderProductSerialixer(data=product_data)
-                    product_serializer.is_valid(raise_exception=True)
-                    product_serializer.save()
-                    order_product_serializers.append(product_serializer)
-                
-                # Create PaymentDetails
-                payment_details_data['GiftCardTransaction'] = transaction_.id
-                payment_details_serializer = serializers.PaymentDetailsSerializer(data=payment_details_data)
-                payment_details_serializer.is_valid(raise_exception=True)
-                payment_details = payment_details_serializer.save()
-
-                # Create UserDeviceGiftCardPayment
-                user_device_data['GiftCardTransaction'] = transaction_.id
-                user_device_serializer = serializers.UserDeviceGiftCardPaymentSerializer(data=user_device_data)
-                user_device_serializer.is_valid(raise_exception=True)
-                user_device = user_device_serializer.save()
-                
-                for index, prduct_data_request in enumerate(order_product):
-                    tasks.make_api_requests.run(
-                        prduct_data_request,
-                        index,
-                        transaction_data,
-                        transaction_.id,
-                    )
-
-                completed_transactions = list(
-                    transaction_.transactions_details_completed.all()
+        return Response(
+            {
+                "error": (
+                    "Legacy direct payment processing is disabled. "
+                    "Create a crypto payment order through /api/payments/orders/ instead."
                 )
-                card_entries = build_giftcard_email_entries(completed_transactions)
-                product_items = [
-                    serialize_giftcard_product(item) for item in order_product or []
-                ]
-                   
-                
-                end_time = time.time()
-                elapsed_time = end_time - start_time
-                print(f"End time: {end_time} \n")
-                print("How many seconds it took: ", elapsed_time, " s \n")
-
-                if card_entries:
-                    send_giftcard_codes_email(
-                        send_order_update_email,
-                        email=transaction_data.get("email"),
-                        reference=transaction_data.get("reference"),
-                        paid_amount=transaction_data.get("amount"),
-                        payment_currency="USD",
-                        card_entries=card_entries,
-                        product_items=product_items,
-                    )
-                else:
-                    send_order_update_email(
-                        email=transaction_data.get("email"),
-                        subject="Order update: gift card request received",
-                        heading="Your gift card order is being processed",
-                        preheader="We received your order and started processing your gift card purchase.",
-                        status_label="Processing",
-                        rows=[
-                            {"label": "Reference", "value": transaction_data.get("reference")},
-                            {"label": "Amount", "value": transaction_data.get("amount")},
-                            {
-                                "label": "Payment method",
-                                "value": (transaction_data.get("payment_method") or "crypto").upper(),
-                            },
-                            {"label": "Items", "value": str(len(order_product or []))},
-                        ],
-                        product_items=product_items,
-                    )
-
-                return Response({
-                        "reference": transaction_data.get("reference"),
-                        "status": "success"
-                    }, status=status.HTTP_201_CREATED)
-        
-        except Exception as e:
-            # Log the error for debugging
-            log_error(transaction_data, e)
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            },
+            status=status.HTTP_410_GONE,
+        )
 
 def log_error(transaction_data, error):
     # Log the error details for further analysis
@@ -934,38 +828,15 @@ class GetGiftCardOrder(APIView):
     permission_classes = [AllowAny]  # Example: Change permission if needed
 
     def post(self, request):
-        order_reference = request.data.get("reference")
-        print(order_reference)
-        if not order_reference:
-            return Response({"error": "Reference is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            product_data = models.GiftCardTransaction.objects.filter(reference=order_reference).first()
-        except models.GiftCardTransaction.DoesNotExist:
-            
-            return Response({"error": "Gift card transaction not found"}, status=400)
-
-        try:
-            transaction_product = models.TransactionProduct.objects.filter(GiftCardTransaction=product_data)
-        except (models.TransactionProduct.DoesNotExist) as e:
-            return Response({"error": str(e)}, status=400)
-        
-        
-        print(product_data, transaction_product)
-
-        # Using serializers to return model data
-        product_serializer = serializers.GiftCardTransactionSerializer(product_data)
-        # print(product_serializer)
-        transaction_serializer = serializers.TransactionProductSerializer(transaction_product, many=True)
-        # redeem_code_serializer = serializers.CardRedeemCodeSerializer(redeem_code)
-
-        response_object = {
-            "product_data":product_serializer.data,
-            "transactionData":transaction_serializer.data,
-            # "redeem_code": redeem_code_serializer.data
-        }
-
-        return Response({"data": response_object}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "error": (
+                    "Legacy gift-card order lookup is disabled. "
+                    "Use the signed completion link from the crypto payment flow."
+                )
+            },
+            status=status.HTTP_410_GONE,
+        )
     
 
 class GetSearchResult(APIView):
@@ -1060,15 +931,23 @@ class CartView(APIView):
     def put(self, request, format=None):
         cartid = request.GET.get("id")
         cart_quantity = request.data.get("quantity")
-        object_ = models.Cart.objects.filter(
-            pk=cartid
+        updated = models.Cart.objects.filter(
+            pk=cartid,
+            user=request.user,
         ).update(quantity=cart_quantity, updated_at=timezone.now())
+        if not updated:
+            return Response({"error": "Cart item not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"data":"success"}, status=200)
         
         
     def delete(self, request, format=None):
         cartid = request.GET.get("id")
-        object_ = models.Cart.objects.filter(pk=cartid).delete()
+        deleted, _ = models.Cart.objects.filter(
+            pk=cartid,
+            user=request.user,
+        ).delete()
+        if not deleted:
+            return Response({"error": "Cart item not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"data":"success"}, status=200)
 
 
@@ -1306,20 +1185,15 @@ class AirtimeSuccessOrder(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        reference = request.data.get("reference")  # Using query_params for GET request
-
-        if not reference:
-            return Response({"error": "Reference parameter is missing."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            airtime_order = models.TopupTransaction.objects.get(reference=reference)
-            print(airtime_order, reference, "This is the")
-            serializer_ = serializers.AirtimTopUpSerializer(airtime_order)
-            
-        except models.TopupTransaction.DoesNotExist:
-            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        return Response(serializer_.data, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "error": (
+                    "Legacy top-up order lookup is disabled. "
+                    "Use the signed completion link from the crypto payment flow."
+                )
+            },
+            status=status.HTTP_410_GONE,
+        )
             
 
 

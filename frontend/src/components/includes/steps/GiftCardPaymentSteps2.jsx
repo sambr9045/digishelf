@@ -1,12 +1,8 @@
 import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import validator from "validator";
-import visa from "../../../assets/images/payment/visa.png";
-import mastercard from "../../../assets/images/payment/mastercard.png";
 import bitcoin from "../../../assets/images/payment/bitcoin.png";
 import coins from "../../../assets/images/payment/coins.png";
-import ae from "../../../assets/images/payment/ae.png";
-import discover from "../../../assets/images/payment/discover.png";
 import emptycart from "../../../assets/images/cart/cart.svg";
 import { Link } from "react-router-dom";
 import {
@@ -21,7 +17,6 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { usePaystackPayment } from "react-paystack";
 import { ToastContainer, toast } from "react-toastify";
 import { api_endpoint } from "../../constant";
 import { nanoid } from "nanoid";
@@ -120,79 +115,6 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
     }
   };
 
-  const HandleRelease = async (UserData) => {
-    try {
-      const response = await axios.post(
-        `${api_endpoint}/api/process-payment/`,
-        UserData,
-      );
-      if (response.data) {
-        setIsLoading(false);
-        // redirect to completed paymenr
-        return response.data;
-      }
-    } catch (error) {
-      toast.info(
-        "Your transaction has been submitted successfully. However, we are currently experiencing network issues. Please contact our support team for assistance.",
-      );
-      setIsLoading(false);
-    }
-  };
-
-  const handleCall = async (data) => {
-    const result = await HandleRelease(data);
-    console.log(result);
-    // clear cart before redirecting
-    if (result) {
-      clearCart();
-    }
-    const url = `/gift-card/payment-complete/${result.reference}`;
-    navigate(url);
-    // window.location.href = ;
-  };
-  const handleSuccess = (reference) => {
-    setIsLoading(true);
-
-    const data = {
-      transaction: {
-        reference: reference.reference,
-        products: cart,
-        amount: cartTotal,
-        country: country.country,
-        email: userEmail,
-        user: currentUserId,
-        user_type: normalizedUserType,
-        payment_method: paymentMethodSelect,
-      },
-      payment_details: {
-        message: reference.message,
-        status: reference.status,
-        transaction: reference.transaction,
-        trxref: reference.trxref,
-      },
-      user_device: {
-        ip_address: localStorage.getItem("ip"),
-      },
-    };
-
-    handleCall(data);
-  };
-
-  const handleClose = () => {
-    // implementation for  whatever you want to do when the Paystack dialog closed.
-    console.log("closed");
-  };
-
-  const config = {
-    reference: `DSB-${nanoid(14)}`,
-    email: userEmail,
-    amount: Math.round(cartTotal * 100), // Amount in kobo
-    currency: PAYMENT_CURRENCY,
-    publicKey: import.meta.env.VITE_APP_PAYSTACK_PUBLIC_KEY,
-  };
-
-  const initializePayment = usePaystackPayment(config);
-
   const HandlePayment = async () => {
     if (userEmail === "") {
       toast.error("Please enter your email address.");
@@ -209,16 +131,10 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
       return;
     }
 
-    if (paymentMethodSelect === "cbc") {
-      initializePayment({
-        onSuccess: handleSuccess,
-        onClose: handleClose,
-        config: config,
-      });
-    } else if (paymentMethodSelect === "crypto") {
+    if (paymentMethodSelect === "crypto") {
       await createCryptoOrder();
     } else {
-      toast.error("Please select payment method");
+      toast.error("Only crypto payments are available right now.");
     }
   };
 
@@ -268,12 +184,6 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
       setCartTotal((total + processing_fee).toFixed(2));
     }
   }, [cart]);
-
-  useEffect(() => {
-    if (country?.country !== "GH" && paymentMethodSelect === "cbc") {
-      setPaymentMethodSelect("crypto");
-    }
-  }, [country?.country, paymentMethodSelect]);
 
   useEffect(() => {
     onStepChange?.(steps);
