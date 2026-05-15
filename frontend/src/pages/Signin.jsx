@@ -15,7 +15,7 @@ import { createWebPageSchema } from "../utils/seo";
 
 export default function Signin() {
   const clientId =
-    "1014448615483-g62js5lep5uq3lulr4tnquqkc0bvv5ab.apps.googleusercontent.com";
+    "449377331234-rr3sbk3ahcdotn8lv8nt8cfighqa1h4q.apps.googleusercontent.com";
   const navigate = useNavigate();
   const { setSession, setCartUpdated } = useContext(SessionContext);
   const [email, setEmail] = useState("");
@@ -120,9 +120,7 @@ export default function Signin() {
           </section>
 
           <section className="rounded-[2rem] border border-white/70 bg-white p-6 shadow-[0_30px_90px_rgba(33,23,34,0.18)] sm:p-8">
-            <h2 className="text-3xl font-black tracking-[-0.04em]">
-              Sign in
-            </h2>
+            <h2 className="text-3xl font-black tracking-[-0.04em]">Sign in</h2>
             <p className="mt-2 text-[#665b67]">
               Use Google or your email and password.
             </p>
