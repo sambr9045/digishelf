@@ -33,7 +33,7 @@ export default function Signup() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const clientId =
-    "1014448615483-g62js5lep5uq3lulr4tnquqkc0bvv5ab.apps.googleusercontent.com";
+    "449377331234-rr3sbk3ahcdotn8lv8nt8cfighqa1h4q.apps.googleusercontent.com";
 
   const validateForm = () => {
     const errors = {};
