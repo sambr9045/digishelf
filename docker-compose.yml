@@ -48,6 +48,10 @@ services:
     container_name: digishelf-frontend
     depends_on:
       - backend
+    environment:
+      - BACKEND_ORIGIN=http://backend:8000
+      - PUBLIC_SITE_ORIGIN=https://digishelves.com
+      - PORT=5179
     ports:
       - "127.0.0.1:5173:5179"
     restart: unless-stopped

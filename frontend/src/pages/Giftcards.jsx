@@ -257,36 +257,14 @@ export default function Giftcards() {
   );
   const giftCardSchema = useMemo(() => {
     const schemaCards = giftCards.slice(0, 24);
-    const items = schemaCards.map((item, index) => {
-      const minValue = Number(item.minRecipientDenomination || 0);
-      const maxValue = Number(item.maxRecipientDenomination || 0);
-      const recipientCurrency = item.recipientCurrencyCode || "USD";
-      const hasPriceRange = minValue > 0 || maxValue > 0;
-
-      return {
-        "@type": "ListItem",
-        position: index + 1,
-        url: buildAbsoluteUrl(
-          buildGiftCardUrl(item, item.productName || "gift-card"),
-        ),
-        name: item.productName,
-        ...(hasPriceRange
-          ? {
-              item: {
-                "@type": "Product",
-                name: item.productName,
-                offers: {
-                  "@type": "AggregateOffer",
-                  lowPrice: minValue || maxValue,
-                  highPrice: maxValue || minValue,
-                  priceCurrency: recipientCurrency,
-                  availability: "https://schema.org/InStock",
-                },
-              },
-            }
-          : {}),
-      };
-    });
+    const items = schemaCards.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: buildAbsoluteUrl(
+        buildGiftCardUrl(item, item.productName || "gift-card"),
+      ),
+      name: item.productName,
+    }));
 
     return [
       createWebPageSchema({
@@ -369,9 +347,9 @@ export default function Giftcards() {
               <span className="inline-flex rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
                 Popular brands
               </span>
-              <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-[#211722] sm:text-5xl">
+              <h1 className="mt-5 text-4xl font-black tracking-[-0.05em] text-[#211722] sm:text-5xl">
                 Browse cards people buy most.
-              </h2>
+              </h1>
               <p className="mt-3 max-w-2xl text-lg leading-8 text-[#665b67]">
                 Pick a brand to see available gift card products and values.
               </p>
