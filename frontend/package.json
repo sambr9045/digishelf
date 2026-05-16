@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "node server.js",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -19,6 +20,7 @@
     "axios": "^1.6.8",
     "bootstrap": "^5.3.3",
     "country-to-currency": "^2.0.2",
+    "express": "^4.21.2",
     "framer-motion": "^12.38.0",
     "jquery": "^3.7.1",
     "jwt-decode": "^4.0.0",

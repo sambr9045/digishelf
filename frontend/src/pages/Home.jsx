@@ -135,6 +135,7 @@ export default function Home() {
       </TopUpProvider>
 
       <main className="bg-white font-display text-[#211722]">
+        <h1 className="sr-only">Digishelves Airtime Top-ups and Gift Cards</h1>
         <motion.section
           className="relative overflow-hidden py-20 sm:py-24"
           variants={sectionFade}
@@ -144,7 +145,10 @@ export default function Home() {
         >
           <div className="absolute inset-x-6 top-12 h-32 rounded-full bg-[#10ac84]/10 blur-3xl" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <motion.div className="mx-auto max-w-3xl text-center" variants={fadeItem}>
+            <motion.div
+              className="mx-auto max-w-3xl text-center"
+              variants={fadeItem}
+            >
               <span className="inline-flex items-center gap-2 rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
                 <Sparkles className="h-4 w-4" />
                 How it works
@@ -182,9 +186,7 @@ export default function Home() {
                     <h3 className="text-2xl font-black tracking-[-0.03em]">
                       {step.title}
                     </h3>
-                    <p className="mt-3 leading-7 text-[#675d68]">
-                      {step.text}
-                    </p>
+                    <p className="mt-3 leading-7 text-[#675d68]">{step.text}</p>
                   </motion.article>
                 );
               })}
@@ -229,7 +231,10 @@ export default function Home() {
               </div>
             </motion.div>
 
-            <motion.div className="grid gap-4 sm:grid-cols-2" variants={staggerGroup}>
+            <motion.div
+              className="grid gap-4 sm:grid-cols-2"
+              variants={staggerGroup}
+            >
               {benefits.map((benefit) => {
                 const Icon = benefit.icon;
 
@@ -267,7 +272,10 @@ export default function Home() {
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-10 rounded-[2.5rem] border border-[#efe7ed] bg-[#fbf8f4] p-6 shadow-2xl shadow-[#551839]/8 sm:p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-10">
-              <motion.div className="rounded-[2rem] bg-white p-8" variants={fadeItem}>
+              <motion.div
+                className="rounded-[2rem] bg-white p-8"
+                variants={fadeItem}
+              >
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#551839] text-white">
                   <Repeat2 className="h-7 w-7" strokeWidth={2.2} />
                 </div>
@@ -280,7 +288,10 @@ export default function Home() {
                 </p>
               </motion.div>
 
-              <motion.div className="grid content-center gap-4" variants={staggerGroup}>
+              <motion.div
+                className="grid content-center gap-4"
+                variants={staggerGroup}
+              >
                 {rewardSteps.map((step, index) => (
                   <motion.div
                     key={step}
@@ -298,16 +309,28 @@ export default function Home() {
               </motion.div>
             </div>
 
-            <motion.div className="mt-8 grid gap-4 sm:grid-cols-3" variants={staggerGroup}>
-              <motion.div className="rounded-3xl bg-[#f7f1e8] p-6" variants={fadeItem}>
+            <motion.div
+              className="mt-8 grid gap-4 sm:grid-cols-3"
+              variants={staggerGroup}
+            >
+              <motion.div
+                className="rounded-3xl bg-[#f7f1e8] p-6"
+                variants={fadeItem}
+              >
                 <WalletCards className="h-7 w-7 text-[#551839]" />
                 <p className="mt-4 font-black">Flexible reward usage</p>
               </motion.div>
-              <motion.div className="rounded-3xl bg-[#e9f8f3] p-6" variants={fadeItem}>
+              <motion.div
+                className="rounded-3xl bg-[#e9f8f3] p-6"
+                variants={fadeItem}
+              >
                 <ShieldCheck className="h-7 w-7 text-[#08745a]" />
                 <p className="mt-4 font-black">Transparent redemption</p>
               </motion.div>
-              <motion.div className="rounded-3xl bg-[#211722] p-6 text-white" variants={fadeItem}>
+              <motion.div
+                className="rounded-3xl bg-[#211722] p-6 text-white"
+                variants={fadeItem}
+              >
                 <Gift className="h-7 w-7 text-[#9ff0d9]" />
                 <p className="mt-4 font-black">Gift cards and top-ups</p>
               </motion.div>

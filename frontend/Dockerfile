@@ -18,10 +18,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-RUN npm install -g serve
+COPY package.json package-lock.json* ./
+RUN npm install --omit=dev --legacy-peer-deps
 
 COPY --from=build /app/dist /app/dist
+COPY --from=build /app/server.js /app/server.js
 
 EXPOSE 5179
 
-CMD ["serve", "-s", "dist", "-l", "5179"]
+CMD ["node", "server.js"]
