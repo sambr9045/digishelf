@@ -17,6 +17,7 @@ const BACKEND_ORIGIN = (
 const app = express();
 let cachedIndexHtml = "";
 
+
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
