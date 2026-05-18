@@ -19,11 +19,16 @@ const DEFAULT_GEO = {
 };
 
 function getSiteOrigin() {
-  if (typeof window !== "undefined") {
+  const configuredOrigin = import.meta.env.VITE_SITE_URL || "https://digishelves.com";
+
+  if (
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ) {
     return window.location.origin;
   }
 
-  return import.meta.env.VITE_SITE_URL || "https://digishelves.com";
+  return configuredOrigin;
 }
 
 export function buildAbsoluteUrl(path = "/") {
