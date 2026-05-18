@@ -347,9 +347,9 @@ export default function Giftcards() {
               <span className="inline-flex rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
                 Popular brands
               </span>
-              <h1 className="mt-5 text-4xl font-black tracking-[-0.05em] text-[#211722] sm:text-5xl">
+              <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-[#211722] sm:text-5xl">
                 Browse cards people buy most.
-              </h1>
+              </h2>
               <p className="mt-3 max-w-2xl text-lg leading-8 text-[#665b67]">
                 Pick a brand to see available gift card products and values.
               </p>
