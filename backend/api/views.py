@@ -396,15 +396,13 @@ def _build_giftcard_sitemap_entries():
 
 
 def _build_sitemap_xml(request):
-    today = timezone.now().date().isoformat()
     core_pages = [
         ("/", "daily", "1.0"),
         ("/about", "monthly", "0.7"),
         ("/contact", "monthly", "0.7"),
+        ("/terms-of-use", "monthly", "0.5"),
+        ("/privacy-policy", "monthly", "0.5"),
         ("/gift-cards", "daily", "0.95"),
-        ("/signin", "monthly", "0.4"),
-        ("/signup", "monthly", "0.5"),
-        ("/top-up", "daily", "0.95"),
     ]
 
     type_cache = {}
@@ -412,7 +410,6 @@ def _build_sitemap_xml(request):
     sitemap_urls = [
         (
             _build_public_url(request, path),
-            today,
             changefreq,
             priority,
         )
@@ -428,7 +425,6 @@ def _build_sitemap_xml(request):
             sitemap_urls.append(
                 (
                     _build_public_url(request, f"/gift-card/{brand_slug}"),
-                    today,
                     "weekly",
                     "0.75",
                 )
@@ -437,7 +433,6 @@ def _build_sitemap_xml(request):
         sitemap_urls.append(
             (
                 _build_public_url(request, _build_giftcard_path(item, brand_name)),
-                today,
                 "weekly",
                 "0.85",
             )
@@ -447,12 +442,11 @@ def _build_sitemap_xml(request):
         (
             "<url>"
             f"<loc>{escape(location)}</loc>"
-            f"<lastmod>{lastmod}</lastmod>"
             f"<changefreq>{changefreq}</changefreq>"
             f"<priority>{priority}</priority>"
             "</url>"
         )
-        for location, lastmod, changefreq, priority in sitemap_urls
+        for location, changefreq, priority in sitemap_urls
     ]
 
     return (

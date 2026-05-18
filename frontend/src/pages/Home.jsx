@@ -135,7 +135,6 @@ export default function Home() {
       </TopUpProvider>
 
       <main className="bg-white font-display text-[#211722]">
-        <h1 className="sr-only">Digishelves Airtime Top-ups and Gift Cards</h1>
         <motion.section
           className="relative overflow-hidden py-20 sm:py-24"
           variants={sectionFade}
