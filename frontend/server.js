@@ -13,6 +13,8 @@ const SITE_ORIGIN = (process.env.PUBLIC_SITE_ORIGIN || "https://digishelves.com"
 const BACKEND_ORIGIN = (
   process.env.BACKEND_ORIGIN || process.env.VITE_DEV_BACKEND_ORIGIN || "http://backend:8000"
 ).replace(/\/$/, "");
+const SITE_HOSTNAME = new URL(SITE_ORIGIN).hostname;
+const DEFAULT_IMAGE = toAbsoluteUrl("/favicon.ico");
 
 const app = express();
 let cachedIndexHtml = "";
@@ -37,6 +39,120 @@ function toAbsoluteUrl(urlPath = "/") {
   }
 
   return `${SITE_ORIGIN}${urlPath.startsWith("/") ? urlPath : `/${urlPath}`}`;
+}
+
+function normalizePathname(pathname = "/") {
+  if (!pathname || pathname === "/") {
+    return "/";
+  }
+
+  return pathname.replace(/\/+$/, "") || "/";
+}
+
+function titleizeSlug(value = "") {
+  return decodeURIComponent(value)
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function buildPageMeta(requestPath = "/") {
+  const pathname = normalizePathname(requestPath);
+  const staticPages = {
+    "/": {
+      title: "Airtime Top-ups and Gift Cards | Digishelves",
+      description:
+        "Buy airtime top-ups and digital gift cards with a streamlined checkout flow on Digishelves.",
+      canonicalPath: "/",
+    },
+    "/about": {
+      title: "About Digishelves",
+      description:
+        "Learn how Digishelves combines airtime top-ups and digital gift cards into one focused digital checkout experience.",
+      canonicalPath: "/about",
+    },
+    "/contact": {
+      title: "Contact Digishelves Support",
+      description:
+        "Contact Digishelves support for help with top-ups, gift cards, checkout issues, and order questions.",
+      canonicalPath: "/contact",
+    },
+    "/terms-of-use": {
+      title: "Terms of Use | Digishelves",
+      description:
+        "Read Digishelves terms governing gift card and airtime top-up services, payment rules, and platform usage.",
+      canonicalPath: "/terms-of-use",
+    },
+    "/privacy-policy": {
+      title: "Privacy Policy | Digishelves",
+      description:
+        "Read how Digishelves collects and uses personal data, including account, order, analytics, and security information.",
+      canonicalPath: "/privacy-policy",
+    },
+    "/gift-cards": {
+      title: "Buy Digital Gift Cards | Digishelves",
+      description:
+        "Browse digital gift cards by brand and country, compare values, and buy online through Digishelves.",
+      canonicalPath: "/gift-cards",
+    },
+    "/top-up": {
+      title: "Airtime Top-ups and Gift Cards | Digishelves",
+      description:
+        "Buy airtime top-ups and digital gift cards with a streamlined checkout flow on Digishelves.",
+      canonicalPath: "/",
+    },
+  };
+
+  if (staticPages[pathname]) {
+    return staticPages[pathname];
+  }
+
+  const giftCardTypeMatch = pathname.match(/^\/gift-card\/([^/]+)$/);
+  if (giftCardTypeMatch) {
+    const typeName = titleizeSlug(giftCardTypeMatch[1]) || "Gift Card";
+    return {
+      title: `${typeName} Gift Cards | Digishelves`,
+      description: `Browse ${typeName} gift card products and values on Digishelves.`,
+      canonicalPath: pathname,
+    };
+  }
+
+  return {
+    title: "Digishelves",
+    description:
+      "Digishelves is a digital commerce platform for buying airtime top-ups and gift cards with cryptocurrency",
+    canonicalPath: pathname,
+  };
+}
+
+function buildRobotsValue(pathname = "/") {
+  const noindexExactPaths = new Set([
+    "/404",
+    "/account",
+    "/admin",
+    "/admin-login",
+    "/checkout",
+    "/profile-settings",
+    "/signin",
+    "/signup",
+    "/top-up/checkout",
+  ]);
+  const noindexPrefixes = [
+    "/gift-card/payment/",
+    "/gift-card/payment-complete/",
+    "/top-up/payment/",
+    "/top-up/success/",
+  ];
+
+  if (
+    noindexExactPaths.has(pathname) ||
+    noindexPrefixes.some((prefix) => pathname.startsWith(prefix))
+  ) {
+    return "noindex,nofollow";
+  }
+
+  return "index,follow,max-image-preview:large";
 }
 
 function extractProductId(pathname) {
@@ -72,10 +188,11 @@ function replaceTag(html, matcher, replacement) {
 function injectMetaTags(html, meta) {
   const title = escapeHtml(meta.title);
   const description = escapeHtml(meta.description);
-  const image = escapeHtml(meta.image);
+  const image = escapeHtml(meta.image || DEFAULT_IMAGE);
   const url = escapeHtml(meta.url);
-  const price = escapeHtml(meta.price);
-  const priceCurrency = escapeHtml(meta.priceCurrency);
+  const robots = escapeHtml(meta.robots || "index,follow,max-image-preview:large");
+  const price = escapeHtml(meta.price || "");
+  const priceCurrency = escapeHtml(meta.priceCurrency || "");
 
   let out = html;
   out = out.replace(/<title>[^<]*<\/title>/i, `<title>${title}</title>`);
@@ -83,6 +200,11 @@ function injectMetaTags(html, meta) {
     out,
     /<meta\s+name=["']description["'][^>]*>/i,
     `<meta name=\"description\" content=\"${description}\" />`,
+  );
+  out = replaceTag(
+    out,
+    /<meta\s+name=["']robots["'][^>]*>/i,
+    `<meta name=\"robots\" content=\"${robots}\" />`,
   );
   out = replaceTag(
     out,
@@ -118,6 +240,11 @@ function injectMetaTags(html, meta) {
     out,
     /<meta\s+name=["']twitter:image["'][^>]*>/i,
     `<meta name=\"twitter:image\" content=\"${image}\" />`,
+  );
+  out = replaceTag(
+    out,
+    /<link\s+rel=["']canonical["'][^>]*>/i,
+    `<link rel=\"canonical\" href=\"${url}\" />`,
   );
   out = replaceTag(
     out,
@@ -165,6 +292,7 @@ function buildProductMeta(product, requestPath) {
     description,
     image: toAbsoluteUrl(logo),
     url: toAbsoluteUrl(requestPath),
+    robots: "index,follow,max-image-preview:large",
     price: sharePrice,
     priceCurrency: currency,
   };
@@ -179,36 +307,61 @@ async function readIndexHtml() {
 }
 
 async function fetchGiftCard(productId) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const origins = [...new Set([BACKEND_ORIGIN, SITE_ORIGIN])];
 
-  try {
-    const response = await fetch(`${BACKEND_ORIGIN}/api/giftcards/?productId=${productId}`, {
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
-    });
+  for (const origin of origins) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
-    if (!response.ok) {
-      return null;
+    try {
+      const response = await fetch(`${origin}/api/giftcards/?productId=${productId}`, {
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json();
+      if (payload?.data) {
+        return payload.data;
+      }
+    } catch {
+      continue;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const payload = await response.json();
-    return payload?.data || null;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  return null;
 }
+
+app.use((req, res, next) => {
+  if (req.hostname === `www.${SITE_HOSTNAME}`) {
+    res.redirect(301, `${SITE_ORIGIN}${req.originalUrl}`);
+    return;
+  }
+
+  next();
+});
 
 app.use(express.static(DIST_DIR, { index: false, maxAge: "1d" }));
 
 app.get("*", async (req, res) => {
   const indexHtml = await readIndexHtml();
   const productId = extractProductId(req.path);
+  const pathname = normalizePathname(req.path);
 
   if (!productId) {
-    res.status(200).type("html").send(indexHtml);
+    const pageMeta = buildPageMeta(pathname);
+    const html = injectMetaTags(indexHtml, {
+      ...pageMeta,
+      image: DEFAULT_IMAGE,
+      url: toAbsoluteUrl(pageMeta.canonicalPath),
+      robots: buildRobotsValue(pathname),
+    });
+    res.status(200).type("html").send(html);
     return;
   }
 
