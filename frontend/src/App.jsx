@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import Search from "./pages/Search";
 import Signin from "./pages/Signin";
 import Signup from "./pages/Signup";
+import VerifyEmail from "./pages/VerifyEmail";
 import TopUpCheckout from "./pages/TopUpCheckout";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -72,6 +73,10 @@ const router = createBrowserRouter([
       {
         path: "signup",
         element: <Signup />,
+      },
+      {
+        path: "verify-email",
+        element: <VerifyEmail />,
       },
       {
         path: "admin-login",

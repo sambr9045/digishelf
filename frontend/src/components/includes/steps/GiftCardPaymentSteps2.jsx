@@ -17,7 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { api_endpoint } from "../../constant";
 import { nanoid } from "nanoid";
 // import { useHistory } from "react-router-dom";
@@ -212,7 +212,6 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
 
   return (
     <div className="checkout-flow">
-      <ToastContainer position="top-center" theme="colored" />
       {cartItems.length > 0 ? (
         <>
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-6">

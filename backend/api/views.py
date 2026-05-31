@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.contrib.auth import login
 from django.http import HttpResponse
+from django.core import signing
 from .serializers import UserSerializer, UserRegistrationSerializer
 from .models import Account, DigiShelfData
 from rest_framework import status
@@ -41,6 +42,7 @@ from operator import attrgetter
 from urllib.parse import quote
 from difflib import SequenceMatcher
 from xml.sax.saxutils import escape
+import secrets
 from payments.fulfillment import (
     build_giftcard_email_entries,
     send_giftcard_codes_email,
@@ -60,6 +62,13 @@ GIFT_CARD_CACHE_TIMEOUT_SECONDS = int(
     os.getenv("GIFT_CARD_CACHE_TIMEOUT_SECONDS", str(34 * 60 * 60))
 )
 DEFAULT_PUBLIC_SITE_URL = os.getenv("PUBLIC_SITE_URL") or os.getenv("SITE_URL")
+EMAIL_VERIFICATION_TTL_SECONDS = int(
+    os.getenv("EMAIL_VERIFICATION_TTL_SECONDS", str(15 * 60))
+)
+EMAIL_VERIFICATION_SESSION_SALT = "api.email_verification.session"
+EMAIL_VERIFICATION_SESSION_MAX_AGE_SECONDS = int(
+    os.getenv("EMAIL_VERIFICATION_SESSION_MAX_AGE_SECONDS", str(7 * 24 * 60 * 60))
+)
 
 
 def get_recaptcha_secret():
@@ -91,6 +100,125 @@ def get_admin_notification_email():
         or os.getenv("ADMIN_NOTIFICTION_EMAIL")
         or settings.DEFAULT_FROM_ADDRESS
     )
+
+
+def _normalize_email_address(email):
+    return Account.objects.normalize_email((email or "").strip()).lower()
+
+
+def _split_full_name(full_name):
+    parts = [part for part in str(full_name or "").strip().split() if part]
+    if not parts:
+        return "", ""
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], " ".join(parts[1:])
+
+
+def _email_verification_cache_key(email):
+    digest = hashlib.sha256(_normalize_email_address(email).encode("utf-8")).hexdigest()
+    return f"auth.email_verification.{digest}"
+
+
+def _email_verification_digest(email, code):
+    raw = f"{_normalize_email_address(email)}:{code}:{settings.SECRET_KEY}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def make_email_verification_session(user):
+    return signing.dumps(
+        {"user_id": user.pk},
+        salt=EMAIL_VERIFICATION_SESSION_SALT,
+    )
+
+
+def get_user_from_email_verification_session(session_token):
+    if not session_token:
+        raise ValueError("Missing verification session.")
+
+    try:
+        payload = signing.loads(
+            session_token,
+            salt=EMAIL_VERIFICATION_SESSION_SALT,
+            max_age=EMAIL_VERIFICATION_SESSION_MAX_AGE_SECONDS,
+        )
+    except signing.BadSignature as exc:
+        raise ValueError("Your verification session has expired. Sign up again or request a new code.") from exc
+
+    user = Account.objects.filter(pk=payload.get("user_id"), auth_type="email").first()
+    if not user:
+        raise ValueError("We could not find an account for this verification session.")
+    return user
+
+
+def issue_email_verification_code(user):
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    cache.set(
+        _email_verification_cache_key(user.email),
+        {
+            "user_id": user.pk,
+            "code_digest": _email_verification_digest(user.email, code),
+        },
+        timeout=EMAIL_VERIFICATION_TTL_SECONDS,
+    )
+    return code
+
+
+def get_email_verification_payload(email):
+    payload = cache.get(_email_verification_cache_key(email))
+    if not isinstance(payload, dict):
+        return None
+    return payload
+
+
+def send_email_verification_code(user):
+    code = issue_email_verification_code(user)
+    expires_in_minutes = max(1, (EMAIL_VERIFICATION_TTL_SECONDS + 59) // 60)
+    subject = "Verify your Digishelves email"
+    support_email = getattr(settings, "DEFAULT_FROM_ADDRESS", "info@digishelves.com")
+    body = (
+        f"Hi {user.first_name or 'there'},\n\n"
+        f"Your Digishelves verification code is {code}.\n"
+        f"It expires in {expires_in_minutes} minute(s).\n\n"
+        "If you did not create this account, you can ignore this email.\n\n"
+        "Digishelves"
+    )
+    html_body = render_to_string("emails/verification_code.html", {
+        "first_name": user.first_name or "there",
+        "code": code,
+        "expires_in_minutes": expires_in_minutes,
+        "support_email": support_email,
+    })
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    message.attach_alternative(html_body, "text/html")
+    message.send(fail_silently=False)
+
+
+def send_admin_new_user_notification(user):
+    admin_email = get_admin_notification_email()
+    if not admin_email:
+        return
+
+    subject = "New Digishelves user signup"
+    body = (
+        "A new Digishelves account was created.\n\n"
+        f"Name: {(f'{user.first_name or ''} {user.last_name or ''}').strip() or 'N/A'}\n"
+        f"Email: {user.email}\n"
+        f"Auth type: {user.auth_type}\n"
+        f"Email verified: {'Yes' if user.email_verified else 'No'}\n"
+    )
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[admin_email],
+    )
+    message.send(fail_silently=True)
 
 
 def send_contact_notification(contact):
@@ -463,12 +591,33 @@ class LoginWithEmailView(APIView):
     def post(self, request, format=None):
         import time
         
-        email = request.data.get("email")
+        email = _normalize_email_address(request.data.get("email"))
         password = request.data.get("password")
         # Validate email and password
         if not email or not password:
             return Response({'error': 'Email and password are required'}, status=status.HTTP_401_UNAUTHORIZED)
         
+        existing_user = Account.objects.filter(email__iexact=email).first()
+        if existing_user is not None:
+            if existing_user.deleted:
+                return Response({'error': 'Email and password are required'}, status=status.HTTP_401_UNAUTHORIZED)
+            if existing_user.suspended:
+                return Response({'error': 'Your account has been suspended. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
+            if (
+                existing_user.auth_type == 'email'
+                and (not existing_user.email_verified or not existing_user.is_active)
+                and existing_user.check_password(password)
+            ):
+                return Response(
+                    {
+                        'error': 'Please verify your email before signing in.',
+                        'code': 'email_not_verified',
+                        'email': existing_user.email,
+                        'email_verification_required': True,
+                        'verification_session': make_email_verification_session(existing_user),
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         
         
         # Authenticate user
@@ -550,6 +699,11 @@ class GoogleLogin(APIView):
                 )
                 user.set_unusable_password()
                 user.save()
+                threading.Thread(
+                    target=send_admin_new_user_notification,
+                    args=(user,),
+                    daemon=True,
+                ).start()
 
             return self._build_auth_response(request, user)
 
@@ -570,10 +724,59 @@ class EmailSignUp(APIView):
     permission_classes = [AllowAny]  
 
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+        payload = request.data.copy()
+        normalized_email = _normalize_email_address(payload.get("email"))
+        if normalized_email:
+            payload["email"] = normalized_email
+
+        if payload.get("fullname") and not (payload.get("first_name") or payload.get("last_name")):
+            first_name, last_name = _split_full_name(payload.get("fullname"))
+            payload["first_name"] = first_name
+            payload["last_name"] = last_name
+
+        existing_user = Account.objects.filter(email__iexact=normalized_email).first() if normalized_email else None
+        if existing_user and existing_user.auth_type != "email":
+            return Response(
+                {"error": "This email address is already registered with Google sign-in."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if existing_user and (existing_user.email_verified or existing_user.is_active):
+            return Response(
+                {"error": "User with this email already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = UserRegistrationSerializer(existing_user, data=payload)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+            created = existing_user is None
+            user = serializer.save()
+
+            try:
+                send_email_verification_code(user)
+            except Exception:
+                return Response(
+                    {
+                        "error": "We could not send the verification email right now. Please try again or resend the code.",
+                        "email_verification_required": True,
+                        "email": user.email,
+                        "verification_session": make_email_verification_session(user),
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+
+            return Response(
+                {
+                    "message": (
+                        "Account created. We sent a verification code to your email address."
+                        if created
+                        else "Your account is still waiting for verification. We sent a new verification code."
+                    ),
+                    "email_verification_required": True,
+                    "email": user.email,
+                    "verification_session": make_email_verification_session(user),
+                },
+                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+            )
         else:
             # Check for specific validation errors
             if 'email' in serializer.errors and any(
@@ -584,6 +787,103 @@ class EmailSignUp(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmailVerificationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        code = str(request.data.get("code") or "").strip()
+        if not code:
+            return Response({"error": "Verification code is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = get_user_from_email_verification_session(request.data.get("verification_session"))
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.deleted:
+            return Response({"error": "This account is no longer available."}, status=status.HTTP_403_FORBIDDEN)
+        if user.suspended:
+            return Response({"error": "Your account has been suspended. Please contact support."}, status=status.HTTP_403_FORBIDDEN)
+        if user.email_verified and user.is_active:
+            return Response({"message": "Your email is already verified."}, status=status.HTTP_200_OK)
+
+        payload = get_email_verification_payload(user.email)
+        if not payload or payload.get("user_id") != user.pk:
+            return Response(
+                {"error": "Your verification code has expired. Please request a new one."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if payload.get("code_digest") != _email_verification_digest(user.email, code):
+            return Response({"error": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.email_verified = True
+        user.is_active = True
+        user.save(update_fields=["email_verified", "is_active"])
+        cache.delete(_email_verification_cache_key(user.email))
+
+        threading.Thread(
+            target=send_admin_new_user_notification,
+            args=(user,),
+            daemon=True,
+        ).start()
+
+        return Response(
+            {"message": "Email verified successfully. You can sign in now."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResendEmailVerificationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            user = get_user_from_email_verification_session(request.data.get("verification_session"))
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.deleted:
+            return Response({"error": "This account is no longer available."}, status=status.HTTP_403_FORBIDDEN)
+        if user.suspended:
+            return Response({"error": "Your account has been suspended. Please contact support."}, status=status.HTTP_403_FORBIDDEN)
+        if user.email_verified and user.is_active:
+            return Response({"message": "Your email is already verified."}, status=status.HTTP_200_OK)
+
+        requested_email = _normalize_email_address(request.data.get("email") or user.email)
+        if not requested_email:
+            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if requested_email != user.email:
+            if Account.objects.filter(email__iexact=requested_email).exclude(pk=user.pk).exists():
+                return Response(
+                    {"error": "Another account already uses that email address."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            cache.delete(_email_verification_cache_key(user.email))
+            user.email = requested_email
+            user.email_verified = False
+            user.is_active = False
+            user.save(update_fields=["email", "email_verified", "is_active"])
+
+        try:
+            send_email_verification_code(user)
+        except Exception:
+            return Response(
+                {"error": "We could not send a verification email right now. Please try again."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                "message": "A new verification code has been sent.",
+                "email": user.email,
+                "verification_session": make_email_verification_session(user),
+            },
+            status=status.HTTP_200_OK,
+        )
   
   
   

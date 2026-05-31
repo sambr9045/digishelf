@@ -25,25 +25,43 @@ export default function GiftCardBanner({
 }) {
   const location = useLocation();
   const query = useQuery();
+  const queryCountry = query.get("country") || "";
   const navigate = useNavigate();
   const { country } = useContext(SessionContext);
-  const [selectedCountry, setSelectedCountry] = useState(
-    query.get("country") || "",
+  const [selectedCountry, setSelectedCountry] = useState(queryCountry);
+  const [hasManualCountrySelection, setHasManualCountrySelection] = useState(
+    Boolean(queryCountry),
   );
   const [giftcardname, setGiftcardname] = useState(query.get("name") || "");
+  const [countrySearchText, setCountrySearchText] = useState("");
   const [countryMenuOpen, setCountryMenuOpen] = useState(false);
-  const countryMenuRef = useRef(null);
+  const mobilePopoverCountryMenuRef = useRef(null);
+  const mobileInlineCountryMenuRef = useRef(null);
+  const desktopCountryMenuRef = useRef(null);
 
   const selectedCountryInfo = useMemo(
     () => countries.find((item) => item.alpha2Code === selectedCountry) || null,
     [selectedCountry],
   );
+  const filteredCountries = useMemo(() => {
+    const normalizedSearch = countrySearchText.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return countries;
+    }
+
+    return countries.filter(
+      (item) =>
+        item.name.toLowerCase().includes(normalizedSearch) ||
+        item.alpha2Code.toLowerCase().includes(normalizedSearch),
+    );
+  }, [countrySearchText]);
 
   useEffect(() => {
-    if (!selectedCountry && country.country) {
+    if (!hasManualCountrySelection && !selectedCountry && country.country) {
       setSelectedCountry(country.country);
     }
-  }, [country.country, selectedCountry]);
+  }, [country.country, hasManualCountrySelection, selectedCountry]);
 
   useEffect(() => {
     if (!countryMenuOpen) {
@@ -51,10 +69,17 @@ export default function GiftCardBanner({
     }
 
     const handleDocumentClick = (event) => {
-      if (
-        countryMenuRef.current &&
-        !countryMenuRef.current.contains(event.target)
-      ) {
+      const isInsideMobilePopover =
+        mobilePopoverCountryMenuRef.current &&
+        mobilePopoverCountryMenuRef.current.contains(event.target);
+      const isInsideMobileInline =
+        mobileInlineCountryMenuRef.current &&
+        mobileInlineCountryMenuRef.current.contains(event.target);
+      const isInsideDesktop =
+        desktopCountryMenuRef.current &&
+        desktopCountryMenuRef.current.contains(event.target);
+
+      if (!isInsideMobilePopover && !isInsideMobileInline && !isInsideDesktop) {
         setCountryMenuOpen(false);
       }
     };
@@ -79,7 +104,9 @@ export default function GiftCardBanner({
   };
 
   const handleCountryChange = (countryCode) => {
+    setHasManualCountrySelection(true);
     setSelectedCountry(countryCode);
+    setCountrySearchText("");
     setCountryMenuOpen(false);
   };
 
@@ -149,7 +176,7 @@ export default function GiftCardBanner({
                 <span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
                   Country
                 </span>
-                <div className="relative" ref={countryMenuRef}>
+                <div className="relative" ref={mobilePopoverCountryMenuRef}>
                   <button
                     type="button"
                     onClick={() => setCountryMenuOpen((open) => !open)}
@@ -181,8 +208,19 @@ export default function GiftCardBanner({
                   </button>
 
                   {countryMenuOpen ? (
-                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-[1.5rem] border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
+                    <div className="absolute left-0 top-[calc(100%+0.5rem)] z-[80] w-[calc(100%+0.75rem)] overflow-hidden rounded-2xl border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
                       <div className="max-h-72 overflow-y-auto p-2">
+                        <div className="mb-2">
+                          <input
+                            type="text"
+                            value={countrySearchText}
+                            onChange={(event) =>
+                              setCountrySearchText(event.target.value)
+                            }
+                            placeholder="Search country"
+                            className="h-10 w-full rounded-xl border border-[#eadfe7] bg-[#fbf8f4] px-3 text-sm font-bold text-[#211722] outline-none transition placeholder:text-[#9b8d98] focus:border-[#551839] focus:bg-white focus:ring-4 focus:ring-[#551839]/10"
+                          />
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleCountryChange("")}
@@ -203,7 +241,7 @@ export default function GiftCardBanner({
                           ) : null}
                         </button>
 
-                        {countries.map((item) => (
+                        {filteredCountries.map((item) => (
                           <button
                             key={item.alpha2Code}
                             type="button"
@@ -229,6 +267,12 @@ export default function GiftCardBanner({
                             ) : null}
                           </button>
                         ))}
+
+                        {filteredCountries.length === 0 ? (
+                          <p className="mb-0 mt-2 px-2 py-2 text-sm font-bold text-[#665b67]">
+                            No country found.
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
@@ -259,7 +303,7 @@ export default function GiftCardBanner({
           </div>
         )}
       />
-      <section className="relative z-20 isolate overflow-x-hidden overflow-y-visible bg-[#f7f1e8] pt-28 pb-14 sm:pt-32 sm:pb-18">
+      <section className="relative z-40 overflow-x-clip overflow-y-visible bg-[#f7f1e8] pb-14 pt-28 sm:pb-18 sm:pt-32">
         <div className="absolute left-[-10rem] top-4 h-80 w-80 rounded-full bg-[#10ac84]/20 blur-3xl" />
         <div className="absolute right-[-8rem] top-20 h-[30rem] w-[30rem] rounded-full bg-[#551839]/15 blur-3xl" />
 
@@ -293,11 +337,141 @@ export default function GiftCardBanner({
 
             <form
               onSubmit={handleSearchClick}
-              className="relative z-20 mt-8 hidden w-full rounded-[1.75rem] bg-transparent p-0 shadow-none md:block"
+              className="relative z-50 mt-8 grid gap-2 md:hidden"
             >
-              <div className="grid gap-2 md:grid-cols-[160px_minmax(0,2.8fr)_160px] xl:grid-cols-[170px_minmax(0,3.2fr)_160px]">
+              <label className="block">
+                <div className="relative" ref={mobileInlineCountryMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setCountryMenuOpen((open) => !open)}
+                    className="flex h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] px-4 text-left outline-none transition hover:border-[#d8c5d1] focus:border-[#551839] focus:bg-white focus:ring-4 focus:ring-[#551839]/10"
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      {selectedCountryInfo ? (
+                        <span className="flex h-7 w-7 shrink-0 overflow-hidden rounded-full border border-white bg-white shadow-sm">
+                          <img
+                            src={getFlagUrl(selectedCountryInfo.alpha2Code)}
+                            alt={`${selectedCountryInfo.name} flag`}
+                            className="h-full w-full object-cover"
+                          />
+                        </span>
+                      ) : (
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#551839] shadow-sm">
+                          <Globe2 className="h-4 w-4" />
+                        </span>
+                      )}
+                      <span className="truncate text-sm font-black text-[#211722]">
+                        {selectedCountryInfo?.name || "All countries"}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 text-[#551839] transition ${
+                        countryMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {countryMenuOpen ? (
+                    <div className="absolute left-0 top-[calc(100%+0.5rem)] z-[130] w-full overflow-hidden rounded-2xl border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
+                      <div className="max-h-72 overflow-y-auto p-2">
+                        <div className="mb-2">
+                          <input
+                            type="text"
+                            value={countrySearchText}
+                            onChange={(event) =>
+                              setCountrySearchText(event.target.value)
+                            }
+                            placeholder="Search country"
+                            className="h-10 w-full rounded-xl border border-[#eadfe7] bg-[#fbf8f4] px-3 text-sm font-bold text-[#211722] outline-none transition placeholder:text-[#9b8d98] focus:border-[#551839] focus:bg-white focus:ring-4 focus:ring-[#551839]/10"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCountryChange("")}
+                          className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm font-bold transition ${
+                            !selectedCountry
+                              ? "bg-[#551839] text-white"
+                              : "text-[#4d4150] hover:bg-[#f7f1e8]"
+                          }`}
+                        >
+                          <span className="flex min-w-0 items-center gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-[#551839]">
+                              <Globe2 className="h-4 w-4" />
+                            </span>
+                            <span>All countries</span>
+                          </span>
+                          {!selectedCountry ? (
+                            <Check className="h-4 w-4" />
+                          ) : null}
+                        </button>
+
+                        {filteredCountries.map((item) => (
+                          <button
+                            key={item.alpha2Code}
+                            type="button"
+                            onClick={() => handleCountryChange(item.alpha2Code)}
+                            className={`mt-1 flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm font-bold transition ${
+                              selectedCountry === item.alpha2Code
+                                ? "bg-[#551839] text-white"
+                                : "text-[#4d4150] hover:bg-[#f7f1e8]"
+                            }`}
+                          >
+                            <span className="flex min-w-0 items-center gap-3">
+                              <span className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full border border-white bg-white shadow-sm">
+                                <img
+                                  src={getFlagUrl(item.alpha2Code)}
+                                  alt={`${item.name} flag`}
+                                  className="h-full w-full object-cover"
+                                />
+                              </span>
+                              <span className="truncate">{item.name}</span>
+                            </span>
+                            {selectedCountry === item.alpha2Code ? (
+                              <Check className="h-4 w-4 shrink-0" />
+                            ) : null}
+                          </button>
+                        ))}
+
+                        {filteredCountries.length === 0 ? (
+                          <p className="mb-0 mt-2 px-2 py-2 text-sm font-bold text-[#665b67]">
+                            No country found.
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </label>
+
+              <label className="block">
+                <div className="relative">
+                  <Gift className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#551839]" />
+                  <input
+                    type="text"
+                    value={giftcardname}
+                    placeholder="Search brand"
+                    onChange={handleNameChange}
+                    className="h-14 w-full rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] px-11 text-sm font-black text-[#211722] outline-none transition placeholder:text-[#9b8d98] focus:border-[#551839] focus:bg-white focus:ring-4 focus:ring-[#551839]/10"
+                  />
+                </div>
+              </label>
+
+              <button
+                type="submit"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#551839] px-6 text-sm font-black text-white transition hover:bg-[#44122d]"
+              >
+                <Search className="h-5 w-5" />
+                Search
+              </button>
+            </form>
+
+            <form
+              onSubmit={handleSearchClick}
+              className="relative z-50 mt-8 hidden w-full rounded-[1.75rem] bg-transparent p-0 shadow-none md:block"
+            >
+              <div className="grid gap-2 md:grid-cols-[195px_minmax(0,2.7fr)_160px] xl:grid-cols-[210px_minmax(0,3fr)_160px]">
                 <label className="block">
-                  <div className="relative" ref={countryMenuRef}>
+                  <div className="relative" ref={desktopCountryMenuRef}>
                     <button
                       type="button"
                       onClick={() => setCountryMenuOpen((open) => !open)}
@@ -329,8 +503,19 @@ export default function GiftCardBanner({
                     </button>
 
                     {countryMenuOpen ? (
-                      <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-[1.5rem] border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
+                      <div className="absolute left-0 top-[calc(100%+0.5rem)] z-[120] w-[calc(100%+0.75rem)] overflow-hidden rounded-2xl border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
                         <div className="max-h-80 overflow-y-auto p-2">
+                          <div className="mb-2">
+                            <input
+                              type="text"
+                              value={countrySearchText}
+                              onChange={(event) =>
+                                setCountrySearchText(event.target.value)
+                              }
+                              placeholder="Search country"
+                              className="h-10 w-full rounded-xl border border-[#eadfe7] bg-[#fbf8f4] px-3 text-sm font-bold text-[#211722] outline-none transition placeholder:text-[#9b8d98] focus:border-[#551839] focus:bg-white focus:ring-4 focus:ring-[#551839]/10"
+                            />
+                          </div>
                           <button
                             type="button"
                             onClick={() => handleCountryChange("")}
@@ -351,7 +536,7 @@ export default function GiftCardBanner({
                             ) : null}
                           </button>
 
-                          {countries.map((item) => (
+                          {filteredCountries.map((item) => (
                             <button
                               key={item.alpha2Code}
                               type="button"
@@ -379,6 +564,12 @@ export default function GiftCardBanner({
                               ) : null}
                             </button>
                           ))}
+
+                          {filteredCountries.length === 0 ? (
+                            <p className="mb-0 mt-2 px-2 py-2 text-sm font-bold text-[#665b67]">
+                              No country found.
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     ) : null}

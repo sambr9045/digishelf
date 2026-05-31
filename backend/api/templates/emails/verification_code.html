@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify your Digishelves email</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f7f1e8;font-family:'DM Sans',Arial,sans-serif;color:#211722;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f1e8;padding:28px 14px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #eadfe7;border-radius:20px;overflow:hidden;">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#211722;padding:24px 28px;">
+                <p style="margin:0;font-size:11px;letter-spacing:0.22em;font-weight:700;text-transform:uppercase;color:#9ff1dd;">Digishelves</p>
+                <h1 style="margin:10px 0 0;font-size:24px;line-height:1.25;font-weight:800;color:#ffffff;">Verify your email</h1>
+                <p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:rgba(255,255,255,0.70);">One quick step to activate your account.</p>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:28px 28px 10px;">
+                <p style="margin:0 0 6px;font-size:15px;line-height:1.7;color:#332834;">
+                  Hi {{ first_name }},
+                </p>
+                <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#665b67;">
+                  Enter the code below to verify your email address and complete your Digishelves registration.
+                </p>
+
+                <!-- OTP box -->
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 28px;">
+                  <tr>
+                    <td align="center" style="background:#fbf8f4;border:1.5px solid #eadfe7;border-radius:16px;padding:20px 36px;">
+                      <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#9a8b97;">Verification code</p>
+                      <p style="margin:0;font-size:38px;font-weight:800;letter-spacing:0.28em;color:#211722;">{{ code }}</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Expiry pill -->
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
+                  <tr>
+                    <td style="display:inline-block;padding:7px 14px;border-radius:999px;background:#f7f1e8;border:1px solid #eadfe7;font-size:12px;font-weight:700;color:#551839;letter-spacing:0.10em;text-transform:uppercase;">
+                      Expires in {{ expires_in_minutes }} minute{{ expires_in_minutes|pluralize }}
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 0;font-size:13px;line-height:1.7;color:#9a8b97;">
+                  If you did not create a Digishelves account, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:18px 28px 24px;background:#fbf8f4;border-top:1px solid #efe7ed;margin-top:24px;">
+                <p style="margin:0;font-size:13px;line-height:1.7;color:#665b67;">
+                  Need help? Contact us at
+                  <a href="mailto:{{ support_email }}" style="color:#551839;text-decoration:none;font-weight:700;">{{ support_email }}</a>.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

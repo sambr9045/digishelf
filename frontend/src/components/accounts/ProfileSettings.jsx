@@ -4,7 +4,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import axios from "axios";
 import { SessionContext } from "../sessionContext";
 import { api_endpoint } from "../../../src/components/constant";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -44,7 +44,7 @@ export default function ProfileSettings() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.accessToken}`,
           },
-        }
+        },
       );
 
       if (response.status === 204) {
@@ -72,7 +72,7 @@ export default function ProfileSettings() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${session.accessToken}`,
             },
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -114,7 +114,7 @@ export default function ProfileSettings() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.accessToken}`,
           },
-        }
+        },
       );
 
       if (response.status === 200) {
@@ -139,7 +139,8 @@ export default function ProfileSettings() {
         robots="noindex,nofollow"
         schema={createWebPageSchema({
           title: "Digishelves Profile Settings",
-          description: "Update your Digishelves profile details and account settings.",
+          description:
+            "Update your Digishelves profile details and account settings.",
           path: "/profile-settings",
         })}
       />

@@ -42,7 +42,7 @@ import {
   YAxis,
 } from "recharts";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 import { api_endpoint } from "../components/constant";
 import { ADMIN_TOKEN_KEY } from "./AdminLogin";
@@ -75,7 +75,8 @@ const ADMIN_PAGES = [
     icon: Smartphone,
     eyebrow: "Top-up queue",
     title: "Top-up payment orders",
-    description: "Review top-up payments, profit, approval state, and release progress.",
+    description:
+      "Review top-up payments, profit, approval state, and release progress.",
   },
   {
     key: "giftcard-orders",
@@ -83,7 +84,8 @@ const ADMIN_PAGES = [
     icon: Gift,
     eyebrow: "Gift card queue",
     title: "Gift card payment orders",
-    description: "Review gift-card payments, profit, approval state, and release progress.",
+    description:
+      "Review gift-card payments, profit, approval state, and release progress.",
   },
   {
     key: "completed-orders",
@@ -91,7 +93,8 @@ const ADMIN_PAGES = [
     icon: PackageCheck,
     eyebrow: "Completed activity",
     title: "Completed orders",
-    description: "Review recently completed airtime and gift card transactions.",
+    description:
+      "Review recently completed airtime and gift card transactions.",
   },
   {
     key: "messages",
@@ -99,7 +102,8 @@ const ADMIN_PAGES = [
     icon: Mail,
     eyebrow: "Contact inbox",
     title: "Customer messages",
-    description: "Read new messages, reply from the admin panel, and track support follow-up.",
+    description:
+      "Read new messages, reply from the admin panel, and track support follow-up.",
   },
   {
     key: "users",
@@ -107,7 +111,8 @@ const ADMIN_PAGES = [
     icon: Users,
     eyebrow: "Customer activity",
     title: "Users",
-    description: "Review registered users, their purchases, and tracked activity history.",
+    description:
+      "Review registered users, their purchases, and tracked activity history.",
   },
   {
     key: "stats",
@@ -115,7 +120,8 @@ const ADMIN_PAGES = [
     icon: BarChart3,
     eyebrow: "Analytics",
     title: "Analytics dashboard",
-    description: "Track traffic, gift-card engagement, and abandoned carts in one place.",
+    description:
+      "Track traffic, gift-card engagement, and abandoned carts in one place.",
   },
   {
     key: "page-traffic",
@@ -130,22 +136,35 @@ const ADMIN_PAGES = [
 
 function getPageMeta(pageKey) {
   if (pageKey === "crypto-orders") {
-    return ADMIN_PAGES.find((item) => item.key === "topup-orders") || ADMIN_PAGES[0];
+    return (
+      ADMIN_PAGES.find((item) => item.key === "topup-orders") || ADMIN_PAGES[0]
+    );
   }
   return ADMIN_PAGES.find((item) => item.key === pageKey) || ADMIN_PAGES[0];
 }
 
 function findUserByEmail(users, email) {
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
   if (!normalizedEmail) {
     return null;
   }
 
-  return users.find((user) => String(user.email || "").trim().toLowerCase() === normalizedEmail) || null;
+  return (
+    users.find(
+      (user) =>
+        String(user.email || "")
+          .trim()
+          .toLowerCase() === normalizedEmail,
+    ) || null
+  );
 }
 
 function getCurrentOrderState(order, config) {
-  const fulfillmentStatus = String(order?.fulfillment_status || "").toLowerCase();
+  const fulfillmentStatus = String(
+    order?.fulfillment_status || "",
+  ).toLowerCase();
   const paymentStatus = String(order?.status || "").toLowerCase();
   const isManualMode = config?.order_mode === "manual";
 
@@ -177,7 +196,9 @@ function getCurrentOrderState(order, config) {
 }
 
 function getNotificationSeenStorageKey(email) {
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
   if (!normalizedEmail) {
     return "";
   }
@@ -210,7 +231,10 @@ function writeSeenNotificationCount(email, count) {
     return;
   }
 
-  window.localStorage.setItem(storageKey, String(Math.max(Number(count) || 0, 0)));
+  window.localStorage.setItem(
+    storageKey,
+    String(Math.max(Number(count) || 0, 0)),
+  );
 }
 
 export default function AdminDashboard() {
@@ -235,18 +259,35 @@ export default function AdminDashboard() {
   const chartItems = useMemo(() => {
     const stats = dashboard?.stats || {};
     return [
-      { label: "Pending", value: stats.pending_payment_orders || 0, tone: "bg-[#551839]" },
-      { label: "Paid", value: stats.paid_payment_orders || 0, tone: "bg-[#10ac84]" },
-      { label: "Approved", value: stats.approved_payment_orders || 0, tone: "bg-[#2775ca]" },
+      {
+        label: "Pending",
+        value: stats.pending_payment_orders || 0,
+        tone: "bg-[#551839]",
+      },
+      {
+        label: "Paid",
+        value: stats.paid_payment_orders || 0,
+        tone: "bg-[#10ac84]",
+      },
+      {
+        label: "Approved",
+        value: stats.approved_payment_orders || 0,
+        tone: "bg-[#2775ca]",
+      },
       { label: "Manual", value: stats.manual_queue || 0, tone: "bg-[#f59e0b]" },
     ];
   }, [dashboard]);
 
   const paymentOrders = dashboard?.payment_orders || [];
-  const topupPaymentOrders = paymentOrders.filter((order) => order.fulfillment_type === "topup");
-  const giftcardPaymentOrders = paymentOrders.filter((order) => order.fulfillment_type === "giftcard");
+  const topupPaymentOrders = paymentOrders.filter(
+    (order) => order.fulfillment_type === "topup",
+  );
+  const giftcardPaymentOrders = paymentOrders.filter(
+    (order) => order.fulfillment_type === "giftcard",
+  );
   const selectedOrderId = searchParams.get("order");
-  const selectedOrder = paymentOrders.find((order) => order.order_id === selectedOrderId) || null;
+  const selectedOrder =
+    paymentOrders.find((order) => order.order_id === selectedOrderId) || null;
   const topups = dashboard?.topups || [];
   const giftcards = dashboard?.giftcards || [];
   const contacts = dashboard?.contacts || [];
@@ -258,9 +299,13 @@ export default function AdminDashboard() {
   const notificationItems = paymentOrders
     .filter((order) => order.fulfillment_status !== "completed")
     .slice(0, 6);
-  const unreadNotifications = Math.max(pendingNotifications - seenNotificationCount, 0);
+  const unreadNotifications = Math.max(
+    pendingNotifications - seenNotificationCount,
+    0,
+  );
   const selectedContactId = Number(searchParams.get("contact") || 0);
-  const selectedContact = contacts.find((contact) => contact.id === selectedContactId) || null;
+  const selectedContact =
+    contacts.find((contact) => contact.id === selectedContactId) || null;
   const [replyDraft, setReplyDraft] = useState("");
   const [processingContactId, setProcessingContactId] = useState(0);
   const [userDetail, setUserDetail] = useState(null);
@@ -276,7 +321,9 @@ export default function AdminDashboard() {
   const abandonedCarts = analytics.abandoned_carts || [];
   const selectedUserId = Number(searchParams.get("user") || 0);
   const selectedUser = users.find((user) => user.id === selectedUserId) || null;
-  const selectedTrafficPage = Number.isFinite(Number(searchParams.get("traffic_page") || 1))
+  const selectedTrafficPage = Number.isFinite(
+    Number(searchParams.get("traffic_page") || 1),
+  )
     ? Math.max(Number(searchParams.get("traffic_page") || 1), 1)
     : 1;
 
@@ -300,7 +347,9 @@ export default function AdminDashboard() {
         navigate("/admin-login");
         return;
       }
-      toast.error(error?.response?.data?.error || "Could not load admin dashboard.");
+      toast.error(
+        error?.response?.data?.error || "Could not load admin dashboard.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -321,7 +370,9 @@ export default function AdminDashboard() {
       }));
       toast.success("Configuration updated.");
     } catch (error) {
-      toast.error(error?.response?.data?.error || "Could not save configuration.");
+      toast.error(
+        error?.response?.data?.error || "Could not save configuration.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -382,16 +433,21 @@ export default function AdminDashboard() {
 
     setProcessingOrderId(orderId);
     try {
-      await axios.delete(`${api_endpoint}/api/admin/payment-orders/${orderId}/`, {
-        headers: getAdminHeaders(),
-      });
+      await axios.delete(
+        `${api_endpoint}/api/admin/payment-orders/${orderId}/`,
+        {
+          headers: getAdminHeaders(),
+        },
+      );
       toast.success("Payment order deleted.");
       if (selectedOrderId === orderId) {
         setSearchParams({ page: currentPage.key });
       }
       await fetchDashboard();
     } catch (error) {
-      toast.error(error?.response?.data?.error || "Could not delete payment order.");
+      toast.error(
+        error?.response?.data?.error || "Could not delete payment order.",
+      );
     } finally {
       setProcessingOrderId("");
     }
@@ -431,7 +487,9 @@ export default function AdminDashboard() {
         );
         await fetchDashboard();
       } catch (error) {
-        toast.error(error?.response?.data?.error || "Could not mark message as read.");
+        toast.error(
+          error?.response?.data?.error || "Could not mark message as read.",
+        );
       }
     }
   };
@@ -520,7 +578,10 @@ export default function AdminDashboard() {
       return;
     }
     setSearchParams({
-      page: order.fulfillment_type === "giftcard" ? "giftcard-orders" : "topup-orders",
+      page:
+        order.fulfillment_type === "giftcard"
+          ? "giftcard-orders"
+          : "topup-orders",
       order: order.order_id,
     });
     setMobileNavOpen(false);
@@ -554,16 +615,21 @@ export default function AdminDashboard() {
       setUserDetail(null);
       setIsUserDetailLoading(true);
       try {
-        const response = await axios.get(`${api_endpoint}/api/admin/users/${selectedUserId}/`, {
-          headers: getAdminHeaders(),
-        });
+        const response = await axios.get(
+          `${api_endpoint}/api/admin/users/${selectedUserId}/`,
+          {
+            headers: getAdminHeaders(),
+          },
+        );
         if (active) {
           setUserDetail(response.data);
         }
       } catch (error) {
         if (active) {
           setUserDetail(null);
-          toast.error(error?.response?.data?.error || "Could not load user activity.");
+          toast.error(
+            error?.response?.data?.error || "Could not load user activity.",
+          );
         }
       } finally {
         if (active) {
@@ -591,18 +657,23 @@ export default function AdminDashboard() {
     const fetchPageTrafficDetail = async () => {
       setIsPageTrafficLoading(true);
       try {
-        const response = await axios.get(`${api_endpoint}/api/admin/page-traffic/`, {
-          headers: getAdminHeaders(),
-          params: {
-            page: selectedTrafficPage,
+        const response = await axios.get(
+          `${api_endpoint}/api/admin/page-traffic/`,
+          {
+            headers: getAdminHeaders(),
+            params: {
+              page: selectedTrafficPage,
+            },
           },
-        });
+        );
         if (active) {
           setPageTrafficDetail(response.data);
         }
       } catch (error) {
         if (active) {
-          toast.error(error?.response?.data?.error || "Could not load page traffic.");
+          toast.error(
+            error?.response?.data?.error || "Could not load page traffic.",
+          );
           setPageTrafficDetail(null);
         }
       } finally {
@@ -651,7 +722,9 @@ export default function AdminDashboard() {
   }, [adminEmail, pendingNotifications]);
 
   useEffect(() => {
-    setSeenNotificationCount((current) => Math.min(current, pendingNotifications));
+    setSeenNotificationCount((current) =>
+      Math.min(current, pendingNotifications),
+    );
   }, [pendingNotifications]);
 
   useEffect(() => {
@@ -681,8 +754,6 @@ export default function AdminDashboard() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(85,24,57,0.06),_transparent_24%),linear-gradient(180deg,_#faf8f4_0%,_#f4efe8_100%)] font-display text-[#211722]">
-      <ToastContainer position="top-center" theme="colored" />
-
       {isDesktop ? (
         <aside className="fixed inset-y-0 left-0 z-30 w-[280px] border-r border-white/6 bg-[#211722] text-white shadow-[24px_0_80px_rgba(33,23,34,0.12)]">
           <div className="flex h-full flex-col px-6 py-8">
@@ -725,11 +796,11 @@ export default function AdminDashboard() {
                   ) : null}
                 </button>
                 {notificationOpen ? (
-                    <NotificationDropdown
-                      items={notificationItems}
-                      onOpenOrders={() => goToPage("topup-orders")}
-                      onSelectOrder={goToOrderPage}
-                    />
+                  <NotificationDropdown
+                    items={notificationItems}
+                    onOpenOrders={() => goToPage("topup-orders")}
+                    onSelectOrder={goToOrderPage}
+                  />
                 ) : null}
               </div>
               <button
@@ -840,7 +911,11 @@ export default function AdminDashboard() {
           </header>
         ) : null}
 
-        <div className={isDesktop ? "min-h-screen px-8 py-8" : "px-4 pb-6 pt-24 sm:px-6"}>
+        <div
+          className={
+            isDesktop ? "min-h-screen px-8 py-8" : "px-4 pb-6 pt-24 sm:px-6"
+          }
+        >
           <div className="space-y-6">
             {!isDesktop ? (
               <section className="rounded-[2rem] border border-[#eadfe7] bg-white p-5 shadow-[0_20px_70px_rgba(33,23,34,0.08)]">
@@ -922,19 +997,36 @@ export default function AdminDashboard() {
                         label="Pending payment orders"
                         value={dashboard?.stats?.pending_payment_orders}
                       />
-                      <SummaryLine label="Top-up transactions" value={dashboard?.stats?.topups} />
-                      <SummaryLine label="Gift card transactions" value={dashboard?.stats?.giftcards} />
+                      <SummaryLine
+                        label="Top-up transactions"
+                        value={dashboard?.stats?.topups}
+                      />
+                      <SummaryLine
+                        label="Gift card transactions"
+                        value={dashboard?.stats?.giftcards}
+                      />
                       <SummaryLine
                         label="Manual release mode"
-                        value={config?.order_mode === "manual" ? "Enabled" : "Disabled"}
+                        value={
+                          config?.order_mode === "manual"
+                            ? "Enabled"
+                            : "Disabled"
+                        }
                       />
                       <SummaryLine
                         label="Admin login IP"
-                        value={adminSession.latest_login_ip || adminSession.login_ip || "Unknown"}
+                        value={
+                          adminSession.latest_login_ip ||
+                          adminSession.login_ip ||
+                          "Unknown"
+                        }
                       />
                       <SummaryLine
                         label="Signed in at"
-                        value={formatDateTime(adminSession.latest_login_at || adminSession.issued_at)}
+                        value={formatDateTime(
+                          adminSession.latest_login_at ||
+                            adminSession.issued_at,
+                        )}
                       />
                     </div>
                   </div>
@@ -954,24 +1046,34 @@ export default function AdminDashboard() {
                   <ConfigInput
                     label="Profit %"
                     value={config.profit_percentage}
-                    onChange={(value) => setConfig({ ...config, profit_percentage: value })}
+                    onChange={(value) =>
+                      setConfig({ ...config, profit_percentage: value })
+                    }
                   />
                   <ConfigInput
                     label="Top-up fee %"
                     value={config.processing_fee}
-                    onChange={(value) => setConfig({ ...config, processing_fee: value })}
+                    onChange={(value) =>
+                      setConfig({ ...config, processing_fee: value })
+                    }
                   />
                   <ConfigInput
                     label="Gift card fee %"
                     value={config.giftcard_processing_fee}
-                    onChange={(value) => setConfig({ ...config, giftcard_processing_fee: value })}
+                    onChange={(value) =>
+                      setConfig({ ...config, giftcard_processing_fee: value })
+                    }
                   />
                   <label className="block">
-                    <span className="mb-2 block text-sm font-black">Order mode</span>
+                    <span className="mb-2 block text-sm font-black">
+                      Order mode
+                    </span>
                     <select
                       className="h-14 w-full rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] px-4 py-3 font-black outline-none focus:border-[#551839]"
                       value={config.order_mode}
-                      onChange={(event) => setConfig({ ...config, order_mode: event.target.value })}
+                      onChange={(event) =>
+                        setConfig({ ...config, order_mode: event.target.value })
+                      }
                     >
                       <option value="auto">Automatic</option>
                       <option value="manual">Manual approval</option>
@@ -996,7 +1098,11 @@ export default function AdminDashboard() {
                 subtitle="Approve, release, and review top-up order profit."
                 orders={topupPaymentOrders}
                 users={users}
-                selectedOrder={selectedOrder?.fulfillment_type === "topup" ? selectedOrder : null}
+                selectedOrder={
+                  selectedOrder?.fulfillment_type === "topup"
+                    ? selectedOrder
+                    : null
+                }
                 config={config}
                 processingOrderId={processingOrderId}
                 onOpenDetail={goToOrderPage}
@@ -1015,7 +1121,11 @@ export default function AdminDashboard() {
                 subtitle="Approve, release, and review gift-card order profit."
                 orders={giftcardPaymentOrders}
                 users={users}
-                selectedOrder={selectedOrder?.fulfillment_type === "giftcard" ? selectedOrder : null}
+                selectedOrder={
+                  selectedOrder?.fulfillment_type === "giftcard"
+                    ? selectedOrder
+                    : null
+                }
                 config={config}
                 processingOrderId={processingOrderId}
                 onOpenDetail={goToOrderPage}
@@ -1123,7 +1233,8 @@ function AdminSidebarContent({
         Digishelves Ops
       </h1>
       <p className="mt-3 text-sm font-bold leading-6 text-white/70">
-        Review payments, approve manual orders, and release top-ups or gift cards.
+        Review payments, approve manual orders, and release top-ups or gift
+        cards.
       </p>
 
       <nav className="mt-8 grid gap-3">
@@ -1175,19 +1286,30 @@ function formatDateTime(value) {
 function getPaymentOrderDisplay(order) {
   const summary = order.summary || {};
   const productItems = summary.products || [];
-  const profitCurrency = order.profit_currency || summary.payment_currency || order.token_symbol || "";
+  const profitCurrency =
+    order.profit_currency ||
+    summary.payment_currency ||
+    order.token_symbol ||
+    "";
   const productLabel =
     summary.operator ||
-    (productItems.map((item) => item.product_name).filter(Boolean).join(", ") ||
-      (summary.product_count ? `${summary.product_count} products` : order.token_symbol));
+    productItems
+      .map((item) => item.product_name)
+      .filter(Boolean)
+      .join(", ") ||
+    (summary.product_count
+      ? `${summary.product_count} products`
+      : order.token_symbol);
   const discountPercentage = Number(order.discount_percentage || 0);
   const discountProfit = Number(order.discount_profit || 0);
 
-  let profitBreakdown = `Fee ${order.processing_fee || "0.00"} ${profitCurrency}`.trim();
+  let profitBreakdown =
+    `Fee ${order.processing_fee || "0.00"} ${profitCurrency}`.trim();
   if (discountPercentage > 0) {
     profitBreakdown += ` · Discount ${order.discount_percentage}%`;
   } else if (discountProfit > 0) {
-    profitBreakdown += ` · Discount ${order.discount_profit} ${profitCurrency}`.trim();
+    profitBreakdown +=
+      ` · Discount ${order.discount_profit} ${profitCurrency}`.trim();
   }
 
   return {
@@ -1211,7 +1333,11 @@ function getPaymentOrderDisplay(order) {
   };
 }
 
-function ProductImageThumb({ src, alt, className = "h-12 w-12 rounded-[1rem]" }) {
+function ProductImageThumb({
+  src,
+  alt,
+  className = "h-12 w-12 rounded-[1rem]",
+}) {
   return (
     <div
       className={`flex shrink-0 items-center justify-center overflow-hidden border border-[#eadfe7] bg-white ${className}`}
@@ -1258,7 +1384,9 @@ function GiftCardProductGrid({ items, compact = false }) {
   }
 
   return (
-    <div className={`grid gap-3 ${compact ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}>
+    <div
+      className={`grid gap-3 ${compact ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}
+    >
       {items.map((item, index) => (
         <article
           key={`${item.product_name || "product"}-${index}`}
@@ -1331,7 +1459,9 @@ function PaymentOrderActionButtons({
           className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#f59e0b] px-4 text-sm font-black text-white disabled:opacity-60"
         >
           <ShieldCheck className="h-4 w-4" />
-          {processingOrderId === order.order_id ? "Approving..." : "Approve payment"}
+          {processingOrderId === order.order_id
+            ? "Approving..."
+            : "Approve payment"}
         </button>
       ) : null}
       {canRelease ? (
@@ -1342,7 +1472,9 @@ function PaymentOrderActionButtons({
           className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#551839] px-4 text-sm font-black text-white disabled:opacity-60"
         >
           <PackageCheck className="h-4 w-4" />
-          {processingOrderId === order.order_id ? "Releasing..." : "Release product"}
+          {processingOrderId === order.order_id
+            ? "Releasing..."
+            : "Release product"}
         </button>
       ) : null}
       {order.can_delete ? (
@@ -1443,7 +1575,9 @@ function PaymentOrdersSection({
           </div>
         </>
       ) : (
-        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">{emptyLabel}</div>
+        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">
+          {emptyLabel}
+        </div>
       )}
     </section>
   );
@@ -1473,7 +1607,8 @@ function PaymentOrderTableRow({
             onClick={() => onOpenDetail(order)}
             className="inline-flex rounded-full bg-[#f7f1e8] px-3 py-1 font-mono text-[0.65rem] font-black uppercase tracking-wider text-[#551839] transition hover:bg-[#eadfe7]"
           >
-            {order.payment_code || order.order_id.replace(/-/g, "").slice(0, 12)}
+            {order.payment_code ||
+              order.order_id.replace(/-/g, "").slice(0, 12)}
           </button>
           <p className="mt-2 break-all text-xs font-bold leading-5 text-[#665b67]">
             {order.wallet_address}
@@ -1519,7 +1654,9 @@ function PaymentOrderTableRow({
         </p>
       </td>
       <td className="px-5 py-4">
-        <p className="text-sm font-black text-[#211722]">{display.profitValue}</p>
+        <p className="text-sm font-black text-[#211722]">
+          {display.profitValue}
+        </p>
         <p className="mt-1 text-xs font-bold leading-5 text-[#665b67]">
           {display.profitBreakdown}
         </p>
@@ -1558,7 +1695,9 @@ function PaymentOrderDetailView({
   const debug = order.debug || {};
   const latestTransfer = debug.processed_transfers?.[0];
   const latestHash =
-    order.paid_transaction_hash || debug.payment_activity?.latest_transaction_hash || "N/A";
+    order.paid_transaction_hash ||
+    debug.payment_activity?.latest_transaction_hash ||
+    "N/A";
 
   return (
     <div className="p-5 sm:p-6">
@@ -1576,7 +1715,8 @@ function PaymentOrderDetailView({
             Order detail
           </p>
           <h3 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#211722]">
-            {order.payment_code || order.order_id.replace(/-/g, "").slice(0, 12)}
+            {order.payment_code ||
+              order.order_id.replace(/-/g, "").slice(0, 12)}
           </h3>
           <p className="mt-2 text-sm font-bold text-[#665b67]">
             {display.customerLabel} · {display.productLabel}
@@ -1600,12 +1740,17 @@ function PaymentOrderDetailView({
         <DetailCard label="Payment tx hash" value={latestHash} mono />
         <DetailCard
           label="Paid block"
-          value={order.paid_block_number || latestTransfer?.block_number || "N/A"}
+          value={
+            order.paid_block_number || latestTransfer?.block_number || "N/A"
+          }
         />
         <DetailCard label="Email" value={display.customerLabel} icon={Mail} />
         <DetailCard label="User type" value={display.customerTypeLabel} />
         <DetailCard label="Receiver / Country" value={display.receiverLabel} />
-        <DetailCard label="Amount" value={`${order.amount} ${order.token_symbol}`} />
+        <DetailCard
+          label="Amount"
+          value={`${order.amount} ${order.token_symbol}`}
+        />
         <DetailCard label="Profit" value={display.profitValue} />
         <DetailCard
           label="Confirmations"
@@ -1628,26 +1773,47 @@ function PaymentOrderDetailView({
         </section>
       ) : null}
 
-      {(debug.processed_transfers?.length ||
-        debug.fulfillment_payload ||
-        debug.topup_transaction ||
-        debug.giftcard_transaction) ? (
+      {debug.processed_transfers?.length ||
+      debug.fulfillment_payload ||
+      debug.topup_transaction ||
+      debug.giftcard_transaction ? (
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
           <JsonPanel title="Payment activity" data={debug.payment_activity} />
-          <JsonPanel title="Processed blockchain transfers" data={debug.processed_transfers} />
-          <JsonPanel title="Stored fulfillment request" data={debug.fulfillment_payload} />
-          <JsonPanel title="Order summary snapshot" data={debug.summary_snapshot} />
+          <JsonPanel
+            title="Processed blockchain transfers"
+            data={debug.processed_transfers}
+          />
+          <JsonPanel
+            title="Stored fulfillment request"
+            data={debug.fulfillment_payload}
+          />
+          <JsonPanel
+            title="Order summary snapshot"
+            data={debug.summary_snapshot}
+          />
           {debug.topup_transaction ? (
-            <JsonPanel title="Stored top-up transaction" data={debug.topup_transaction} />
+            <JsonPanel
+              title="Stored top-up transaction"
+              data={debug.topup_transaction}
+            />
           ) : null}
           {debug.topup_transaction?.payment_trace ? (
-            <JsonPanel title="Stored payment trace" data={debug.topup_transaction.payment_trace} />
+            <JsonPanel
+              title="Stored payment trace"
+              data={debug.topup_transaction.payment_trace}
+            />
           ) : null}
           {debug.topup_transaction?.reloader_transaction ? (
-            <JsonPanel title="Reloadly response" data={debug.topup_transaction.reloader_transaction} />
+            <JsonPanel
+              title="Reloadly response"
+              data={debug.topup_transaction.reloader_transaction}
+            />
           ) : null}
           {debug.giftcard_transaction ? (
-            <JsonPanel title="Stored gift-card transaction" data={debug.giftcard_transaction} />
+            <JsonPanel
+              title="Stored gift-card transaction"
+              data={debug.giftcard_transaction}
+            />
           ) : null}
         </div>
       ) : null}
@@ -1685,7 +1851,8 @@ function PaymentOrderMobileCard({
             onClick={() => onOpenDetail(order)}
             className="inline-flex rounded-full bg-[#f7f1e8] px-3 py-1 font-mono text-[0.65rem] font-black uppercase tracking-wider text-[#551839] transition hover:bg-[#eadfe7]"
           >
-            {order.payment_code || order.order_id.replace(/-/g, "").slice(0, 12)}
+            {order.payment_code ||
+              order.order_id.replace(/-/g, "").slice(0, 12)}
           </button>
           <div className="mt-3">
             <UserEmailButton
@@ -1695,7 +1862,9 @@ function PaymentOrderMobileCard({
               className="text-base"
             />
           </div>
-          <p className="mt-1 text-sm font-bold text-[#665b67]">{display.customerContext}</p>
+          <p className="mt-1 text-sm font-bold text-[#665b67]">
+            {display.customerContext}
+          </p>
           <p className="mt-2 inline-flex rounded-full bg-[#f7f1e8] px-3 py-1 text-xs font-black text-[#551839]">
             {display.customerTypeLabel}
           </p>
@@ -1707,7 +1876,10 @@ function PaymentOrderMobileCard({
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <DetailCard label="Product" value={display.productLabel || "N/A"} />
-        <DetailCard label="Amount" value={`${order.amount} ${order.token_symbol}`} />
+        <DetailCard
+          label="Amount"
+          value={`${order.amount} ${order.token_symbol}`}
+        />
         <DetailCard label="Profit" value={display.profitValue} />
         <DetailCard label="Profit breakdown" value={display.profitBreakdown} />
       </div>
@@ -1796,7 +1968,9 @@ function MessageRow({ contact, onOpenDetail }) {
             </span>
           ) : null}
         </div>
-        <p className="mt-1 mb-0 text-sm font-bold text-[#665b67]">{contact.email}</p>
+        <p className="mt-1 mb-0 text-sm font-bold text-[#665b67]">
+          {contact.email}
+        </p>
       </div>
 
       <p className="line-clamp-2 text-sm font-bold text-[#665b67]">
@@ -1841,7 +2015,9 @@ function MessageDetailView({
           <h3 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#211722]">
             {contact.name}
           </h3>
-          <p className="mt-2 text-sm font-bold text-[#665b67]">{contact.email}</p>
+          <p className="mt-2 text-sm font-bold text-[#665b67]">
+            {contact.email}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {contact.is_new ? (
@@ -1859,14 +2035,21 @@ function MessageDetailView({
 
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <DetailCard label="Email" value={contact.email} icon={Mail} />
-        <DetailCard label="Received" value={formatDateTime(contact.created_at)} />
+        <DetailCard
+          label="Received"
+          value={formatDateTime(contact.created_at)}
+        />
         <DetailCard
           label="Read at"
           value={contact.read_at ? formatDateTime(contact.read_at) : "Unread"}
         />
         <DetailCard
           label="Last reply"
-          value={contact.replied_at ? formatDateTime(contact.replied_at) : "No reply yet"}
+          value={
+            contact.replied_at
+              ? formatDateTime(contact.replied_at)
+              : "No reply yet"
+          }
         />
       </div>
 
@@ -1947,7 +2130,11 @@ function UsersSection({
         <>
           <div className="divide-y divide-[#eadfe7] md:hidden">
             {users.map((user) => (
-              <UserMobileCard key={user.id} user={user} onOpenDetail={onOpenDetail} />
+              <UserMobileCard
+                key={user.id}
+                user={user}
+                onOpenDetail={onOpenDetail}
+              />
             ))}
           </div>
 
@@ -1966,14 +2153,20 @@ function UsersSection({
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <UserTableRow key={user.id} user={user} onOpenDetail={onOpenDetail} />
+                  <UserTableRow
+                    key={user.id}
+                    user={user}
+                    onOpenDetail={onOpenDetail}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         </>
       ) : (
-        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">No users found yet.</div>
+        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">
+          No users found yet.
+        </div>
       )}
     </section>
   );
@@ -1984,8 +2177,12 @@ function UserTableRow({ user, onOpenDetail }) {
     <tr className="border-t border-[#eadfe7] align-top">
       <td className="px-5 py-4">
         <div className="min-w-[14rem]">
-          <p className="mb-0 text-sm font-black text-[#211722]">{user.display_name || user.email}</p>
-          <p className="mt-1 break-all text-xs font-bold text-[#665b67]">{user.email}</p>
+          <p className="mb-0 text-sm font-black text-[#211722]">
+            {user.display_name || user.email}
+          </p>
+          <p className="mt-1 break-all text-xs font-bold text-[#665b67]">
+            {user.email}
+          </p>
           <p className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-[#9a8b97]">
             Joined {formatDateTime(user.date_joined)}
           </p>
@@ -1994,7 +2191,10 @@ function UserTableRow({ user, onOpenDetail }) {
       <td className="px-5 py-4">
         <div className="flex min-w-[11rem] flex-wrap gap-2">
           <StatusPill value={user.auth_type || "email"} muted />
-          <StatusPill value={user.email_verified ? "verified" : "unverified"} muted />
+          <StatusPill
+            value={user.email_verified ? "verified" : "unverified"}
+            muted
+          />
           {user.suspended ? <StatusPill value="suspended" /> : null}
         </div>
       </td>
@@ -2011,10 +2211,14 @@ function UserTableRow({ user, onOpenDetail }) {
           <p className="mb-0">{user.tracked_events || 0} tracked events</p>
         </div>
       </td>
-      <td className="px-5 py-4 text-sm font-bold text-[#665b67]">{user.cart_items || 0} items</td>
+      <td className="px-5 py-4 text-sm font-bold text-[#665b67]">
+        {user.cart_items || 0} items
+      </td>
       <td className="px-5 py-4">
         <p className="min-w-[10rem] text-xs font-black uppercase tracking-[0.14em] text-[#9a8b97]">
-          {formatDateTime(user.last_activity_at || user.last_login || user.date_joined)}
+          {formatDateTime(
+            user.last_activity_at || user.last_login || user.date_joined,
+          )}
         </p>
       </td>
       <td className="px-5 py-4 text-right">
@@ -2039,16 +2243,28 @@ function UserMobileCard({ user, onOpenDetail }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="mb-0 text-base font-black text-[#211722]">{user.display_name || user.email}</p>
-          <p className="mt-1 break-all text-sm font-bold text-[#665b67]">{user.email}</p>
+          <p className="mb-0 text-base font-black text-[#211722]">
+            {user.display_name || user.email}
+          </p>
+          <p className="mt-1 break-all text-sm font-bold text-[#665b67]">
+            {user.email}
+          </p>
         </div>
-        <StatusPill value={user.email_verified ? "verified" : "unverified"} muted />
+        <StatusPill
+          value={user.email_verified ? "verified" : "unverified"}
+          muted
+        />
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <DetailCard label="Orders" value={`${user.payment_orders || 0}`} />
         <DetailCard label="Page views" value={`${user.page_views || 0}`} />
         <DetailCard label="Cart items" value={`${user.cart_items || 0}`} />
-        <DetailCard label="Last activity" value={formatDateTime(user.last_activity_at || user.last_login || user.date_joined)} />
+        <DetailCard
+          label="Last activity"
+          value={formatDateTime(
+            user.last_activity_at || user.last_login || user.date_joined,
+          )}
+        />
       </div>
     </button>
   );
@@ -2084,11 +2300,16 @@ function UserDetailView({ detail, onBack }) {
           <h3 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#211722]">
             {profile.display_name || profile.email}
           </h3>
-          <p className="mt-2 break-all text-sm font-bold text-[#665b67]">{profile.email}</p>
+          <p className="mt-2 break-all text-sm font-bold text-[#665b67]">
+            {profile.email}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusPill value={profile.auth_type || "email"} muted />
-          <StatusPill value={profile.email_verified ? "verified" : "unverified"} muted />
+          <StatusPill
+            value={profile.email_verified ? "verified" : "unverified"}
+            muted
+          />
           <StatusPill value={profile.is_active ? "active" : "inactive"} muted />
           {profile.suspended ? <StatusPill value="suspended" /> : null}
           {profile.deleted ? <StatusPill value="deleted" /> : null}
@@ -2098,9 +2319,18 @@ function UserDetailView({ detail, onBack }) {
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <DetailCard label="Phone" value={profile.phone_number || "N/A"} />
         <DetailCard label="Country" value={profile.country || "N/A"} />
-        <DetailCard label="Joined" value={formatDateTime(profile.date_joined)} />
-        <DetailCard label="Last login" value={formatDateTime(profile.last_login)} />
-        <DetailCard label="Payment orders" value={summary.payment_orders || 0} />
+        <DetailCard
+          label="Joined"
+          value={formatDateTime(profile.date_joined)}
+        />
+        <DetailCard
+          label="Last login"
+          value={formatDateTime(profile.last_login)}
+        />
+        <DetailCard
+          label="Payment orders"
+          value={summary.payment_orders || 0}
+        />
         <DetailCard label="Top-ups" value={summary.topups || 0} />
         <DetailCard label="Gift cards" value={summary.giftcards || 0} />
         <DetailCard label="Page views" value={summary.page_views || 0} />
@@ -2123,7 +2353,9 @@ function UserDetailView({ detail, onBack }) {
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="mb-0 text-sm font-black text-[#211722]">{item.title}</p>
+                      <p className="mb-0 text-sm font-black text-[#211722]">
+                        {item.title}
+                      </p>
                       {item.subtitle ? (
                         <p className="mt-1 mb-0 break-all text-xs font-bold text-[#665b67]">
                           {item.subtitle}
@@ -2162,9 +2394,15 @@ function UserDetailView({ detail, onBack }) {
                 <tbody className="divide-y divide-[#f1e8ef]">
                   {pageViews.map((item) => (
                     <tr key={item.path}>
-                      <td className="py-3 pr-4 text-sm font-black text-[#211722]">{item.title}</td>
-                      <td className="py-3 pr-4 text-xs font-bold text-[#665b67]">{truncatePath(item.path, 34)}</td>
-                      <td className="py-3 text-sm font-bold text-[#665b67]">{item.views}</td>
+                      <td className="py-3 pr-4 text-sm font-black text-[#211722]">
+                        {item.title}
+                      </td>
+                      <td className="py-3 pr-4 text-xs font-bold text-[#665b67]">
+                        {truncatePath(item.path, 34)}
+                      </td>
+                      <td className="py-3 text-sm font-bold text-[#665b67]">
+                        {item.views}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -2186,16 +2424,15 @@ function UserDetailView({ detail, onBack }) {
             return {
               key: order.order_id,
               cells: [
-                (
-                  <div className="min-w-[10rem]">
-                    <p className="mb-0 text-sm font-black text-[#211722]">
-                      {order.payment_code || String(order.order_id || "").slice(0, 8)}
-                    </p>
-                    <p className="mt-1 mb-0 break-all text-xs font-bold text-[#665b67]">
-                      {display.reference}
-                    </p>
-                  </div>
-                ),
+                <div className="min-w-[10rem]">
+                  <p className="mb-0 text-sm font-black text-[#211722]">
+                    {order.payment_code ||
+                      String(order.order_id || "").slice(0, 8)}
+                  </p>
+                  <p className="mt-1 mb-0 break-all text-xs font-bold text-[#665b67]">
+                    {display.reference}
+                  </p>
+                </div>,
                 order.fulfillment_type,
                 `${order.amount} ${order.token_symbol}`,
                 `${order.status} / ${order.fulfillment_status}`,
@@ -2214,7 +2451,9 @@ function UserDetailView({ detail, onBack }) {
             key: item.id,
             cells: [
               <div className="min-w-[10rem]">
-                <p className="mb-0 text-sm font-black text-[#211722]">{item.product_name}</p>
+                <p className="mb-0 text-sm font-black text-[#211722]">
+                  {item.product_name}
+                </p>
                 <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">
                   {item.recipient_amount} {item.recipient_currency}
                 </p>
@@ -2274,7 +2513,9 @@ function UserDetailView({ detail, onBack }) {
             cells: [
               formatDateTime(item.created_at),
               item.is_replied ? "Replied" : item.is_new ? "New" : "Read",
-              <span className="line-clamp-2 text-sm font-bold text-[#665b67]">{item.message}</span>,
+              <span className="line-clamp-2 text-sm font-bold text-[#665b67]">
+                {item.message}
+              </span>,
             ],
           }))}
           emptyLabel="No contact messages from this user."
@@ -2288,16 +2529,17 @@ function UserDetailView({ detail, onBack }) {
             key: item.id,
             cells: [
               formatEventTypeLabel(item.event_type),
-              (
-                <div className="min-w-[10rem]">
-                  <p className="mb-0 text-sm font-black text-[#211722]">
-                    {item.page_title || item.product_name || item.page_path || "Activity"}
-                  </p>
-                  <p className="mt-1 mb-0 break-all text-xs font-bold text-[#665b67]">
-                    {item.page_path || item.product_id || ""}
-                  </p>
-                </div>
-              ),
+              <div className="min-w-[10rem]">
+                <p className="mb-0 text-sm font-black text-[#211722]">
+                  {item.page_title ||
+                    item.product_name ||
+                    item.page_path ||
+                    "Activity"}
+                </p>
+                <p className="mt-1 mb-0 break-all text-xs font-bold text-[#665b67]">
+                  {item.page_path || item.product_id || ""}
+                </p>
+              </div>,
               formatDateTime(item.created_at),
             ],
           }))}
@@ -2314,7 +2556,9 @@ function CompactDataTable({ title, subtitle, columns, rows, emptyLabel }) {
       <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-[#10ac84]">
         {title}
       </p>
-      <h4 className="mb-0 text-xl font-black tracking-[-0.04em] text-[#211722]">{title}</h4>
+      <h4 className="mb-0 text-xl font-black tracking-[-0.04em] text-[#211722]">
+        {title}
+      </h4>
       <p className="mt-2 text-sm font-bold text-[#665b67]">{subtitle}</p>
       <div className="mt-5 overflow-x-auto">
         {rows.length ? (
@@ -2332,7 +2576,10 @@ function CompactDataTable({ title, subtitle, columns, rows, emptyLabel }) {
               {rows.map((row) => (
                 <tr key={row.key}>
                   {row.cells.map((cell, index) => (
-                    <td key={`${row.key}-${index}`} className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]">
+                    <td
+                      key={`${row.key}-${index}`}
+                      className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]"
+                    >
                       {cell}
                     </td>
                   ))}
@@ -2352,14 +2599,18 @@ function StatCard({ icon: Icon, label, value, tone }) {
   return (
     <article className="rounded-[1.5rem] border border-[#eadfe7] bg-white p-5 shadow-[0_16px_45px_rgba(33,23,34,0.05)]">
       <div className="flex items-center justify-between gap-3">
-        <span className={`flex h-11 w-11 items-center justify-center rounded-2xl text-white ${tone}`}>
+        <span
+          className={`flex h-11 w-11 items-center justify-center rounded-2xl text-white ${tone}`}
+        >
           <Icon className="h-5 w-5" />
         </span>
         <span className="text-right text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
           {label}
         </span>
       </div>
-      <p className="mt-4 text-4xl font-black tracking-[-0.05em]">{value ?? 0}</p>
+      <p className="mt-4 text-4xl font-black tracking-[-0.05em]">
+        {value ?? 0}
+      </p>
     </article>
   );
 }
@@ -2400,10 +2651,23 @@ function SimpleBarChart({ items }) {
   return (
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 4 }}>
-          <CartesianGrid stroke="#f1e8ef" strokeDasharray="4 4" vertical={false} />
-          <XAxis dataKey="label" tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }} />
-          <YAxis allowDecimals={false} tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }} />
+        <BarChart
+          data={data}
+          margin={{ top: 8, right: 8, left: -20, bottom: 4 }}
+        >
+          <CartesianGrid
+            stroke="#f1e8ef"
+            strokeDasharray="4 4"
+            vertical={false}
+          />
+          <XAxis
+            dataKey="label"
+            tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }}
+          />
+          <YAxis
+            allowDecimals={false}
+            tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }}
+          />
           <Tooltip
             cursor={{ fill: "#fbf8f4" }}
             contentStyle={{
@@ -2458,14 +2722,18 @@ function AnalyticsMetricCard({ icon: Icon, label, value, tone, helper }) {
   return (
     <article className="rounded-[1.5rem] border border-[#eadfe7] bg-white p-5 shadow-[0_16px_45px_rgba(33,23,34,0.05)]">
       <div className="flex items-center justify-between gap-3">
-        <span className={`flex h-11 w-11 items-center justify-center rounded-2xl text-white ${tone}`}>
+        <span
+          className={`flex h-11 w-11 items-center justify-center rounded-2xl text-white ${tone}`}
+        >
           <Icon className="h-5 w-5" />
         </span>
         <span className="text-right text-[11px] font-black uppercase tracking-[0.18em] text-[#9a8b97]">
           {label}
         </span>
       </div>
-      <p className="mt-4 text-4xl font-black tracking-[-0.05em] text-[#211722]">{value ?? 0}</p>
+      <p className="mt-4 text-4xl font-black tracking-[-0.05em] text-[#211722]">
+        {value ?? 0}
+      </p>
       {helper ? (
         <p className="mt-2 mb-0 text-sm font-bold text-[#665b67]">{helper}</p>
       ) : null}
@@ -2493,7 +2761,14 @@ function AnalyticsSection({
   stats,
   onViewAllPageTraffic,
 }) {
-  const pieColors = ["#551839", "#10ac84", "#2775ca", "#f59e0b", "#211722", "#d96c8b"];
+  const pieColors = [
+    "#551839",
+    "#10ac84",
+    "#2775ca",
+    "#f59e0b",
+    "#211722",
+    "#d96c8b",
+  ];
   const pageChartData = pageTraffic.slice(0, 6).map((item) => ({
     path: formatPathLabel(item.path),
     views: item.views,
@@ -2549,16 +2824,39 @@ function AnalyticsSection({
           <div className="mt-6 h-[320px]">
             {trafficSeries.length ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trafficSeries} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart
+                  data={trafficSeries}
+                  margin={{ top: 8, right: 10, left: -20, bottom: 0 }}
+                >
                   <defs>
-                    <linearGradient id="trafficAreaFill" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="trafficAreaFill"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="5%" stopColor="#551839" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#551839" stopOpacity={0.03} />
+                      <stop
+                        offset="95%"
+                        stopColor="#551839"
+                        stopOpacity={0.03}
+                      />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#f1e8ef" strokeDasharray="4 4" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }} />
-                  <YAxis allowDecimals={false} tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }} />
+                  <CartesianGrid
+                    stroke="#f1e8ef"
+                    strokeDasharray="4 4"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }}
+                  />
                   <Tooltip
                     contentStyle={{
                       borderRadius: "16px",
@@ -2608,7 +2906,10 @@ function AnalyticsSection({
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value, name) => [value, formatEventTypeLabel(name)]}
+                      formatter={(value, name) => [
+                        value,
+                        formatEventTypeLabel(name),
+                      ]}
                       contentStyle={{
                         borderRadius: "16px",
                         border: "1px solid #eadfe7",
@@ -2630,13 +2931,17 @@ function AnalyticsSection({
                   <div className="flex items-center gap-3">
                     <span
                       className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: pieColors[index % pieColors.length] }}
+                      style={{
+                        backgroundColor: pieColors[index % pieColors.length],
+                      }}
                     />
                     <span className="text-sm font-black text-[#211722]">
                       {formatEventTypeLabel(item.event_type)}
                     </span>
                   </div>
-                  <span className="text-sm font-black text-[#551839]">{item.count}</span>
+                  <span className="text-sm font-black text-[#551839]">
+                    {item.count}
+                  </span>
                 </div>
               ))}
               {!eventBreakdown.length ? (
@@ -2664,8 +2969,16 @@ function AnalyticsSection({
                   layout="vertical"
                   margin={{ top: 8, right: 10, left: 10, bottom: 8 }}
                 >
-                  <CartesianGrid stroke="#f1e8ef" strokeDasharray="4 4" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }} />
+                  <CartesianGrid
+                    stroke="#f1e8ef"
+                    strokeDasharray="4 4"
+                    horizontal={false}
+                  />
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fill: "#665b67", fontSize: 12, fontWeight: 700 }}
+                  />
                   <YAxis
                     type="category"
                     dataKey="path"
@@ -2721,8 +3034,12 @@ function AnalyticsSection({
                     <td className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]">
                       <span title={item.path}>{truncatePath(item.path)}</span>
                     </td>
-                    <td className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]">{item.views}</td>
-                    <td className="py-3 align-top text-sm font-bold text-[#665b67]">{item.unique_visitors}</td>
+                    <td className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]">
+                      {item.views}
+                    </td>
+                    <td className="py-3 align-top text-sm font-bold text-[#665b67]">
+                      {item.unique_visitors}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -2745,9 +3062,18 @@ function AnalyticsSection({
             <SimpleBarChart items={chartItems} />
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <SummaryLine label="Total orders" value={stats.payment_orders || 0} />
-            <SummaryLine label="Paid orders" value={stats.paid_payment_orders || 0} />
-            <SummaryLine label="Approved" value={stats.approved_payment_orders || 0} />
+            <SummaryLine
+              label="Total orders"
+              value={stats.payment_orders || 0}
+            />
+            <SummaryLine
+              label="Paid orders"
+              value={stats.paid_payment_orders || 0}
+            />
+            <SummaryLine
+              label="Approved"
+              value={stats.approved_payment_orders || 0}
+            />
             <SummaryLine label="Manual queue" value={stats.manual_queue || 0} />
           </div>
         </div>
@@ -2775,11 +3101,21 @@ function AnalyticsSection({
                 <tbody className="divide-y divide-[#f1e8ef]">
                   {topGiftcards.map((item) => (
                     <tr key={`${item.product_id || item.product_name}`}>
-                      <td className="py-3 pr-4 text-sm font-black text-[#211722]">{item.product_name}</td>
-                      <td className="py-3 pr-4 text-sm font-bold text-[#665b67]">{item.views}</td>
-                      <td className="py-3 pr-4 text-sm font-bold text-[#665b67]">{item.average_view_seconds}s</td>
-                      <td className="py-3 pr-4 text-sm font-bold text-[#665b67]">{item.add_to_cart}</td>
-                      <td className="py-3 text-sm font-bold text-[#665b67]">{item.buy_now}</td>
+                      <td className="py-3 pr-4 text-sm font-black text-[#211722]">
+                        {item.product_name}
+                      </td>
+                      <td className="py-3 pr-4 text-sm font-bold text-[#665b67]">
+                        {item.views}
+                      </td>
+                      <td className="py-3 pr-4 text-sm font-bold text-[#665b67]">
+                        {item.average_view_seconds}s
+                      </td>
+                      <td className="py-3 pr-4 text-sm font-bold text-[#665b67]">
+                        {item.add_to_cart}
+                      </td>
+                      <td className="py-3 text-sm font-bold text-[#665b67]">
+                        {item.buy_now}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -2807,13 +3143,21 @@ function AnalyticsSection({
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="mb-0 text-base font-black text-[#211722]">{cart.name}</p>
-                      <p className="mt-1 mb-0 text-sm font-bold text-[#665b67]">{cart.email}</p>
+                      <p className="mb-0 text-base font-black text-[#211722]">
+                        {cart.name}
+                      </p>
+                      <p className="mt-1 mb-0 text-sm font-bold text-[#665b67]">
+                        {cart.email}
+                      </p>
                     </div>
                     <div className="text-sm font-bold text-[#665b67] sm:text-right">
                       <p className="mb-0">{cart.item_count} items</p>
-                      <p className="mt-1 mb-0">{cart.total_quantity} total quantity</p>
-                      <p className="mt-1 mb-0">{cart.total_value} total value</p>
+                      <p className="mt-1 mb-0">
+                        {cart.total_quantity} total quantity
+                      </p>
+                      <p className="mt-1 mb-0">
+                        {cart.total_value} total value
+                      </p>
                     </div>
                   </div>
                   <p className="mt-3 mb-0 text-xs font-black uppercase tracking-[0.16em] text-[#9a8b97]">
@@ -2868,7 +3212,12 @@ function SidebarLink({ icon: Icon, label, badge = 0, isActive, onClick }) {
   );
 }
 
-function NotificationDropdown({ items, onOpenOrders, onSelectOrder, desktop = false }) {
+function NotificationDropdown({
+  items,
+  onOpenOrders,
+  onSelectOrder,
+  desktop = false,
+}) {
   return (
     <div
       className={`absolute right-0 z-40 w-[320px] overflow-hidden rounded-[1.5rem] border border-[#eadfe7] bg-white shadow-[0_24px_80px_rgba(33,23,34,0.16)] ${
@@ -3006,7 +3355,9 @@ function SectionHeader({ title, subtitle }) {
   return (
     <div className="border-b border-[#eadfe7] p-5">
       <h2 className="text-xl font-black tracking-[-0.04em]">{title}</h2>
-      {subtitle ? <p className="mt-1 text-sm font-bold text-[#665b67]">{subtitle}</p> : null}
+      {subtitle ? (
+        <p className="mt-1 text-sm font-bold text-[#665b67]">{subtitle}</p>
+      ) : null}
     </div>
   );
 }
@@ -3033,32 +3384,50 @@ function StatusPill({ value, muted = false }) {
       ? "bg-[#dff8ef] text-[#067a5f]"
       : normalized === "replied"
         ? "bg-[#e7ecff] text-[#2751ca]"
-    : normalized === "paid" || normalized === "approved" || normalized === "completed"
-      ? "bg-[#dff8ef] text-[#067a5f]"
-      : normalized === "processing"
-        ? "bg-[#e7ecff] text-[#2751ca]"
-        : normalized === "awaiting approval" || normalized === "pending payment"
-          ? "bg-[#fff1d6] text-[#9a5a00]"
-          : normalized === "ready to release"
-            ? "bg-[#f7f1e8] text-[#551839]"
-      : normalized === "failed"
-        ? "bg-red-50 text-red-600"
-        : "bg-[#f7f1e8] text-[#551839]";
+        : normalized === "paid" ||
+            normalized === "approved" ||
+            normalized === "completed"
+          ? "bg-[#dff8ef] text-[#067a5f]"
+          : normalized === "processing"
+            ? "bg-[#e7ecff] text-[#2751ca]"
+            : normalized === "awaiting approval" ||
+                normalized === "pending payment"
+              ? "bg-[#fff1d6] text-[#9a5a00]"
+              : normalized === "ready to release"
+                ? "bg-[#f7f1e8] text-[#551839]"
+                : normalized === "failed"
+                  ? "bg-red-50 text-red-600"
+                  : "bg-[#f7f1e8] text-[#551839]";
 
   return (
-    <span className={`inline-flex w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${colorClass}`}>
+    <span
+      className={`inline-flex w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${colorClass}`}
+    >
       {value}
     </span>
   );
 }
 
-function UserEmailButton({ email, matchedUser, onOpenUser, className = "text-sm" }) {
+function UserEmailButton({
+  email,
+  matchedUser,
+  onOpenUser,
+  className = "text-sm",
+}) {
   if (!email) {
-    return <p className={`mb-0 break-all font-black text-[#211722] ${className}`}>No email saved</p>;
+    return (
+      <p className={`mb-0 break-all font-black text-[#211722] ${className}`}>
+        No email saved
+      </p>
+    );
   }
 
   if (!matchedUser || !onOpenUser) {
-    return <p className={`mb-0 break-all font-black text-[#211722] ${className}`}>{email}</p>;
+    return (
+      <p className={`mb-0 break-all font-black text-[#211722] ${className}`}>
+        {email}
+      </p>
+    );
   }
 
   return (
@@ -3081,7 +3450,9 @@ function DetailCard({ label, value, icon: Icon, mono = false }) {
           {label}
         </p>
       </div>
-      <p className={`mb-0 break-all text-[13px] font-black leading-6 text-[#211722] sm:text-sm ${mono ? "font-mono" : ""}`}>
+      <p
+        className={`mb-0 break-all text-[13px] font-black leading-6 text-[#211722] sm:text-sm ${mono ? "font-mono" : ""}`}
+      >
         {value}
       </p>
     </article>
@@ -3121,7 +3492,8 @@ function TopUpRow({ order, users, onOpenUser }) {
           {order.operator || "Top-up"} · {order.phone_number}
         </h3>
         <p className="text-sm font-bold text-[#665b67]">
-          {order.receiver_amount} {order.receiver_currency_code} · {order.status}
+          {order.receiver_amount} {order.receiver_currency_code} ·{" "}
+          {order.status}
         </p>
         <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-[#9a8b97]">
           Fee {order.processing_fee} {order.sender_currency} · {discountLabel}
@@ -3164,9 +3536,7 @@ function GiftCardRow({ order, users, onOpenUser }) {
   return (
     <div className="grid gap-3 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
       <div className="min-w-0">
-        <h3 className="font-black text-[#211722]">
-          {order.country}
-        </h3>
+        <h3 className="font-black text-[#211722]">{order.country}</h3>
         <div className="mt-1">
           <UserEmailButton
             email={order.email}
@@ -3175,10 +3545,12 @@ function GiftCardRow({ order, users, onOpenUser }) {
           />
         </div>
         <p className="text-sm font-bold text-[#665b67]">
-          {order.amount} {order.profit_currency || ""} · {order.products?.length || 0} product(s)
+          {order.amount} {order.profit_currency || ""} ·{" "}
+          {order.products?.length || 0} product(s)
         </p>
         <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-[#9a8b97]">
-          Fee {order.processing_fee} {order.profit_currency || ""} · {discountLabel}
+          Fee {order.processing_fee} {order.profit_currency || ""} ·{" "}
+          {discountLabel}
         </p>
         <ProductThumbnailRow items={order.products} />
       </div>
@@ -3204,11 +3576,24 @@ function GiftCardRow({ order, users, onOpenUser }) {
   );
 }
 
-function CompletedTransactionsSection({ topups, giftcards, users, onOpenUser }) {
+function CompletedTransactionsSection({
+  topups,
+  giftcards,
+  users,
+  onOpenUser,
+}) {
   return (
     <section className="grid gap-6 xl:grid-cols-2">
-      <CompletedTopupTable orders={topups} users={users} onOpenUser={onOpenUser} />
-      <CompletedGiftcardTable orders={giftcards} users={users} onOpenUser={onOpenUser} />
+      <CompletedTopupTable
+        orders={topups}
+        users={users}
+        onOpenUser={onOpenUser}
+      />
+      <CompletedGiftcardTable
+        orders={giftcards}
+        users={users}
+        onOpenUser={onOpenUser}
+      />
     </section>
   );
 }
@@ -3216,12 +3601,20 @@ function CompletedTransactionsSection({ topups, giftcards, users, onOpenUser }) 
 function CompletedTopupTable({ orders, users, onOpenUser }) {
   return (
     <div className="rounded-[2rem] border border-[#eadfe7] bg-white shadow-[0_20px_70px_rgba(33,23,34,0.08)]">
-      <SectionHeader title="Top-up transactions" subtitle="Recent completed top-ups." />
+      <SectionHeader
+        title="Top-up transactions"
+        subtitle="Recent completed top-ups."
+      />
       {orders.length ? (
         <>
           <div className="divide-y divide-[#eadfe7] md:hidden">
             {orders.map((order) => (
-              <TopUpRow key={order.reference} order={order} users={users} onOpenUser={onOpenUser} />
+              <TopUpRow
+                key={order.reference}
+                order={order}
+                users={users}
+                onOpenUser={onOpenUser}
+              />
             ))}
           </div>
           <div className="hidden overflow-x-auto md:block">
@@ -3237,10 +3630,15 @@ function CompletedTopupTable({ orders, users, onOpenUser }) {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order.reference} className="border-t border-[#eadfe7] align-top">
+                  <tr
+                    key={order.reference}
+                    className="border-t border-[#eadfe7] align-top"
+                  >
                     <td className="px-5 py-4">
                       <div className="min-w-[8rem]">
-                        <p className="mb-0 text-sm font-black text-[#211722]">{order.reference}</p>
+                        <p className="mb-0 text-sm font-black text-[#211722]">
+                          {order.reference}
+                        </p>
                         {order.email ? (
                           <div className="mt-1">
                             <UserEmailButton
@@ -3251,14 +3649,20 @@ function CompletedTopupTable({ orders, users, onOpenUser }) {
                             />
                           </div>
                         ) : (
-                          <p className="mt-1 mb-0 break-all text-xs font-bold text-[#665b67]">No email</p>
+                          <p className="mt-1 mb-0 break-all text-xs font-bold text-[#665b67]">
+                            No email
+                          </p>
                         )}
                       </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="min-w-[10rem]">
-                        <p className="mb-0 text-sm font-black text-[#211722]">{order.operator || "Top-up"}</p>
-                        <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">{order.phone_number}</p>
+                        <p className="mb-0 text-sm font-black text-[#211722]">
+                          {order.operator || "Top-up"}
+                        </p>
+                        <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">
+                          {order.phone_number}
+                        </p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
@@ -3292,7 +3696,9 @@ function CompletedTopupTable({ orders, users, onOpenUser }) {
           </div>
         </>
       ) : (
-        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">No completed top-ups yet.</div>
+        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">
+          No completed top-ups yet.
+        </div>
       )}
     </div>
   );
@@ -3301,12 +3707,20 @@ function CompletedTopupTable({ orders, users, onOpenUser }) {
 function CompletedGiftcardTable({ orders, users, onOpenUser }) {
   return (
     <div className="rounded-[2rem] border border-[#eadfe7] bg-white shadow-[0_20px_70px_rgba(33,23,34,0.08)]">
-      <SectionHeader title="Gift card transactions" subtitle="Recent gift-card orders." />
+      <SectionHeader
+        title="Gift card transactions"
+        subtitle="Recent gift-card orders."
+      />
       {orders.length ? (
         <>
           <div className="divide-y divide-[#eadfe7] md:hidden">
             {orders.map((order) => (
-              <GiftCardRow key={order.reference} order={order} users={users} onOpenUser={onOpenUser} />
+              <GiftCardRow
+                key={order.reference}
+                order={order}
+                users={users}
+                onOpenUser={onOpenUser}
+              />
             ))}
           </div>
           <div className="hidden overflow-x-auto md:block">
@@ -3322,11 +3736,18 @@ function CompletedGiftcardTable({ orders, users, onOpenUser }) {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order.reference} className="border-t border-[#eadfe7] align-top">
+                  <tr
+                    key={order.reference}
+                    className="border-t border-[#eadfe7] align-top"
+                  >
                     <td className="px-5 py-4">
                       <div className="min-w-[8rem]">
-                        <p className="mb-0 text-sm font-black text-[#211722]">{order.reference}</p>
-                        <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">{formatDateTime(order.created_at)}</p>
+                        <p className="mb-0 text-sm font-black text-[#211722]">
+                          {order.reference}
+                        </p>
+                        <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">
+                          {formatDateTime(order.created_at)}
+                        </p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
@@ -3337,20 +3758,29 @@ function CompletedGiftcardTable({ orders, users, onOpenUser }) {
                           onOpenUser={onOpenUser}
                           className="text-sm"
                         />
-                        <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">{order.country}</p>
+                        <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">
+                          {order.country}
+                        </p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
                       <p className="mb-0 text-sm font-black text-[#211722]">
                         {order.amount} {order.profit_currency || ""}
                       </p>
-                      <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">{order.payment_method}</p>
+                      <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">
+                        {order.payment_method}
+                      </p>
                     </td>
                     <td className="px-5 py-4">
                       <div className="min-w-[12rem]">
-                        <p className="mb-0 text-sm font-black text-[#211722]">{order.products?.length || 0} item(s)</p>
+                        <p className="mb-0 text-sm font-black text-[#211722]">
+                          {order.products?.length || 0} item(s)
+                        </p>
                         <p className="mt-1 mb-0 text-xs font-bold text-[#665b67]">
-                          {(order.products || []).slice(0, 2).map((item) => item.product_name).join(", ") || "No products"}
+                          {(order.products || [])
+                            .slice(0, 2)
+                            .map((item) => item.product_name)
+                            .join(", ") || "No products"}
                         </p>
                         <ProductThumbnailRow items={order.products} />
                       </div>
@@ -3370,7 +3800,9 @@ function CompletedGiftcardTable({ orders, users, onOpenUser }) {
           </div>
         </>
       ) : (
-        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">No completed gift-card orders yet.</div>
+        <div className="px-5 py-8 text-sm font-bold text-[#665b67]">
+          No completed gift-card orders yet.
+        </div>
       )}
     </div>
   );
@@ -3452,10 +3884,16 @@ function PageTrafficSection({ detail, isLoading, onBack, onPageChange }) {
                         </div>
                       </td>
                       <td className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]">
-                        <span title={item.path}>{truncatePath(item.path, 96)}</span>
+                        <span title={item.path}>
+                          {truncatePath(item.path, 96)}
+                        </span>
                       </td>
-                      <td className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]">{item.views}</td>
-                      <td className="py-3 align-top text-sm font-bold text-[#665b67]">{item.unique_visitors}</td>
+                      <td className="py-3 pr-4 align-top text-sm font-bold text-[#665b67]">
+                        {item.views}
+                      </td>
+                      <td className="py-3 align-top text-sm font-bold text-[#665b67]">
+                        {item.unique_visitors}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

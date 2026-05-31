@@ -77,11 +77,16 @@ export default function Signup() {
         formData,
       );
 
-      if (response.status === 201) {
-        setFormData({ fullname: "", email: "", password: "" });
-        setAccountCreated(
-          "Account created successfully. Please check your inbox to complete setup.",
-        );
+      const data = response.data;
+      if (response.status === 201 || response.status === 200) {
+        navigate("/verify-email", {
+          replace: true,
+          state: {
+            verificationSession: data.verification_session,
+            email: data.email || formData.email,
+          },
+        });
+        return;
       }
     } catch (error) {
       setSignupError(
