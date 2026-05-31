@@ -10,9 +10,10 @@ from django.utils import timezone
 from dotenv import load_dotenv
 
 from .models import ListenerCursor, Order, ProcessedTransfer
+from .notifications import send_admin_order_paid_notification
 from .tokens import get_enabled_payment_tokens, token_units_to_decimal
 from .wallet import get_required_env, validate_payment_environment
-from .fulfillment import complete_order, get_platform_config
+from .fulfillment import build_order_summary, complete_order, get_platform_config
 
 load_dotenv()
 
@@ -353,6 +354,8 @@ class StablecoinTransferListener:
         transfer.confirmed = True
         transfer.order = order
         transfer.save(update_fields=["confirmations", "confirmed", "order", "updated_at"])
+
+        send_admin_order_paid_notification(order, build_order_summary(order))
 
         if (
             get_platform_config().order_mode == "auto"

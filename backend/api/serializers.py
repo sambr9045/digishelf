@@ -16,19 +16,38 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = Account
         fields = ('email',  'first_name', 'last_name','password')
 
+    def validate_email(self, value):
+        return Account.objects.normalize_email((value or "").strip()).lower()
+
     def validate_password(self, value):
         validate_password(value)
         return value
 
     def create(self, validated_data):
-        user = Account.objects.create(
+        return Account.objects.create_user(
             email=validated_data['email'],
+            password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', '')
+            last_name=validated_data.get('last_name', ''),
+            auth_type='email',
+            email_verified=False,
+            is_active=False,
         )
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
+
+    def update(self, instance, validated_data):
+        instance.email = validated_data.get('email', instance.email)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.auth_type = 'email'
+        instance.email_verified = False
+        instance.is_active = False
+
+        password = validated_data.get('password')
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
     
     
 class GiftCardTransactionSerializer(serializers.ModelSerializer):

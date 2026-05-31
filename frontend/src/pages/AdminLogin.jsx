@@ -1,9 +1,15 @@
 import React, { useRef, useState } from "react";
 import axios from "axios";
 import ReCAPTCHA from "react-google-recaptcha";
-import { ArrowLeft, KeyRound, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  KeyRound,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 import { api_endpoint } from "../components/constant";
 import Seo from "../components/Seo";
@@ -115,7 +121,6 @@ export default function AdminLogin() {
           path: "/admin-login",
         })}
       />
-      <ToastContainer position="top-center" theme="colored" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,172,132,0.28),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(85,24,57,0.5),transparent_36%)]" />
       <div className="relative mx-auto flex min-h-screen w-full max-w-lg items-center px-4 py-12">
         <section className="w-full rounded-[2rem] border border-white/10 bg-white p-6 text-[#211722] shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:p-8">
@@ -134,8 +139,13 @@ export default function AdminLogin() {
               </h1>
               {phase === "verify_code" && (
                 <p className="mt-3 text-sm leading-6 text-[#665b67]">
-                  Enter the code sent to <span className="font-black text-[#211722]">{maskedEmail}</span>.
-                  {codeExpiresIn > 0 && ` It expires in about ${Math.ceil(codeExpiresIn / 60)} minute(s).`}
+                  Enter the code sent to{" "}
+                  <span className="font-black text-[#211722]">
+                    {maskedEmail}
+                  </span>
+                  .
+                  {codeExpiresIn > 0 &&
+                    ` It expires in about ${Math.ceil(codeExpiresIn / 60)} minute(s).`}
                 </p>
               )}
             </div>
@@ -157,7 +167,9 @@ export default function AdminLogin() {
             {phase === "credentials" ? (
               <>
                 <label className="block w-full">
-                  <span className="mb-2 block text-sm font-black">Admin email</span>
+                  <span className="mb-2 block text-sm font-black">
+                    Admin email
+                  </span>
                   <div className="relative w-full">
                     <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8f7f8c]" />
                     <input
@@ -172,7 +184,9 @@ export default function AdminLogin() {
                 </label>
 
                 <label className="block w-full">
-                  <span className="mb-2 block text-sm font-black">Password</span>
+                  <span className="mb-2 block text-sm font-black">
+                    Password
+                  </span>
                   <div className="relative w-full">
                     <LockKeyhole className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8f7f8c]" />
                     <input
@@ -213,7 +227,9 @@ export default function AdminLogin() {
             ) : (
               <>
                 <label className="block w-full">
-                  <span className="mb-2 block text-sm font-black">Verification code</span>
+                  <span className="mb-2 block text-sm font-black">
+                    Verification code
+                  </span>
                   <div className="relative w-full">
                     <KeyRound className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8f7f8c]" />
                     <input

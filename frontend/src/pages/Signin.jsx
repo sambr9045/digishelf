@@ -3,7 +3,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 import Header from "../components/Header/Header";
 import Footer from "../components/Footer/Footer";
@@ -69,7 +69,22 @@ export default function Signin() {
         saveSession(response.data);
       }
     } catch (error) {
-      toast.error("Invalid credentials.");
+      const response = error?.response;
+      if (
+        response?.status === 403 &&
+        response.data?.email_verification_required
+      ) {
+        navigate("/verify-email", {
+          replace: true,
+          state: {
+            verificationSession: response.data.verification_session,
+            email: response.data.email || email,
+          },
+        });
+        return;
+      }
+
+      toast.error(response?.data?.error || "Invalid credentials.");
     } finally {
       setProcessing(false);
     }
@@ -99,7 +114,6 @@ export default function Signin() {
         })}
       />
       <Header />
-      <ToastContainer position="top-center" theme="colored" />
 
       <main className="relative overflow-hidden pt-28 pb-16 sm:pt-32">
         <div className="absolute left-[-10rem] top-10 h-80 w-80 rounded-full bg-[#10ac84]/20 blur-3xl" />

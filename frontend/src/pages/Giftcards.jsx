@@ -288,7 +288,7 @@ export default function Giftcards() {
   }, [giftCards]);
 
   return (
-    <div>
+    <div className="overflow-x-clip">
       <Seo
         title="Buy Digital Gift Cards"
         description="Browse digital gift cards by brand and country, compare values, and buy online through Digishelves."
@@ -340,7 +340,7 @@ export default function Giftcards() {
         </div>
       ) : null}
 
-      <section className="bg-white py-16 sm:py-20">
+      <section className="relative z-0 bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div>
@@ -378,7 +378,7 @@ export default function Giftcards() {
             </button>
           </div>
 
-          <div>
+          <div className="relative z-0">
             <div className="mb-6 flex flex-wrap items-center gap-3">
               <button
                 type="button"

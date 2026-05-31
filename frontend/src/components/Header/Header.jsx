@@ -4,7 +4,7 @@ import Offcanvas from "react-bootstrap/Offcanvas";
 import Cart from "../includes/Cart";
 import { SessionContext } from "../sessionContext";
 import { NavLink, useLocation } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import UserAccountPart from "../includes/UserAccountPart";
 import { LogIn, Menu, Search, ShoppingBag, UserPlus, X } from "lucide-react";
 // import "bootstrap/dist/css/bootstrap.min.css";
@@ -109,8 +109,6 @@ export default function Header({ mobileSearchPopoverContent = null }) {
 
   return (
     <>
-      <ToastContainer position="top-center" theme="colored" />
-
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           isTransparent

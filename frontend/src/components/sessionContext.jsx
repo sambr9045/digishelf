@@ -5,8 +5,11 @@ import { get_country_by_api } from "./constant";
 import { api_endpoint } from "./constant";
 import { json } from "react-router-dom";
 import Loader from "./includes/Loader";
-import { ToastContainer, toast } from "react-toastify";
-import { buildCartAnalyticsSnapshot, trackAnalyticsEvent } from "../utils/analytics";
+import { toast } from "react-toastify";
+import {
+  buildCartAnalyticsSnapshot,
+  trackAnalyticsEvent,
+} from "../utils/analytics";
 const SessionContext = createContext();
 import countryToCurrency from "country-to-currency";
 
@@ -138,7 +141,7 @@ const SessionProvider = ({ children }) => {
         const existingItem = prevCart.find(
           (cartItem) =>
             cartItem.productId === item.productId &&
-            cartItem.AmountToPay === item.AmountToPay
+            cartItem.AmountToPay === item.AmountToPay,
         );
 
         if (item.recipientAmount === 0 || item.recipientAmount === "") {
@@ -202,7 +205,7 @@ const SessionProvider = ({ children }) => {
               ...item,
               quantity: quantity,
             }
-          : item
+          : item,
       );
       const updatedItem = updatedCart.find((item) => item.id === itemId);
       const response = await axios.put(
@@ -214,7 +217,7 @@ const SessionProvider = ({ children }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.accessToken}`,
           },
-        }
+        },
       );
 
       if (response.data) {
@@ -231,7 +234,7 @@ const SessionProvider = ({ children }) => {
                 ...item,
                 quantity: quantity,
               }
-            : item
+            : item,
         );
         console.log(cart);
         localStorage.setItem("cart", JSON.stringify(updatedCart));
@@ -278,7 +281,7 @@ const SessionProvider = ({ children }) => {
           localStorage.setItem("pc", response.data.processing);
           localStorage.setItem("gpc", response.data.giftcard_processing_fee);
           const currency = JSON.parse(
-            response.data.data.join("")
+            response.data.data.join(""),
           ).conversion_rates;
 
           setExchangeRate(JSON.stringify(currency));
@@ -367,7 +370,6 @@ const SessionProvider = ({ children }) => {
       };
       setSession(newSession);
       localStorage.setItem("session", JSON.stringify(newSession));
-
     } catch (error) {
       console.error("Login error:", error);
       throw error;

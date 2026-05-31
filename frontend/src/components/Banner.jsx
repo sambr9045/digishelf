@@ -1,8 +1,6 @@
 import React, { useContext } from "react";
 import { motion } from "framer-motion";
 import Header from "./Header/Header";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { TopUpContext } from "./Context/TopUpContext";
 
 import "react-intl-tel-input/dist/main.css";
@@ -26,8 +24,6 @@ export default function Banner() {
     <>
       <Header />
       <section className="relative isolate flex min-h-screen items-center overflow-hidden bg-[#f7f1e8] pt-24 pb-14 md:pt-28 lg:pb-16">
-        <ToastContainer position="top-center" theme="colored" />
-
         <div className="absolute left-[-12rem] top-10 h-96 w-96 rounded-full bg-[#10ac84]/20 blur-3xl" />
         <div className="absolute right-[-10rem] top-32 h-[32rem] w-[32rem] rounded-full bg-[#551839]/15 blur-3xl" />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />

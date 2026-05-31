@@ -1,7 +1,5 @@
 import React, { useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 import Header from "../components/Header/Header";
 import Footer from "../components/Footer/Footer";
@@ -56,7 +54,6 @@ function CheckoutContent() {
         })}
       />
       <Header />
-      <ToastContainer position="top-center" theme="colored" />
 
       <main className="relative overflow-hidden pt-28 pb-20 sm:pt-32">
         <div className="absolute left-[-10rem] top-12 h-80 w-80 rounded-full bg-[#10ac84]/20 blur-3xl pointer-events-none" />
