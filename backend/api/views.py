@@ -39,10 +39,9 @@ from . import tasks
 import requests
 from itertools import chain
 from operator import attrgetter
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from difflib import SequenceMatcher
 from xml.sax.saxutils import escape
-import secrets
 from payments.fulfillment import (
     build_giftcard_email_entries,
     send_giftcard_codes_email,
@@ -66,6 +65,7 @@ EMAIL_VERIFICATION_TTL_SECONDS = int(
     os.getenv("EMAIL_VERIFICATION_TTL_SECONDS", str(15 * 60))
 )
 EMAIL_VERIFICATION_SESSION_SALT = "api.email_verification.session"
+EMAIL_VERIFICATION_LINK_SALT = "api.email_verification.link"
 EMAIL_VERIFICATION_SESSION_MAX_AGE_SECONDS = int(
     os.getenv("EMAIL_VERIFICATION_SESSION_MAX_AGE_SECONDS", str(7 * 24 * 60 * 60))
 )
@@ -115,14 +115,33 @@ def _split_full_name(full_name):
     return parts[0], " ".join(parts[1:])
 
 
-def _email_verification_cache_key(email):
-    digest = hashlib.sha256(_normalize_email_address(email).encode("utf-8")).hexdigest()
-    return f"auth.email_verification.{digest}"
+def get_public_site_base_url():
+    public_site_urls = [
+        item.strip()
+        for item in str(DEFAULT_PUBLIC_SITE_URL or "").split(",")
+        if item.strip()
+    ]
+    if settings.DEBUG:
+        local_url = next(
+            (
+                item
+                for item in public_site_urls
+                if "localhost" in item or "127.0.0.1" in item
+            ),
+            "",
+        )
+        public_site_url = local_url or (public_site_urls[0] if public_site_urls else "")
+    else:
+        public_site_url = public_site_urls[0] if public_site_urls else ""
 
+    if not public_site_url:
+        return "http://localhost:5173" if settings.DEBUG else "https://digishelves.com"
 
-def _email_verification_digest(email, code):
-    raw = f"{_normalize_email_address(email)}:{code}:{settings.SECRET_KEY}"
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    parsed = urlparse(public_site_url)
+    if not parsed.scheme or not parsed.netloc:
+        return "http://localhost:5173" if settings.DEBUG else "https://digishelves.com"
+
+    return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
 
 
 def make_email_verification_session(user):
@@ -130,6 +149,39 @@ def make_email_verification_session(user):
         {"user_id": user.pk},
         salt=EMAIL_VERIFICATION_SESSION_SALT,
     )
+
+
+def make_email_verification_link_token(user):
+    return signing.dumps(
+        {
+            "user_id": user.pk,
+            "email": _normalize_email_address(user.email),
+        },
+        salt=EMAIL_VERIFICATION_LINK_SALT,
+    )
+
+
+def get_user_from_email_verification_link_token(token):
+    if not token:
+        raise ValueError("Missing verification token.")
+
+    try:
+        payload = signing.loads(
+            token,
+            salt=EMAIL_VERIFICATION_LINK_SALT,
+            max_age=EMAIL_VERIFICATION_TTL_SECONDS,
+        )
+    except signing.SignatureExpired as exc:
+        raise ValueError("Your verification link has expired. Please request a new one.") from exc
+    except signing.BadSignature as exc:
+        raise ValueError("Invalid verification link.") from exc
+
+    user = Account.objects.filter(pk=payload.get("user_id"), auth_type="email").first()
+    if not user:
+        raise ValueError("We could not find an account for this verification link.")
+    if _normalize_email_address(user.email) != _normalize_email_address(payload.get("email")):
+        raise ValueError("This verification link is no longer valid. Please request a new one.")
+    return user
 
 
 def get_user_from_email_verification_session(session_token):
@@ -143,7 +195,7 @@ def get_user_from_email_verification_session(session_token):
             max_age=EMAIL_VERIFICATION_SESSION_MAX_AGE_SECONDS,
         )
     except signing.BadSignature as exc:
-        raise ValueError("Your verification session has expired. Sign up again or request a new code.") from exc
+        raise ValueError("Your verification session has expired. Sign up again or request a new link.") from exc
 
     user = Account.objects.filter(pk=payload.get("user_id"), auth_type="email").first()
     if not user:
@@ -151,41 +203,23 @@ def get_user_from_email_verification_session(session_token):
     return user
 
 
-def issue_email_verification_code(user):
-    code = f"{secrets.randbelow(1_000_000):06d}"
-    cache.set(
-        _email_verification_cache_key(user.email),
-        {
-            "user_id": user.pk,
-            "code_digest": _email_verification_digest(user.email, code),
-        },
-        timeout=EMAIL_VERIFICATION_TTL_SECONDS,
-    )
-    return code
-
-
-def get_email_verification_payload(email):
-    payload = cache.get(_email_verification_cache_key(email))
-    if not isinstance(payload, dict):
-        return None
-    return payload
-
-
-def send_email_verification_code(user):
-    code = issue_email_verification_code(user)
+def send_email_verification_link(user):
+    token = make_email_verification_link_token(user)
+    verification_link = f"{get_public_site_base_url()}/verify-email?token={quote(token)}"
     expires_in_minutes = max(1, (EMAIL_VERIFICATION_TTL_SECONDS + 59) // 60)
     subject = "Verify your Digishelves email"
     support_email = getattr(settings, "DEFAULT_FROM_ADDRESS", "info@digishelves.com")
     body = (
         f"Hi {user.first_name or 'there'},\n\n"
-        f"Your Digishelves verification code is {code}.\n"
+        "Click the link below to verify your Digishelves account:\n"
+        f"{verification_link}\n\n"
         f"It expires in {expires_in_minutes} minute(s).\n\n"
         "If you did not create this account, you can ignore this email.\n\n"
         "Digishelves"
     )
-    html_body = render_to_string("emails/verification_code.html", {
+    html_body = render_to_string("emails/verification_link.html", {
         "first_name": user.first_name or "there",
-        "code": code,
+        "verification_link": verification_link,
         "expires_in_minutes": expires_in_minutes,
         "support_email": support_email,
     })
@@ -604,8 +638,7 @@ class LoginWithEmailView(APIView):
             if existing_user.suspended:
                 return Response({'error': 'Your account has been suspended. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
             if (
-                existing_user.auth_type == 'email'
-                and (not existing_user.email_verified or not existing_user.is_active)
+                (not existing_user.email_verified or not existing_user.is_active)
                 and existing_user.check_password(password)
             ):
                 return Response(
@@ -752,11 +785,11 @@ class EmailSignUp(APIView):
             user = serializer.save()
 
             try:
-                send_email_verification_code(user)
+                send_email_verification_link(user)
             except Exception:
                 return Response(
                     {
-                        "error": "We could not send the verification email right now. Please try again or resend the code.",
+                        "error": "We could not send the verification email right now. Please try again or resend the link.",
                         "email_verification_required": True,
                         "email": user.email,
                         "verification_session": make_email_verification_session(user),
@@ -767,9 +800,9 @@ class EmailSignUp(APIView):
             return Response(
                 {
                     "message": (
-                        "Account created. We sent a verification code to your email address."
+                        "Account created. We sent a verification link to your email address."
                         if created
-                        else "Your account is still waiting for verification. We sent a new verification code."
+                        else "Your account is still waiting for verification. We sent a new verification link."
                     ),
                     "email_verification_required": True,
                     "email": user.email,
@@ -793,12 +826,12 @@ class EmailVerificationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        code = str(request.data.get("code") or "").strip()
-        if not code:
-            return Response({"error": "Verification code is required."}, status=status.HTTP_400_BAD_REQUEST)
+        token = str(request.data.get("token") or "").strip()
+        if not token:
+            return Response({"error": "Verification link is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = get_user_from_email_verification_session(request.data.get("verification_session"))
+            user = get_user_from_email_verification_link_token(token)
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -809,20 +842,9 @@ class EmailVerificationView(APIView):
         if user.email_verified and user.is_active:
             return Response({"message": "Your email is already verified."}, status=status.HTTP_200_OK)
 
-        payload = get_email_verification_payload(user.email)
-        if not payload or payload.get("user_id") != user.pk:
-            return Response(
-                {"error": "Your verification code has expired. Please request a new one."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if payload.get("code_digest") != _email_verification_digest(user.email, code):
-            return Response({"error": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
-
         user.email_verified = True
         user.is_active = True
         user.save(update_fields=["email_verified", "is_active"])
-        cache.delete(_email_verification_cache_key(user.email))
 
         threading.Thread(
             target=send_admin_new_user_notification,
@@ -862,14 +884,13 @@ class ResendEmailVerificationView(APIView):
                     {"error": "Another account already uses that email address."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            cache.delete(_email_verification_cache_key(user.email))
             user.email = requested_email
             user.email_verified = False
             user.is_active = False
             user.save(update_fields=["email", "email_verified", "is_active"])
 
         try:
-            send_email_verification_code(user)
+            send_email_verification_link(user)
         except Exception:
             return Response(
                 {"error": "We could not send a verification email right now. Please try again."},
@@ -878,7 +899,7 @@ class ResendEmailVerificationView(APIView):
 
         return Response(
             {
-                "message": "A new verification code has been sent.",
+                "message": "A new verification link has been sent.",
                 "email": user.email,
                 "verification_session": make_email_verification_session(user),
             },
