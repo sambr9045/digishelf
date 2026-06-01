@@ -38,7 +38,7 @@ class Order(models.Model):
         db_index=True,
     )
     token_contract_address = models.CharField(max_length=42, default="")
-    wallet_address = models.CharField(max_length=42, unique=True, db_index=True)
+    wallet_address = models.CharField(max_length=42, db_index=True)
     wallet_index = models.PositiveIntegerField(unique=True)
     status = models.CharField(
         max_length=20,
