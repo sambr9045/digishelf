@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 from django.conf import settings
 from django.core.cache import cache
 from django.core import signing
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -210,23 +210,39 @@ class CreateOrderView(APIView):
                 pk=1,
                 defaults={"next_index": 0},
             )
-            wallet_index = wallet_index_state.next_index
-            wallet = generate_address(wallet_index)
 
-            order = Order.objects.create(
-                amount=amount,
-                token_symbol=payment_token.symbol,
-                token_contract_address=payment_token.contract_address,
-                wallet_address=wallet["address"],
-                wallet_index=wallet_index,
-                fulfillment_type=fulfillment_type,
-                customer_email=customer_email,
-                fulfillment_payload=fulfillment_payload,
-                summary_snapshot=summary_snapshot,
-            )
+            # Keep pointer in sync with existing rows (covers restored DBs or manual edits).
+            max_used_index = Order.objects.order_by("-wallet_index").values_list("wallet_index", flat=True).first()
+            if max_used_index is not None and wallet_index_state.next_index <= max_used_index:
+                wallet_index_state.next_index = max_used_index + 1
 
-            wallet_index_state.next_index = wallet_index + 1
-            wallet_index_state.save(update_fields=["next_index", "updated_at"])
+            order = None
+            for _ in range(8):
+                wallet_index = wallet_index_state.next_index
+                wallet = generate_address(wallet_index)
+                try:
+                    order = Order.objects.create(
+                        amount=amount,
+                        token_symbol=payment_token.symbol,
+                        token_contract_address=payment_token.contract_address,
+                        wallet_address=wallet["address"],
+                        wallet_index=wallet_index,
+                        fulfillment_type=fulfillment_type,
+                        customer_email=customer_email,
+                        fulfillment_payload=fulfillment_payload,
+                        summary_snapshot=summary_snapshot,
+                    )
+                except IntegrityError:
+                    # Advance and retry if this index/address already exists.
+                    wallet_index_state.next_index = wallet_index + 1
+                    continue
+
+                wallet_index_state.next_index = wallet_index + 1
+                wallet_index_state.save(update_fields=["next_index", "updated_at"])
+                break
+
+            if order is None:
+                raise ValueError("Unable to allocate a unique wallet address for order")
 
         send_admin_new_order_notification(order, summary_snapshot)
 
