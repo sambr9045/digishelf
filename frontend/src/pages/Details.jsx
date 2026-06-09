@@ -181,7 +181,8 @@ export default function Details() {
   const [customAmountError, setCustomAmountError] = useState("");
   const [customAmount, setCustomAmount] = useState("");
   const [customAmountValue, setCustomAmountValue] = useState(0);
-  const { country, addToCart, mainCurrency, session } = useContext(SessionContext);
+  const { country, addToCart, mainCurrency, session } =
+    useContext(SessionContext);
   const navigate = useNavigate();
   const viewStartRef = useRef(0);
 
@@ -362,7 +363,10 @@ export default function Details() {
     viewStartRef.current = startedAt;
 
     return () => {
-      const durationSeconds = Math.max(Math.round((Date.now() - startedAt) / 1000), 1);
+      const durationSeconds = Math.max(
+        Math.round((Date.now() - startedAt) / 1000),
+        1,
+      );
       sendAnalyticsEvents(
         [
           {
@@ -529,6 +533,18 @@ export default function Details() {
                   Choose a value, add it to your cart, or continue directly to
                   checkout with secure Digishelves payment.
                 </p>
+
+                <div className="mt-4">
+                  <div className="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                    <strong className="font-black">Trademark Notice:</strong>{" "}
+                    All trademarks, service marks, and brand names are the
+                    property of their respective owners. Digishelves is an
+                    independent marketplace and is not affiliated with, endorsed
+                    by, or sponsored by any brand listed on this website. Brand
+                    names and logos are used solely to identify products
+                    available through third-party distribution providers.
+                  </div>
+                </div>
 
                 <div className="mt-8">
                   {denominationOptions.length > 0 ? (

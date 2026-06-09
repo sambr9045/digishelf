@@ -22,12 +22,7 @@ const contactMethods = [
   {
     icon: Mail,
     title: "Email",
-    lines: ["info@digishelves.com"],
-  },
-  {
-    icon: MapPin,
-    title: "Location",
-    lines: ["Royal Ln. Mesa, New Jersey", "Thornridge Cir. Shiloh, Hawaii"],
+    lines: ["support@digishelves.com"],
   },
 ];
 
@@ -89,7 +84,8 @@ export default function Contact() {
     } catch (error) {
       console.log(error);
       toast.error(
-        error?.response?.data?.error || "Something went wrong. Please try again later.",
+        error?.response?.data?.error ||
+          "Something went wrong. Please try again later.",
       );
     }
   };
