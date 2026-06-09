@@ -23,14 +23,10 @@ const supportLinks = [
 const socialLinks = [
   {
     label: "Facebook",
-    href: "https://facebook.com/digishelves",
+    href: "https://web.facebook.com/profile.php?id=61560111105801",
     Icon: FacebookIcon,
   },
-  {
-    label: "LinkedIn",
-    href: "https://linkedin.com/company/digishelves",
-    Icon: LinkedInIcon,
-  },
+
   { label: "X", href: "https://x.com/digishelves", Icon: XIcon },
 ];
 
@@ -100,14 +96,9 @@ export default function Footer() {
               >
                 <Mail className="mt-0.5 h-5 w-5 shrink-0 text-[#9ff1dd]" />
                 <span>
-                  <span className="block">info@digishelves.com</span>
+                  <span className="block">support@digishelves.com</span>
                 </span>
               </a>
-
-              <div className="flex gap-3 font-bold sm:col-span-2 lg:col-span-1">
-                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#9ff1dd]" />
-                <span>285 Great North Road, Grey Lynn, Auckland 1021</span>
-              </div>
             </div>
           </div>
         </div>
