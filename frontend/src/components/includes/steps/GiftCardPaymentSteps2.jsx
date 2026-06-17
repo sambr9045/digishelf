@@ -570,7 +570,7 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
 
             <div>
               <Link
-                to="/gift-cards"
+                to="/gift-card"
                 className="inline-flex items-center justify-center rounded-full bg-[#551839] px-6 py-3 text-sm font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d]"
               >
                 Browse gift cards

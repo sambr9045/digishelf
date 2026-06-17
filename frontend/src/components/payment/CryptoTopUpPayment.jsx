@@ -422,7 +422,7 @@ export default function CryptoTopUpPayment() {
 
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <Link
-            to={isGiftCardOrder ? "/gift-cards" : "/top-up/checkout"}
+            to={isGiftCardOrder ? "/gift-card" : "/top-up/checkout"}
             className="inline-flex items-center gap-2 rounded-full border border-[#eadfe7] bg-white px-4 py-2 text-sm font-black text-[#665b67] transition hover:border-[#551839]/30 hover:text-[#551839]"
           >
             <ArrowLeft className="h-4 w-4" />

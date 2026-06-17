@@ -90,11 +90,11 @@ function buildPageMeta(requestPath = "/") {
         "Read how Digishelves collects and uses personal data, including account, order, analytics, and security information.",
       canonicalPath: "/privacy-policy",
     },
-    "/gift-cards": {
+    "/gift-card": {
       title: "Buy Digital Gift Cards | Digishelves",
       description:
         "Browse digital gift cards by brand and country, compare values, and buy online through Digishelves.",
-      canonicalPath: "/gift-cards",
+      canonicalPath: "/gift-card",
     },
     "/top-up": {
       title: "Airtime Top-ups and Gift Cards | Digishelves",
@@ -110,11 +110,26 @@ function buildPageMeta(requestPath = "/") {
 
   const giftCardTypeMatch = pathname.match(/^\/gift-card\/([^/]+)$/);
   if (giftCardTypeMatch) {
-    const typeName = titleizeSlug(giftCardTypeMatch[1]) || "Gift Card";
+    const segment = giftCardTypeMatch[1];
+    if (!["payment", "payment-complete"].includes(segment)) {
+      return {
+        title: "Buy Digital Gift Cards | Digishelves",
+        description:
+          "Browse digital gift cards by brand and country, compare values, and buy online through Digishelves.",
+        canonicalPath: "/gift-card",
+        robots: "noindex,follow",
+      };
+    }
+  }
+
+  const legacyProductId = extractProductId(pathname);
+  if (legacyProductId) {
     return {
-      title: `${typeName} Gift Cards | Digishelves`,
-      description: `Browse ${typeName} gift card products and values on Digishelves.`,
-      canonicalPath: pathname,
+      title: "Buy Digital Gift Cards | Digishelves",
+      description:
+        "Browse digital gift cards by brand and country, compare values, and buy online through Digishelves.",
+      canonicalPath: "/gift-card",
+      robots: "noindex,follow",
     };
   }
 
@@ -147,7 +162,8 @@ function buildRobotsValue(pathname = "/") {
 
   if (
     noindexExactPaths.has(pathname) ||
-    noindexPrefixes.some((prefix) => pathname.startsWith(prefix))
+    noindexPrefixes.some((prefix) => pathname.startsWith(prefix)) ||
+    extractProductId(pathname)
   ) {
     return "noindex,nofollow";
   }
@@ -346,33 +362,45 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  const pathname = normalizePathname(req.path);
+
+  if (pathname === "/gift-cards") {
+    res.redirect(301, toAbsoluteUrl("/gift-card"));
+    return;
+  }
+
+  const productId = extractProductId(pathname);
+  if (productId) {
+    res.redirect(301, toAbsoluteUrl(`/gift-card?productId=${productId}`));
+    return;
+  }
+
+  const giftCardTypeMatch = pathname.match(/^\/gift-card\/([^/]+)$/);
+  if (
+    giftCardTypeMatch &&
+    !["payment", "payment-complete"].includes(giftCardTypeMatch[1])
+  ) {
+    const brand = encodeURIComponent(giftCardTypeMatch[1]);
+    res.redirect(301, toAbsoluteUrl(`/gift-card?brand=${brand}`));
+    return;
+  }
+
+  next();
+});
+
 app.use(express.static(DIST_DIR, { index: false, maxAge: "1d" }));
 
 app.get("*", async (req, res) => {
   const indexHtml = await readIndexHtml();
-  const productId = extractProductId(req.path);
   const pathname = normalizePathname(req.path);
-
-  if (!productId) {
-    const pageMeta = buildPageMeta(pathname);
-    const html = injectMetaTags(indexHtml, {
-      ...pageMeta,
-      image: DEFAULT_IMAGE,
-      url: toAbsoluteUrl(pageMeta.canonicalPath),
-      robots: buildRobotsValue(pathname),
-    });
-    res.status(200).type("html").send(html);
-    return;
-  }
-
-  const product = await fetchGiftCard(productId);
-  if (!product) {
-    res.status(200).type("html").send(indexHtml);
-    return;
-  }
-
-  const meta = buildProductMeta(product, req.path);
-  const html = injectMetaTags(indexHtml, meta);
+  const pageMeta = buildPageMeta(pathname);
+  const html = injectMetaTags(indexHtml, {
+    ...pageMeta,
+    image: DEFAULT_IMAGE,
+    url: toAbsoluteUrl(pageMeta.canonicalPath),
+    robots: pageMeta.robots || buildRobotsValue(pathname),
+  });
   res.status(200).type("html").send(html);
 });
 

@@ -348,6 +348,15 @@ def _slugify(value):
     ).translate(str.maketrans({char: "-" for char in r""" !@#$%^*()+=[]{}\|;:'",.<>/?`~_"""})).strip("-")
 
 
+GIFT_CARD_CATALOG_PATH = "/gift-card"
+
+# Brands approved for individual deep-linked sitemap entries.
+DEEP_LINK_ALLOWED_BRAND_SLUGS = set()
+
+
+def _brand_allows_deep_link(brand_name):
+    return _slugify(brand_name) in DEEP_LINK_ALLOWED_BRAND_SLUGS
+
 def _normalize_public_site_url(request):
     base_url = DEFAULT_PUBLIC_SITE_URL or request.build_absolute_uri("/")
     return base_url.rstrip("/")
@@ -477,8 +486,15 @@ def _build_giftcard_path(item, fallback_type="gift-card"):
         or "global"
     )
 
+    if not _brand_allows_deep_link(brand_name):
+        if product_id:
+            return f"{GIFT_CARD_CATALOG_PATH}?productId={product_id}"
+        if brand_name:
+            return f"{GIFT_CARD_CATALOG_PATH}?brand={quote(brand_name)}"
+        return GIFT_CARD_CATALOG_PATH
+
     if not product_id:
-        return f"/gift-card/{quote(_slugify(product_name))}"
+        return f"{GIFT_CARD_CATALOG_PATH}?brand={quote(brand_name)}"
 
     return (
         f"/gift-card/{_slugify(brand_name)}/{_slugify(country_name)}/"
@@ -564,7 +580,7 @@ def _build_sitemap_xml(request):
         ("/contact", "monthly", "0.7"),
         ("/terms-of-use", "monthly", "0.5"),
         ("/privacy-policy", "monthly", "0.5"),
-        ("/gift-cards", "daily", "0.95"),
+        (GIFT_CARD_CATALOG_PATH, "daily", "0.95"),
     ]
 
     type_cache = {}
@@ -580,6 +596,9 @@ def _build_sitemap_xml(request):
 
     for item in giftcard_items:
         brand_name = ((item.get("brand") or {}).get("brandName")) or item.get("productName") or "Gift Card"
+        if not _brand_allows_deep_link(brand_name):
+            continue
+
         brand_slug = _slugify(brand_name)
 
         if brand_slug and brand_slug not in type_cache:

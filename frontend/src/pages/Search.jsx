@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { api_endpoint } from "../components/constant";
 import GiftCardBanner from "../components/GiftCardBanner";
 import GiftCardContentDisplau from "../components/includes/GiftCardContentDisplau";
 import Footer from "../components/Footer/Footer";
 import Seo from "../components/Seo";
-import { buildGiftCardUrl } from "../utils/slugify";
+import { GIFT_CARD_CATALOG_PATH } from "../config/giftCardProviderPolicy";
 import {
   buildAbsoluteUrl,
   createBreadcrumbSchema,
@@ -19,6 +19,7 @@ function useQuery() {
 
 export default function Search() {
   const query = useQuery();
+  const navigate = useNavigate();
   const searchName = query.get("name") || "";
   const searchCountry = query.get("country") || "";
   const [isLoading, setIsLoading] = useState(true);
@@ -103,13 +104,12 @@ export default function Search() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isLoading, paginationLoading, hasMore]);
   const searchPath = `/giftcard/search?country=${encodeURIComponent(searchCountry)}&name=${encodeURIComponent(searchName)}`;
+  const catalogUrl = buildAbsoluteUrl(GIFT_CARD_CATALOG_PATH);
   const schema = useMemo(() => {
     const items = giftCards.slice(0, 24).map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: buildAbsoluteUrl(
-        buildGiftCardUrl(item, searchName || item.productName),
-      ),
+      url: catalogUrl,
       name: item.productName,
     }));
 
@@ -122,7 +122,7 @@ export default function Search() {
       }),
       createBreadcrumbSchema([
         { name: "Home", path: "/" },
-        { name: "Gift Cards", path: "/gift-cards" },
+        { name: "Gift Cards", path: GIFT_CARD_CATALOG_PATH },
         { name: "Search", path: searchPath },
       ]),
       {
@@ -132,7 +132,15 @@ export default function Search() {
         itemListElement: items,
       },
     ];
-  }, [giftCards, searchCountry, searchName, searchPath]);
+  }, [catalogUrl, giftCards, searchCountry, searchName, searchPath]);
+
+  const handleProductSelect = (item) => {
+    if (!item?.productId) {
+      return;
+    }
+
+    navigate(`/gift-card?productId=${item.productId}`);
+  };
 
   return (
     <div>
@@ -159,6 +167,7 @@ export default function Search() {
             isLoading={paginationLoading ? false : isLoading}
             type={"search"}
             paginationLoading={paginationLoading}
+            onProductSelect={handleProductSelect}
           />
         </div>
       </section>

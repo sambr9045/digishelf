@@ -21,7 +21,7 @@ export default function CheckoutBanner() {
               {/* {type !== "" ? (
                 <>
                   <li>
-                    <Link to={`/gift-cards/`}>Gift Cards</Link>
+                    <Link to={`/gift-card`}>Gift Cards</Link>
                   </li>
                   <li>
                     <i className="material-symbols-outlined">chevron_right</i>

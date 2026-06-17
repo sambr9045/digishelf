@@ -86,7 +86,7 @@ export default function NotFound() {
                     Back to home
                   </Link>
                   <Link
-                    to="/gift-cards"
+                    to="/gift-card"
                     className="inline-flex items-center justify-center gap-2 rounded-full border border-[#551839]/15 bg-white px-5 py-3 text-sm font-black text-[#551839] transition hover:bg-[#fbf8f4]"
                   >
                     <Search className="h-4 w-4" />

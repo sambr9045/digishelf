@@ -101,7 +101,7 @@ export default function About() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                to="/gift-cards"
+                to="/gift-card"
                 className="inline-flex items-center gap-2 rounded-full border border-[#551839]/15 bg-white/70 px-5 py-3 font-black text-[#551839] transition hover:bg-white"
               >
                 Browse gift cards

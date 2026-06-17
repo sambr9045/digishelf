@@ -9,7 +9,7 @@ import logo5 from "../../assets/images/NLogo/logo5.png";
 
 const footerLinks = [
   { label: "Top-up", to: "/" },
-  { label: "Gift Cards", to: "/gift-cards" },
+  { label: "Gift Cards", to: "/gift-card" },
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
 ];

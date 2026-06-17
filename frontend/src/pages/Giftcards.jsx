@@ -1,12 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer/Footer";
 import GiftCardBanner from "../components/GiftCardBanner";
+import GiftCardProductModal from "../components/giftcards/GiftCardProductModal";
 import { api_endpoint } from "../components/constant";
 import axios from "axios";
 import Seo from "../components/Seo";
 import GiftCardContentDisplau from "../components/includes/GiftCardContentDisplau";
 import { Gift, PanelLeft, X } from "lucide-react";
-import { buildGiftCardUrl } from "../utils/slugify";
+import { GIFT_CARD_CATALOG_PATH } from "../config/giftCardProviderPolicy";
 import {
   buildAbsoluteUrl,
   createBreadcrumbSchema,
@@ -84,13 +86,17 @@ const GIFTCARD = [
 ];
 
 export default function Giftcards() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [giftCards, setGiftCards] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [activeBrand, setActiveBrand] = useState("");
+  const [activeBrand, setActiveBrand] = useState(
+    () => searchParams.get("brand") || "",
+  );
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const selectedProductId = searchParams.get("productId") || "";
 
   // const HandelSeach = async (country, giftcardname) => {
   //   setIsLoading(true);
@@ -149,6 +155,14 @@ export default function Giftcards() {
   }, [activeBrand, page]);
 
   useEffect(() => {
+    const brandFromUrl = searchParams.get("brand") || "";
+    if (brandFromUrl !== activeBrand) {
+      setActiveBrand(brandFromUrl);
+      setPage(1);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (!mobileFilterOpen) {
       return undefined;
     }
@@ -163,12 +177,40 @@ export default function Giftcards() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [mobileFilterOpen]);
 
+  const updateCatalogParams = useCallback(
+    (updates = {}) => {
+      const nextParams = new URLSearchParams(searchParams);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === "") {
+          nextParams.delete(key);
+        } else {
+          nextParams.set(key, String(value));
+        }
+      });
+
+      setSearchParams(nextParams, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
   const handleBrandSelect = (brandName) => {
-    setActiveBrand((currentBrand) => {
-      const nextBrand = currentBrand === brandName ? "" : brandName;
-      return nextBrand;
-    });
+    const nextBrand = activeBrand === brandName ? "" : brandName;
+    setActiveBrand(nextBrand);
     setPage(1);
+    updateCatalogParams({ brand: nextBrand, productId: null });
+  };
+
+  const handleProductSelect = (item) => {
+    if (!item?.productId) {
+      return;
+    }
+
+    updateCatalogParams({ productId: item.productId });
+  };
+
+  const handleCloseProduct = () => {
+    updateCatalogParams({ productId: null });
   };
 
   const displayCards = giftCards;
@@ -255,14 +297,14 @@ export default function Giftcards() {
       </div>
     </>
   );
+  const catalogPath = GIFT_CARD_CATALOG_PATH;
   const giftCardSchema = useMemo(() => {
     const schemaCards = giftCards.slice(0, 24);
+    const catalogUrl = buildAbsoluteUrl(catalogPath);
     const items = schemaCards.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: buildAbsoluteUrl(
-        buildGiftCardUrl(item, item.productName || "gift-card"),
-      ),
+      url: catalogUrl,
       name: item.productName,
     }));
 
@@ -271,12 +313,12 @@ export default function Giftcards() {
         title: "Buy Digital Gift Cards",
         description:
           "Browse digital gift cards by brand and country, compare values, and buy online through Digishelves.",
-        path: "/gift-cards",
+        path: catalogPath,
         type: "CollectionPage",
       }),
       createBreadcrumbSchema([
         { name: "Home", path: "/" },
-        { name: "Gift Cards", path: "/gift-cards" },
+        { name: "Gift Cards", path: catalogPath },
       ]),
       {
         "@context": "https://schema.org",
@@ -285,7 +327,7 @@ export default function Giftcards() {
         itemListElement: items,
       },
     ];
-  }, [giftCards]);
+  }, [catalogPath, giftCards]);
 
   return (
     <div className="overflow-x-clip">
@@ -298,10 +340,17 @@ export default function Giftcards() {
           "gift card catalog",
           "Digishelves gift cards",
         ]}
-        path="/gift-cards"
+        path={catalogPath}
         schema={giftCardSchema}
       />
       <GiftCardBanner />
+
+      {selectedProductId ? (
+        <GiftCardProductModal
+          productId={selectedProductId}
+          onClose={handleCloseProduct}
+        />
+      ) : null}
 
       {mobileFilterOpen ? (
         <div>
@@ -416,7 +465,24 @@ export default function Giftcards() {
               totalPages={totalPages}
               onPageChange={setPage}
               type={activeBrand}
+              onProductSelect={handleProductSelect}
             />
+          </div>
+
+          <div className="mt-12 rounded-[1.5rem] border border-[#eadfe7] bg-[#fbf8f4] px-5 py-4 text-sm leading-7 text-[#665b67] sm:px-6">
+            <strong className="font-black text-[#211722]">Reseller notice:</strong>{" "}
+            Digishelves is an independent authorized reseller. Gift cards shown here
+            are fulfilled through licensed third-party distribution partners.
+            Digishelves is not the card issuer and is not affiliated with, endorsed
+            by, or sponsored by the brands displayed. Brand names and logos are
+            used only to identify available products. Availability, denominations,
+            and redemption rules are set by the issuer and may vary by country.{" "}
+            <Link
+              to="/terms-of-use"
+              className="font-black text-[#551839] underline decoration-[#551839]/30 underline-offset-2 transition hover:decoration-[#551839]"
+            >
+              Terms of Use
+            </Link>
           </div>
         </div>
       </section>

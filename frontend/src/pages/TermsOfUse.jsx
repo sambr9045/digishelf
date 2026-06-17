@@ -120,8 +120,11 @@ const sections = [
     body: [
       "All trademarks, service marks, logos, trade names, and brand names displayed on Digishelves are the property of their respective owners.",
       "References to third-party brands are provided solely for the purpose of identifying the products and services available through our platform.",
-      "Digishelves operates as an independent marketplace and, unless expressly stated otherwise, is not affiliated with, endorsed by, sponsored by, or associated with any brand, trademark owner, product issuer, or rights holder featured on the website.",
-      "Gift cards, airtime products, and other digital products available through Digishelves may be sourced through authorized third-party distribution providers.",
+      "Digishelves operates as an independent marketplace and authorized reseller of digital gift cards. Unless expressly stated otherwise, Digishelves is not affiliated with, endorsed by, sponsored by, or associated with any brand, trademark owner, product issuer, or rights holder featured on the website.",
+      "Digishelves is not the issuer of any gift card product listed on the platform. Gift cards, airtime products, and other digital products available through Digishelves are sourced and fulfilled through authorized third-party distribution providers.",
+      "Your purchase and use of any gift card is also subject to the terms, conditions, restrictions, and redemption policies of the applicable card issuer and distribution partner.",
+      "Unless expressly permitted by the issuer, you may not resell, auction, transfer for value, or otherwise redistribute gift cards purchased through Digishelves.",
+      "Brand names, logos, and product images are displayed on a consolidated catalog for identification purposes only and do not represent separate official storefronts operated by those brands.",
       "The appearance of a brand name, logo, trademark, or product on the platform does not imply any direct relationship, partnership, endorsement, sponsorship, or approval by the respective trademark owner.",
       "If you are a trademark owner, authorized representative, or rights holder and believe that content on Digishelves infringes your rights or may create confusion regarding affiliation, you may contact us and we will promptly review the matter and take appropriate action where necessary.",
     ],
@@ -173,7 +176,7 @@ export default function TermsOfUse() {
           </h1>
 
           <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-[#665b67]">
-            Effective Date: June 9, 2026
+            Effective Date: June 17, 2026
           </p>
 
           <p className="mt-6 text-lg leading-8 text-[#5d505b]">

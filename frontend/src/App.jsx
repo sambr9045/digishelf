@@ -1,4 +1,4 @@
-import { Outlet, createBrowserRouter } from "react-router-dom";
+import { Navigate, Outlet, createBrowserRouter, useParams } from "react-router-dom";
 
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import MyAccount from "./components/accounts/MyAccount";
@@ -11,7 +11,6 @@ import AdminLogin from "./pages/AdminLogin";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Details from "./pages/Details";
-import GiftcardType from "./pages/GiftcardType";
 import Giftcards from "./pages/Giftcards";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
@@ -39,6 +38,17 @@ function RootLayout() {
       <Outlet />
     </>
   );
+}
+
+function GiftCardLegacyCategoryRedirect() {
+  const { type } = useParams();
+  const brand = encodeURIComponent(type || "");
+  return <Navigate to={`/gift-card?brand=${brand}`} replace />;
+}
+
+function GiftCardLegacyProductRedirect() {
+  const { productId } = useParams();
+  return <Navigate to={`/gift-card?productId=${productId}`} replace />;
 }
 
 const router = createBrowserRouter([
@@ -87,24 +97,32 @@ const router = createBrowserRouter([
         element: <AdminDashboard />,
       },
       {
-        path: "gift-cards",
+        path: "gift-card",
         element: <Giftcards />,
       },
       {
-        path: "gift-card/:type",
-        element: <GiftcardType />,
+        path: "gift-cards",
+        element: <Navigate to="/gift-card" replace />,
+      },
+      {
+        path: "gift-card/payment-complete/:reference",
+        element: <PaymentSuccess />,
+      },
+      {
+        path: "gift-card/payment/:orderId",
+        element: <CryptoTopUpPayment />,
       },
       {
         path: "gift-card/:brandSlug/:countrySlug/:productSlug/:productId",
-        element: <Details />,
+        element: <GiftCardLegacyProductRedirect />,
       },
       {
         path: "gift-card/:name/:productId",
         element: <Details />,
       },
       {
-        path: "gift-card/payment-complete/:reference",
-        element: <PaymentSuccess />,
+        path: "gift-card/:type",
+        element: <GiftCardLegacyCategoryRedirect />,
       },
       {
         path: "checkout",
@@ -120,10 +138,6 @@ const router = createBrowserRouter([
       },
       {
         path: "top-up/payment/:orderId",
-        element: <CryptoTopUpPayment />,
-      },
-      {
-        path: "gift-card/payment/:orderId",
         element: <CryptoTopUpPayment />,
       },
       {

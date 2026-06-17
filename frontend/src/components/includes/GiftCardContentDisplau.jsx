@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import empty_search from "../../assets/images/empty_search.svg";
+import { brandAllowsDeepLinkForItem } from "../../config/giftCardProviderPolicy";
 import { buildGiftCardUrl } from "../../utils/slugify";
 
 const skeletonCards = Array.from({ length: 12 });
@@ -36,6 +37,81 @@ function GiftCardSkeletonGrid({ compact = false }) {
   );
 }
 
+function GiftCardTile({ item, type, onProductSelect, getPriceLabel }) {
+  const image = item.logoUrls?.[0] || item.img;
+  const cardClassName =
+    "group w-full overflow-hidden rounded-md border border-[#efe7ed] bg-white text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#551839]/10";
+
+  const cardBody = (
+    <>
+      <div className="relative h-36 overflow-hidden bg-[#fbf8f4]">
+        {image && (
+          <img
+            src={image}
+            alt={item.productName}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          />
+        )}
+        {item.country?.flagUrl && (
+          <span className="absolute right-0 top-0 flex h-11 w-14 items-center justify-center overflow-hidden rounded-bl-md border-l border-b border-black/5 bg-white shadow-sm">
+            <img
+              src={item.country.flagUrl}
+              alt={`${item.country.name || "country"} flag`}
+              className="h-full w-full object-cover"
+            />
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-4 p-5">
+        <div>
+          <p className="mb-1 text-xs font-black uppercase tracking-[0.22em] text-[#9a8b97]">
+            Gift card
+          </p>
+          <h3 className="mb-0 text-lg font-black tracking-[-0.03em] text-[#211722]">
+            {item.productName}
+          </h3>
+          {getPriceLabel(item) ? (
+            <p className="mb-0 mt-2 text-sm font-bold text-[#665b67]">
+              From {getPriceLabel(item)}
+            </p>
+          ) : null}
+        </div>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#f7f1e8] text-[#551839] transition group-hover:bg-[#551839] group-hover:text-white">
+          <ArrowUpRight className="h-5 w-5" />
+        </span>
+      </div>
+    </>
+  );
+
+  if (
+    item?.productId &&
+    onProductSelect &&
+    !brandAllowsDeepLinkForItem(item, type)
+  ) {
+    return (
+      <button
+        type="button"
+        key={`${item.productId}-${item.productName}`}
+        onClick={() => onProductSelect(item)}
+        className={cardClassName}
+      >
+        {cardBody}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      key={`${item.productId}-${item.productName}`}
+      to={buildGiftCardUrl(item, type || item.productName)}
+      className={cardClassName}
+    >
+      {cardBody}
+    </Link>
+  );
+}
+
 export default function GiftCardContentDisplau({
   GIFTCARD,
   isLoading,
@@ -44,6 +120,7 @@ export default function GiftCardContentDisplau({
   currentPage,
   totalPages: totalPagesProp,
   onPageChange,
+  onProductSelect,
 }) {
   const [page, setPage] = useState(1);
   const cards = Array.isArray(GIFTCARD) ? GIFTCARD : [];
@@ -94,18 +171,6 @@ export default function GiftCardContentDisplau({
     return items;
   };
 
-  const getProductLink = (item) => {
-    if (item?.productId) {
-      return buildGiftCardUrl(item, type || item.productName);
-    }
-
-    if (!type) {
-      return `/gift-card/${encodeURIComponent(item.productName)}`;
-    }
-
-    return buildGiftCardUrl(item, type);
-  };
-
   const getPriceLabel = (item) => {
     const minValue = Number(item?.minRecipientDenomination || 0);
     const maxValue = Number(item?.maxRecipientDenomination || 0);
@@ -148,55 +213,15 @@ export default function GiftCardContentDisplau({
           {cards.length > 0 ? (
             <>
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                {displayedCards.map((item) => {
-                  const image = item.logoUrls?.[0] || item.img;
-
-                  return (
-                    <Link
-                      key={`${item.productId}-${item.productName}`}
-                      to={getProductLink(item)}
-                      className="group overflow-hidden rounded-md border border-[#efe7ed] bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#551839]/10"
-                    >
-                      <div className="relative h-36 overflow-hidden bg-[#fbf8f4]">
-                        {image && (
-                          <img
-                            src={image}
-                            alt={item.productName}
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                          />
-                        )}
-                        {item.country?.flagUrl && (
-                          <span className="absolute right-0 top-0 flex h-11 w-14 items-center justify-center overflow-hidden rounded-bl-md border-l border-b border-black/5 bg-white shadow-sm">
-                            <img
-                              src={item.country.flagUrl}
-                              alt={`${item.country.name || "country"} flag`}
-                              className="h-full w-full object-cover"
-                            />
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 p-5">
-                        <div>
-                          <p className="mb-1 text-xs font-black uppercase tracking-[0.22em] text-[#9a8b97]">
-                            Gift card
-                          </p>
-                          <h3 className="mb-0 text-lg font-black tracking-[-0.03em] text-[#211722]">
-                            {item.productName}
-                          </h3>
-                          {getPriceLabel(item) ? (
-                            <p className="mb-0 mt-2 text-sm font-bold text-[#665b67]">
-                              From {getPriceLabel(item)}
-                            </p>
-                          ) : null}
-                        </div>
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#f7f1e8] text-[#551839] transition group-hover:bg-[#551839] group-hover:text-white">
-                          <ArrowUpRight className="h-5 w-5" />
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
+                {displayedCards.map((item) => (
+                  <GiftCardTile
+                    key={`${item.productId}-${item.productName}`}
+                    item={item}
+                    type={type}
+                    onProductSelect={onProductSelect}
+                    getPriceLabel={getPriceLabel}
+                  />
+                ))}
               </div>
 
               {totalPages > 1 && (
