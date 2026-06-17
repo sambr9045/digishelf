@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, CheckCircle2, ShoppingBag, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -8,6 +8,9 @@ import { api_endpoint } from "../constant";
 import { SessionContext } from "../sessionContext";
 import { giftcardDetailsCalculation } from "../includes/Functions";
 import { sendAnalyticsEvents, trackAnalyticsEvent } from "../../utils/analytics";
+
+const TRADEMARK_NOTICE =
+  "All trademarks, service marks, and brand names are the property of their respective owners. Digishelves is an independent authorized reseller and is not the issuer of any gift card. Digishelves is not affiliated with, endorsed by, or sponsored by any brand listed on this website. Brand names and logos are used solely to identify products available through licensed third-party distribution partners. Use of each gift card is also subject to the issuer's terms and redemption policies.";
 
 function getLogoUrl(product) {
   if (!product?.logoUrls) {
@@ -121,6 +124,15 @@ function InstructionBlock({ block }) {
   );
 }
 
+function TrademarkSubtext() {
+  return (
+    <p className="mb-0 mt-6 border-t border-[#eadfe7] pt-5 text-sm leading-6 text-[#9a8b97]">
+      <span className="font-black text-[#665b67]">Trademark notice:</span>{" "}
+      {TRADEMARK_NOTICE}
+    </p>
+  );
+}
+
 export default function GiftCardProductDetail({ productId, onClose }) {
   const [productIdData, setProductIdData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,6 +171,9 @@ export default function GiftCardProductDetail({ productId, onClose }) {
     () => buildInstructionBlocks(productIdData?.redeemInstruction?.verbose),
     [productIdData?.redeemInstruction?.verbose],
   );
+
+  const hasRedeemInstructions =
+    conciseInstructionBlocks.length > 0 || verboseInstructionBlocks.length > 0;
 
   useEffect(() => {
     if (!productId) {
@@ -348,15 +363,15 @@ export default function GiftCardProductDetail({ productId, onClose }) {
   };
 
   return (
-    <div className="relative">
+    <div>
       {onClose ? (
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close gift card details"
-          className="absolute right-0 top-0 z-10 flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfe7] bg-white text-[#211722] transition hover:border-[#551839]/30 hover:text-[#551839]"
+          className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#eadfe7] bg-white px-5 py-3 text-sm font-black text-[#551839] transition hover:border-[#551839]/30 hover:bg-[#fbf8f4]"
         >
-          <X className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
+          Back to gift cards
         </button>
       ) : null}
 
@@ -378,27 +393,13 @@ export default function GiftCardProductDetail({ productId, onClose }) {
             <span className="inline-flex rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#551839]">
               Digital gift card
             </span>
-            <h2 className="mt-5 text-4xl font-black leading-[0.96] tracking-[-0.055em] text-[#211722] sm:text-5xl">
+            <h1 className="mt-5 text-5xl font-black leading-[0.96] tracking-[-0.055em] text-[#211722] sm:text-6xl">
               {productIdData.productName} eGift Card
-            </h2>
+            </h1>
             <p className="mb-0 mt-4 max-w-2xl text-lg leading-8 text-[#665b67]">
               Choose a value, add it to your cart, or continue directly to
               checkout with secure Digishelves payment.
             </p>
-
-            <div className="mt-4">
-              <div className="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-                <strong className="font-black">Trademark notice:</strong> All
-                trademarks, service marks, and brand names are the property of
-                their respective owners. Digishelves is an independent authorized
-                reseller and is not the issuer of any gift card. Digishelves is
-                not affiliated with, endorsed by, or sponsored by any brand listed
-                on this website. Brand names and logos are used solely to identify
-                products available through licensed third-party distribution
-                partners. Use of each gift card is also subject to the issuer&apos;s
-                terms and redemption policies.
-              </div>
-            </div>
 
             <div className="mt-8">
               {denominationOptions.length > 0 ? (
@@ -507,15 +508,15 @@ export default function GiftCardProductDetail({ productId, onClose }) {
             </div>
           </div>
 
-          {productIdData.redeemInstruction ? (
+          {hasRedeemInstructions ? (
             <div className="border-t border-[#eadfe7] pt-8 lg:col-span-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-[#10ac84]" />
-                <h3 className="mb-0 text-2xl font-black tracking-[-0.04em] text-[#211722]">
+                <h2 className="mb-0 text-2xl font-black tracking-[-0.04em] text-[#211722]">
                   Redeem instructions
-                </h3>
+                </h2>
               </div>
-              <div className="mt-4 max-w-4xl space-y-5 text-base leading-7 text-[#665b67]">
+              <div className="mt-4 max-w-4xl">
                 {conciseInstructionBlocks.length > 0 && (
                   <div className="space-y-4">
                     {conciseInstructionBlocks.map((block, index) => (
@@ -537,9 +538,15 @@ export default function GiftCardProductDetail({ productId, onClose }) {
                     ))}
                   </div>
                 )}
+
+                <TrademarkSubtext />
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="lg:col-span-2">
+              <TrademarkSubtext />
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-center text-base font-bold text-[#665b67]">
