@@ -33,7 +33,7 @@ export default function MobileMenu({ session }) {
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/gift-cards" className="nav-link">
+              <NavLink to="/gift-card" className="nav-link">
                 Gift Cards
               </NavLink>
             </li>

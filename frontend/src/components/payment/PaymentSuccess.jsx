@@ -410,7 +410,7 @@ export default function PaymentSuccess() {
                     </button>
 
                     <Link
-                      to="/gift-cards"
+                      to="/gift-card"
                       className="inline-flex h-12 items-center justify-center rounded-full border border-[#eadfe7] bg-transparent px-5 text-sm font-black text-[#665b67]"
                     >
                       Start another gift-card order

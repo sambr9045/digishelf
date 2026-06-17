@@ -22,7 +22,7 @@ export default function Header({ mobileSearchPopoverContent = null }) {
     pathname.includes("gift-card") ||
     pathname.includes("giftcard") ||
     pathname.includes("checkout");
-  const transparentHeaderRoutes = ["/", "/gift-cards", "/signin", "/signup"];
+  const transparentHeaderRoutes = ["/", "/gift-card", "/signin", "/signup"];
   const canUseTransparentHeader = transparentHeaderRoutes.includes(pathname);
   const isTransparent =
     canUseTransparentHeader && !isScrolled && !mobileMenuOpen;
@@ -140,7 +140,7 @@ export default function Header({ mobileSearchPopoverContent = null }) {
                 Top-up
               </NavLink>
               <NavLink
-                to="/gift-cards"
+                to="/gift-card"
                 className={({ isActive }) =>
                   `text-sm font-bold transition-colors ${
                     isActive || pathActive
@@ -314,7 +314,7 @@ export default function Header({ mobileSearchPopoverContent = null }) {
                     Top-up
                   </NavLink>
                   <NavLink
-                    to="/gift-cards"
+                    to="/gift-card"
                     className={({ isActive }) =>
                       `block rounded-2xl px-4 py-3 text-base font-black transition-colors ${
                         isActive || pathActive

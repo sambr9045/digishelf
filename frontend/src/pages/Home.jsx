@@ -214,7 +214,7 @@ export default function Home() {
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  to="/gift-cards"
+                  to="/gift-card"
                   className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 font-black text-[#211722] transition hover:bg-[#f7f1e8]"
                 >
                   Explore gift cards
