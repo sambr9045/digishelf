@@ -39,10 +39,15 @@ def get_public_site_origin():
     if not public_site_url:
         return ""
 
-    parsed = urlparse(public_site_url)
-    if not parsed.scheme or not parsed.netloc:
-        return ""
-    return f"{parsed.scheme}://{parsed.netloc}"
+    for candidate in public_site_url.split(","):
+        candidate = candidate.strip()
+        if not candidate:
+            continue
+        parsed = urlparse(candidate)
+        if parsed.scheme and parsed.netloc:
+            return f"{parsed.scheme}://{parsed.netloc}"
+
+    return ""
 
 
 # Quick-start development settings - unsuitable for production
@@ -63,7 +68,7 @@ if not SECRET_KEY:
 public_site_origin = get_public_site_origin()
 public_site_host = urlparse(public_site_origin).hostname if public_site_origin else ""
 
-allowed_hosts = {"127.0.0.1", "localhost"}
+allowed_hosts = {"127.0.0.1", "localhost", "backend", "digishelf-backend"}
 if public_site_host:
     allowed_hosts.add(public_site_host)
     if public_site_host.count(".") >= 1 and not public_site_host.startswith("www."):

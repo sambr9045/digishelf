@@ -391,6 +391,44 @@ app.use((req, res, next) => {
 
 app.use(express.static(DIST_DIR, { index: false, maxAge: "1d" }));
 
+async function proxyBackendSeoPath(req, res, backendPath) {
+  const origins = [...new Set([BACKEND_ORIGIN, SITE_ORIGIN])];
+
+  for (const origin of origins) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch(`${origin}${backendPath}`, {
+        headers: {
+          Accept: req.headers.accept || "*/*",
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const body = await response.text();
+      const contentType =
+        response.headers.get("content-type") ||
+        (backendPath.endsWith(".xml") ? "application/xml" : "text/plain; charset=utf-8");
+      res.status(200).type(contentType).send(body);
+      return;
+    } catch {
+      continue;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  res.status(502).type("text/plain").send("SEO route unavailable");
+}
+
+app.get("/sitemap.xml", (req, res) => proxyBackendSeoPath(req, res, "/sitemap.xml"));
+app.get("/robots.txt", (req, res) => proxyBackendSeoPath(req, res, "/robots.txt"));
+
 app.get("*", async (req, res) => {
   const indexHtml = await readIndexHtml();
   const pathname = normalizePathname(req.path);
