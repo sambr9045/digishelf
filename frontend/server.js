@@ -392,38 +392,47 @@ app.use((req, res, next) => {
 app.use(express.static(DIST_DIR, { index: false, maxAge: "1d" }));
 
 async function proxyBackendSeoPath(req, res, backendPath) {
-  const origins = [...new Set([BACKEND_ORIGIN, SITE_ORIGIN])];
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
-  for (const origin of origins) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(`${BACKEND_ORIGIN}${backendPath}`, {
+      headers: {
+        Accept: req.headers.accept || "*/*",
+        // Django is behind TLS-terminating proxies. Without these headers,
+        // SECURE_SSL_REDIRECT builds https://backend/... redirect URLs.
+        "X-Forwarded-Proto": "https",
+        "X-Forwarded-Host": SITE_HOSTNAME,
+      },
+      redirect: "manual",
+      signal: controller.signal,
+    });
 
-    try {
-      const response = await fetch(`${origin}${backendPath}`, {
-        headers: {
-          Accept: req.headers.accept || "*/*",
-        },
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        continue;
-      }
-
-      const body = await response.text();
-      const contentType =
-        response.headers.get("content-type") ||
-        (backendPath.endsWith(".xml") ? "application/xml" : "text/plain; charset=utf-8");
-      res.status(200).type(contentType).send(body);
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location") || "";
+      console.error(
+        `SEO proxy received redirect ${response.status} -> ${location} for ${backendPath}`,
+      );
+      res.status(502).type("text/plain").send("SEO route misconfigured");
       return;
-    } catch {
-      continue;
-    } finally {
-      clearTimeout(timeout);
     }
-  }
 
-  res.status(502).type("text/plain").send("SEO route unavailable");
+    if (!response.ok) {
+      res.status(response.status).type("text/plain").send("SEO route unavailable");
+      return;
+    }
+
+    const body = await response.text();
+    const contentType =
+      response.headers.get("content-type") ||
+      (backendPath.endsWith(".xml") ? "application/xml" : "text/plain; charset=utf-8");
+    res.status(200).type(contentType).send(body);
+  } catch (error) {
+    console.error(`SEO proxy failed for ${backendPath}:`, error);
+    res.status(502).type("text/plain").send("SEO route unavailable");
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 app.get("/sitemap.xml", (req, res) => proxyBackendSeoPath(req, res, "/sitemap.xml"));
