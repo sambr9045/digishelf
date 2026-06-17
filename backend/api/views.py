@@ -358,8 +358,10 @@ def _brand_allows_deep_link(brand_name):
     return _slugify(brand_name) in DEEP_LINK_ALLOWED_BRAND_SLUGS
 
 def _normalize_public_site_url(request):
-    base_url = DEFAULT_PUBLIC_SITE_URL or request.build_absolute_uri("/")
-    return base_url.rstrip("/")
+    if DEFAULT_PUBLIC_SITE_URL:
+        return get_public_site_base_url().rstrip("/")
+
+    return request.build_absolute_uri("/").rstrip("/")
 
 
 def _build_public_url(request, path):
@@ -1045,8 +1047,22 @@ class SitemapXmlView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        xml = _build_sitemap_xml(request)
-        return HttpResponse(xml, content_type="application/xml")
+        try:
+            xml = _build_sitemap_xml(request)
+            return HttpResponse(xml, content_type="application/xml")
+        except Exception as exc:
+            print(f"Sitemap generation failed: {exc}")
+            return HttpResponse(
+                (
+                    '<?xml version="1.0" encoding="UTF-8"?>'
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                    f"<url><loc>{escape(_build_public_url(request, '/'))}</loc>"
+                    "<changefreq>daily</changefreq><priority>1.0</priority></url>"
+                    "</urlset>"
+                ),
+                content_type="application/xml",
+                status=200,
+            )
 
 
 class RobotsTxtView(APIView):
