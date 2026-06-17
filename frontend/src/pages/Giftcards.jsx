@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer/Footer";
 import GiftCardBanner from "../components/GiftCardBanner";
-import GiftCardProductModal from "../components/giftcards/GiftCardProductModal";
+import GiftCardProductDetail from "../components/giftcards/GiftCardProductDetail";
 import { api_endpoint } from "../components/constant";
 import axios from "axios";
 import Seo from "../components/Seo";
@@ -207,10 +207,12 @@ export default function Giftcards() {
     }
 
     updateCatalogParams({ productId: item.productId });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCloseProduct = () => {
     updateCatalogParams({ productId: null });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const displayCards = giftCards;
@@ -346,13 +348,17 @@ export default function Giftcards() {
       <GiftCardBanner />
 
       {selectedProductId ? (
-        <GiftCardProductModal
-          productId={selectedProductId}
-          onClose={handleCloseProduct}
-        />
-      ) : null}
-
-      {mobileFilterOpen ? (
+        <section className="bg-white py-16 sm:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <GiftCardProductDetail
+              productId={selectedProductId}
+              onClose={handleCloseProduct}
+            />
+          </div>
+        </section>
+      ) : (
+        <>
+          {mobileFilterOpen ? (
         <div>
           <button
             type="button"
@@ -486,6 +492,8 @@ export default function Giftcards() {
           </div>
         </div>
       </section>
+        </>
+      )}
       <Footer />
     </div>
   );
