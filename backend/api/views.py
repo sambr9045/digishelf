@@ -596,13 +596,39 @@ def _build_sitemap_xml(request):
         for path, changefreq, priority in core_pages
     ]
 
+    def _is_giftcard_restricted(item):
+        # Try common flags returned by provider APIs that indicate restriction
+        for key in ("isRestricted", "restricted", "isDisabled", "disabled", "isBlocked", "blocked"):
+            try:
+                if item.get(key):
+                    return True
+            except Exception:
+                pass
+
+        # Restrictions structures (lists/dicts) -> treat as restricted when present
+        if item.get("restrictions"):
+            return True
+        if item.get("restrictedCountries") or item.get("countryRestrictions"):
+            return True
+
+        return False
+
+    restricted_items = []
     for item in giftcard_items:
-        brand_name = ((item.get("brand") or {}).get("brandName")) or item.get("productName") or "Gift Card"
-        if not _brand_allows_deep_link(brand_name):
+        # Skip items that appear to be restricted by provider metadata
+        if _is_giftcard_restricted(item):
+            try:
+                pid = item.get("productId") or item.get("product_id")
+                if pid:
+                    restricted_items.append(pid)
+            except Exception:
+                pass
             continue
 
+        brand_name = ((item.get("brand") or {}).get("brandName")) or item.get("productName") or "Gift Card"
         brand_slug = _slugify(brand_name)
 
+        # Add a brand-level listing once per brand
         if brand_slug and brand_slug not in type_cache:
             type_cache[brand_slug] = True
             sitemap_urls.append(
@@ -613,6 +639,7 @@ def _build_sitemap_xml(request):
                 )
             )
 
+        # Add the product entry (deep link when allowed, fallback to catalog query)
         sitemap_urls.append(
             (
                 _build_public_url(request, _build_giftcard_path(item, brand_name)),
@@ -620,6 +647,12 @@ def _build_sitemap_xml(request):
                 "0.85",
             )
         )
+
+    # Cache restricted items for review/tuning and log count
+    try:
+        cache.set("seo_sitemap_restricted_items", restricted_items, timeout=GIFT_CARD_CACHE_TIMEOUT_SECONDS)
+    except Exception:
+        pass
 
     xml_items = [
         (

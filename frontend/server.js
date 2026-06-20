@@ -122,16 +122,7 @@ function buildPageMeta(requestPath = "/") {
     }
   }
 
-  const legacyProductId = extractProductId(pathname);
-  if (legacyProductId) {
-    return {
-      title: "Buy Digital Gift Cards | Digishelves",
-      description:
-        "Browse digital gift cards by brand and country, compare values, and buy online through Digishelves.",
-      canonicalPath: "/gift-card",
-      robots: "noindex,follow",
-    };
-  }
+  
 
   return {
     title: "Digishelves",
@@ -160,11 +151,7 @@ function buildRobotsValue(pathname = "/") {
     "/top-up/success/",
   ];
 
-  if (
-    noindexExactPaths.has(pathname) ||
-    noindexPrefixes.some((prefix) => pathname.startsWith(prefix)) ||
-    extractProductId(pathname)
-  ) {
+  if (noindexExactPaths.has(pathname) || noindexPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return "noindex,nofollow";
   }
 
@@ -369,13 +356,6 @@ app.use((req, res, next) => {
     res.redirect(301, toAbsoluteUrl("/gift-card"));
     return;
   }
-
-  const productId = extractProductId(pathname);
-  if (productId) {
-    res.redirect(301, toAbsoluteUrl(`/gift-card?productId=${productId}`));
-    return;
-  }
-
   const giftCardTypeMatch = pathname.match(/^\/gift-card\/([^/]+)$/);
   if (
     giftCardTypeMatch &&
@@ -441,6 +421,105 @@ app.get("/robots.txt", (req, res) => proxyBackendSeoPath(req, res, "/robots.txt"
 app.get("*", async (req, res) => {
   const indexHtml = await readIndexHtml();
   const pathname = normalizePathname(req.path);
+
+  // Serve product detail pages with product-specific meta and JSON-LD for SEO
+  const productId = extractProductId(pathname);
+  if (productId) {
+    try {
+      const product = await fetchGiftCard(productId);
+      if (product) {
+        const productMeta = buildProductMeta(product, pathname);
+
+        let html = injectMetaTags(indexHtml, {
+          ...productMeta,
+          image: productMeta.image || DEFAULT_IMAGE,
+          url: toAbsoluteUrl(pathname),
+          robots: productMeta.robots || "index,follow,max-image-preview:large",
+        });
+
+        const logo = Array.isArray(product?.logoUrls)
+          ? product.logoUrls[0]
+          : product?.logoUrls || DEFAULT_IMAGE;
+
+        const offers =
+          product?.fixedRecipientToSenderDenominationsMap &&
+          Object.keys(product.fixedRecipientToSenderDenominationsMap).length
+            ? Object.keys(product.fixedRecipientToSenderDenominationsMap).map(
+                (amount) => ({
+                  "@type": "Offer",
+                  price: String(amount),
+                  priceCurrency: product.recipientCurrencyCode || "",
+                  availability: "https://schema.org/InStock",
+                  url: toAbsoluteUrl(pathname),
+                }),
+              )
+            : {
+                "@type": "AggregateOffer",
+                lowPrice: Number(product.minRecipientDenomination || 0),
+                highPrice: Number(product.maxRecipientDenomination || 0),
+                priceCurrency: product.recipientCurrencyCode || "",
+                availability: "https://schema.org/InStock",
+                url: toAbsoluteUrl(pathname),
+              };
+
+        const schema = [
+          {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: `${product.productName} eGift Card`,
+            image: logo ? [toAbsoluteUrl(logo)] : undefined,
+            description: productMeta.description,
+            brand: {
+              "@type": "Brand",
+              name: product.brand?.brandName || product.productName,
+            },
+            category: "Gift Card",
+            sku: String(product.productId),
+            offers,
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: `${SITE_ORIGIN}/`,
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Gift Cards",
+                item: `${SITE_ORIGIN}/gift-cards`,
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: product.productName,
+                item: toAbsoluteUrl(pathname),
+              },
+            ],
+          },
+        ];
+
+        html = replaceTag(
+          html,
+          /<script[^>]*data-digishelf-seo=["']true["'][^>]*>[\s\S]*?<\/script>/i,
+          `<script type="application/ld+json" data-digishelf-seo="true">${JSON.stringify(
+            schema,
+          )}</script>`,
+        );
+
+        res.status(200).type("html").send(html);
+        return;
+      }
+    } catch (err) {
+      console.error(`Failed to render product SEO meta for ${pathname}:`, err);
+      // fall through to default page rendering
+    }
+  }
+
   const pageMeta = buildPageMeta(pathname);
   const html = injectMetaTags(indexHtml, {
     ...pageMeta,

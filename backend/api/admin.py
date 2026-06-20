@@ -18,6 +18,7 @@ class DigiShelfDataAdmin(admin.ModelAdmin):
         "processing_fee",
         "giftcard_processing_fee",
         "order_mode",
+        "include_restricted_in_sitemap",
     )
 
 
