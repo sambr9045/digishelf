@@ -206,7 +206,13 @@ export default function Giftcards() {
       return;
     }
 
-    updateCatalogParams({ productId: item.productId });
+    const productUrl = buildGiftCardUrl(item, item.productName);
+    if (productUrl.includes("?productId=")) {
+      updateCatalogParams({ productId: item.productId });
+    } else {
+      navigate(productUrl);
+    }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -359,139 +365,144 @@ export default function Giftcards() {
       ) : (
         <>
           {mobileFilterOpen ? (
-        <div>
-          <button
-            type="button"
-            aria-label="Close brand filter"
-            className="fixed inset-0 z-[58] bg-[#211722]/25 backdrop-blur-[1px]"
-            onClick={closeMobilePopover}
-          />
-          <div
-            id="giftcard-brand-panel"
-            className="fixed inset-x-4 top-[6.5rem] bottom-4 z-[59] overflow-y-auto rounded-[2rem] border border-[#efe7ed] bg-[#fbf8f4] p-5 shadow-[0_28px_90px_rgba(33,23,34,0.22)] lg:inset-x-auto lg:left-1/2 lg:top-32 lg:bottom-auto lg:max-h-[70vh] lg:w-full lg:max-w-xl lg:-translate-x-1/2"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Browse brands"
-          >
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <p className="mb-0 text-xs font-black uppercase tracking-[0.22em] text-[#9a8b97]">
-                  Filter brands
-                </p>
-                <h3 className="mb-0 mt-2 text-3xl font-black tracking-[-0.04em] text-[#211722]">
-                  Browse brands
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={closeMobilePopover}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#eadfe7] bg-white text-[#211722] transition hover:border-[#551839]/30 hover:text-[#551839]"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            {renderBrandSidebar()}
-          </div>
-        </div>
-      ) : null}
-
-      <section className="relative z-0 bg-white py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div>
-              <span className="inline-flex rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
-                Popular brands
-              </span>
-              <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-[#211722] sm:text-5xl">
-                Browse cards people buy most.
-              </h2>
-              <p className="mt-3 max-w-2xl text-lg leading-8 text-[#665b67]">
-                Pick a brand to see available gift card products and values.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleMobilePopover}
-              className="rounded-3xl bg-[#211722] p-5 text-left text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#341c2d]"
-              aria-expanded={mobileFilterOpen}
-              aria-controls="giftcard-brand-panel"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#10ac84] text-[#13251f]">
-                  <Gift className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="mb-0 text-2xl font-black">
-                    {isLoading ? "..." : `${totalItems}+`}
-                  </p>
-                  <p className="mb-0 text-xs font-bold uppercase tracking-[0.22em] text-white/55">
-                    Brand categories
-                  </p>
-                </div>
-              </div>
-            </button>
-          </div>
-
-          <div className="relative z-0">
-            <div className="mb-6 flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={toggleMobilePopover}
-                className="inline-flex items-center gap-2 rounded-full border border-[#eadfe7] bg-white px-4 py-3 text-sm font-black text-[#211722] shadow-sm transition hover:border-[#551839]/30 hover:text-[#551839] lg:hidden"
-                aria-expanded={mobileFilterOpen}
-                aria-controls="giftcard-brand-panel"
+                aria-label="Close brand filter"
+                className="fixed inset-0 z-[58] bg-[#211722]/25 backdrop-blur-[1px]"
+                onClick={closeMobilePopover}
+              />
+              <div
+                id="giftcard-brand-panel"
+                className="fixed inset-x-4 top-[6.5rem] bottom-4 z-[59] overflow-y-auto rounded-[2rem] border border-[#efe7ed] bg-[#fbf8f4] p-5 shadow-[0_28px_90px_rgba(33,23,34,0.22)] lg:inset-x-auto lg:left-1/2 lg:top-32 lg:bottom-auto lg:max-h-[70vh] lg:w-full lg:max-w-xl lg:-translate-x-1/2"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Browse brands"
               >
-                <PanelLeft className="h-4 w-4" />
-                Brand categories
-              </button>
-              <span className="rounded-full border border-[#eadfe7] bg-[#fbf8f4] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#551839]">
-                {activeBrand ? `${activeBrand} collection` : "All gift cards"}
-              </span>
-              <span className="text-sm font-bold text-[#665b67]">
-                {isLoading
-                  ? "Loading catalog..."
-                  : `${totalItems} products available`}
-              </span>
-              {activeBrand ? (
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="mb-0 text-xs font-black uppercase tracking-[0.22em] text-[#9a8b97]">
+                      Filter brands
+                    </p>
+                    <h3 className="mb-0 mt-2 text-3xl font-black tracking-[-0.04em] text-[#211722]">
+                      Browse brands
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeMobilePopover}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#eadfe7] bg-white text-[#211722] transition hover:border-[#551839]/30 hover:text-[#551839]"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                {renderBrandSidebar()}
+              </div>
+            </div>
+          ) : null}
+
+          <section className="relative z-0 bg-white py-16 sm:py-20">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="mb-10 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+                <div>
+                  <span className="inline-flex rounded-full bg-[#f7f1e8] px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
+                    Popular brands
+                  </span>
+                  <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-[#211722] sm:text-5xl">
+                    Browse cards people buy most.
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-lg leading-8 text-[#665b67]">
+                    Pick a brand to see available gift card products and values.
+                  </p>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => handleBrandSelect("")}
-                  className="rounded-full border border-[#eadfe7] bg-white px-4 py-2 text-sm font-black text-[#665b67] transition hover:border-[#551839]/30 hover:text-[#551839]"
+                  onClick={toggleMobilePopover}
+                  className="rounded-3xl bg-[#211722] p-5 text-left text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#341c2d]"
+                  aria-expanded={mobileFilterOpen}
+                  aria-controls="giftcard-brand-panel"
                 >
-                  Clear filter
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#10ac84] text-[#13251f]">
+                      <Gift className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="mb-0 text-2xl font-black">
+                        {isLoading ? "..." : `${totalItems}+`}
+                      </p>
+                      <p className="mb-0 text-xs font-bold uppercase tracking-[0.22em] text-white/55">
+                        Brand categories
+                      </p>
+                    </div>
+                  </div>
                 </button>
-              ) : null}
+              </div>
+
+              <div className="relative z-0">
+                <div className="mb-6 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={toggleMobilePopover}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#eadfe7] bg-white px-4 py-3 text-sm font-black text-[#211722] shadow-sm transition hover:border-[#551839]/30 hover:text-[#551839] lg:hidden"
+                    aria-expanded={mobileFilterOpen}
+                    aria-controls="giftcard-brand-panel"
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                    Brand categories
+                  </button>
+                  <span className="rounded-full border border-[#eadfe7] bg-[#fbf8f4] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#551839]">
+                    {activeBrand
+                      ? `${activeBrand} collection`
+                      : "All gift cards"}
+                  </span>
+                  <span className="text-sm font-bold text-[#665b67]">
+                    {isLoading
+                      ? "Loading catalog..."
+                      : `${totalItems} products available`}
+                  </span>
+                  {activeBrand ? (
+                    <button
+                      type="button"
+                      onClick={() => handleBrandSelect("")}
+                      className="rounded-full border border-[#eadfe7] bg-white px-4 py-2 text-sm font-black text-[#665b67] transition hover:border-[#551839]/30 hover:text-[#551839]"
+                    >
+                      Clear filter
+                    </button>
+                  ) : null}
+                </div>
+
+                <GiftCardContentDisplau
+                  GIFTCARD={displayCards}
+                  isLoading={isLoading}
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  type={activeBrand}
+                  onProductSelect={handleProductSelect}
+                />
+              </div>
+
+              <div className="mt-12 rounded-[1.5rem] border border-[#eadfe7] bg-[#fbf8f4] px-5 py-4 text-sm leading-7 text-[#665b67] sm:px-6">
+                <strong className="font-black text-[#211722]">
+                  Reseller notice:
+                </strong>{" "}
+                Digishelves is an independent authorized reseller. Gift cards
+                shown here are fulfilled through licensed third-party
+                distribution partners. Digishelves is not the card issuer and is
+                not affiliated with, endorsed by, or sponsored by the brands
+                displayed. Brand names and logos are used only to identify
+                available products. Availability, denominations, and redemption
+                rules are set by the issuer and may vary by country.{" "}
+                <Link
+                  to="/terms-of-use"
+                  className="font-black text-[#551839] underline decoration-[#551839]/30 underline-offset-2 transition hover:decoration-[#551839]"
+                >
+                  Terms of Use
+                </Link>
+              </div>
             </div>
-
-            <GiftCardContentDisplau
-              GIFTCARD={displayCards}
-              isLoading={isLoading}
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              type={activeBrand}
-              onProductSelect={handleProductSelect}
-            />
-          </div>
-
-          <div className="mt-12 rounded-[1.5rem] border border-[#eadfe7] bg-[#fbf8f4] px-5 py-4 text-sm leading-7 text-[#665b67] sm:px-6">
-            <strong className="font-black text-[#211722]">Reseller notice:</strong>{" "}
-            Digishelves is an independent authorized reseller. Gift cards shown here
-            are fulfilled through licensed third-party distribution partners.
-            Digishelves is not the card issuer and is not affiliated with, endorsed
-            by, or sponsored by the brands displayed. Brand names and logos are
-            used only to identify available products. Availability, denominations,
-            and redemption rules are set by the issuer and may vary by country.{" "}
-            <Link
-              to="/terms-of-use"
-              className="font-black text-[#551839] underline decoration-[#551839]/30 underline-offset-2 transition hover:decoration-[#551839]"
-            >
-              Terms of Use
-            </Link>
-          </div>
-        </div>
-      </section>
+          </section>
         </>
       )}
       <Footer />

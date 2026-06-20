@@ -7,6 +7,7 @@ import GiftCardContentDisplau from "../components/includes/GiftCardContentDispla
 import Footer from "../components/Footer/Footer";
 import Seo from "../components/Seo";
 import { GIFT_CARD_CATALOG_PATH } from "../config/giftCardProviderPolicy";
+import { buildGiftCardUrl } from "../utils/slugify";
 import {
   buildAbsoluteUrl,
   createBreadcrumbSchema,
@@ -139,7 +140,8 @@ export default function Search() {
       return;
     }
 
-    navigate(`/gift-card?productId=${item.productId}`);
+    const productUrl = buildGiftCardUrl(item, item.productName);
+    navigate(productUrl);
   };
 
   return (

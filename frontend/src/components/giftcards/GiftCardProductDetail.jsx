@@ -7,7 +7,10 @@ import { toast } from "react-toastify";
 import { api_endpoint } from "../constant";
 import { SessionContext } from "../sessionContext";
 import { giftcardDetailsCalculation } from "../includes/Functions";
-import { sendAnalyticsEvents, trackAnalyticsEvent } from "../../utils/analytics";
+import {
+  sendAnalyticsEvents,
+  trackAnalyticsEvent,
+} from "../../utils/analytics";
 
 const TRADEMARK_NOTICE =
   "All trademarks, service marks, and brand names are the property of their respective owners. Digishelves is an independent authorized reseller and is not the issuer of any gift card. Digishelves is not affiliated with, endorsed by, or sponsored by any brand listed on this website. Brand names and logos are used solely to identify products available through licensed third-party distribution partners. Use of each gift card is also subject to the issuer's terms and redemption policies.";
@@ -124,6 +127,65 @@ function InstructionBlock({ block }) {
   );
 }
 
+const GIFT_CARD_DETAIL_CACHE_PREFIX = "digishelves.giftcard.detail";
+const GIFT_CARD_DETAIL_CACHE_DURATION_MS = 34 * 60 * 60 * 1000; // 34 hours
+
+function getGiftCardDetailCacheKey(productId) {
+  return `${GIFT_CARD_DETAIL_CACHE_PREFIX}.${productId}`;
+}
+
+function getCachedGiftCardDetail(productId) {
+  if (typeof window === "undefined" || !productId) {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(
+      getGiftCardDetailCacheKey(productId),
+    );
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    if (
+      Date.now() - (parsed.cachedAt || 0) >
+      GIFT_CARD_DETAIL_CACHE_DURATION_MS
+    ) {
+      window.localStorage.removeItem(getGiftCardDetailCacheKey(productId));
+      return null;
+    }
+
+    return parsed.data || null;
+  } catch (error) {
+    console.warn("Failed to read gift card cache", error);
+    return null;
+  }
+}
+
+function setCachedGiftCardDetail(productId, data) {
+  if (typeof window === "undefined" || !productId || !data) {
+    return;
+  }
+
+  try {
+    const payload = {
+      cachedAt: Date.now(),
+      data,
+    };
+    window.localStorage.setItem(
+      getGiftCardDetailCacheKey(productId),
+      JSON.stringify(payload),
+    );
+  } catch (error) {
+    console.warn("Failed to write gift card cache", error);
+  }
+}
+
 function TrademarkSubtext() {
   return (
     <p className="mb-0 mt-6 border-t border-[#eadfe7] pt-5 text-sm leading-6 text-[#9a8b97]">
@@ -180,6 +242,13 @@ export default function GiftCardProductDetail({ productId, onClose }) {
       return;
     }
 
+    const cachedProduct = getCachedGiftCardDetail(productId);
+    if (cachedProduct) {
+      setProductIdData(cachedProduct);
+      setIsLoading(false);
+      return;
+    }
+
     const getProductById = async () => {
       setIsLoading(true);
       try {
@@ -189,7 +258,11 @@ export default function GiftCardProductDetail({ productId, onClose }) {
           },
         });
 
-        setProductIdData(response.data?.data || null);
+        const product = response.data?.data || null;
+        setProductIdData(product);
+        if (product) {
+          setCachedGiftCardDetail(productId, product);
+        }
       } catch (error) {
         console.log(error);
         toast.error("Unable to load this gift card. Please try again.");

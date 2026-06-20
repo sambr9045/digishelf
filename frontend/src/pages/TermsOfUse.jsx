@@ -4,6 +4,25 @@ import Footer from "../components/Footer/Footer";
 import Seo from "../components/Seo";
 import { createBreadcrumbSchema, createWebPageSchema } from "../utils/seo";
 
+function renderParagraphText(text) {
+  if (!text) return null;
+
+  const emailRegex = /(info@digishelves\.com|support@digishelves\.com)/i;
+  const parts = String(text).split(emailRegex);
+
+  return parts.map((part, idx) => {
+    if (emailRegex.test(part)) {
+      return (
+        <strong key={idx} className="font-black">
+          {part}
+        </strong>
+      );
+    }
+
+    return <React.Fragment key={idx}>{part}</React.Fragment>;
+  });
+}
+
 const sections = [
   {
     title: "1. Acceptance of Terms",
@@ -200,7 +219,7 @@ export default function TermsOfUse() {
 
               {section.body.map((paragraph, index) => (
                 <p key={index} className="mt-4 leading-8 text-[#5d505b]">
-                  {paragraph}
+                  {renderParagraphText(paragraph)}
                 </p>
               ))}
             </article>

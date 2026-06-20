@@ -1,4 +1,9 @@
-import { Navigate, Outlet, createBrowserRouter, useParams } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+  createBrowserRouter,
+  useParams,
+} from "react-router-dom";
 
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import MyAccount from "./components/accounts/MyAccount";
@@ -22,6 +27,7 @@ import TopUpCheckout from "./pages/TopUpCheckout";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProfileSettings from "./components/accounts/ProfileSettings";
+import { brandAllowsDeepLink } from "./config/giftCardProviderPolicy";
 
 function RootEntry() {
   if (window.location.hostname.startsWith("admin.")) {
@@ -47,8 +53,24 @@ function GiftCardLegacyCategoryRedirect() {
 }
 
 function GiftCardLegacyProductRedirect() {
-  const { productId } = useParams();
-  return <Navigate to={`/gift-card?productId=${productId}`} replace />;
+  const { productSlug, productId } = useParams();
+  const slug = productSlug || "";
+  return <Navigate to={`/gift-card/${slug}/${productId}`} replace />;
+}
+
+function GiftCardProductRoute() {
+  const { productSlug, productId } = useParams();
+  const slug = productSlug || "";
+
+  if (!productId) {
+    return <Navigate to="/gift-card" replace />;
+  }
+
+  if (!brandAllowsDeepLink(slug)) {
+    return <Navigate to={`/gift-card?productId=${productId}`} replace />;
+  }
+
+  return <Details />;
 }
 
 const router = createBrowserRouter([
@@ -117,8 +139,9 @@ const router = createBrowserRouter([
         element: <GiftCardLegacyProductRedirect />,
       },
       {
-        path: "gift-card/:name/:productId",
-        element: <Details />,
+        // SEO-friendly product path: /gift-card/:productSlug/:productId
+        path: "gift-card/:productSlug/:productId",
+        element: <GiftCardProductRoute />,
       },
       {
         path: "gift-card/:type",

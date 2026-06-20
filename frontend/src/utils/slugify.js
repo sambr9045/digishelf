@@ -1,8 +1,4 @@
-import {
-  GIFT_CARD_CATALOG_PATH,
-  brandAllowsDeepLinkForItem,
-  buildLegacyDeepLinkPath,
-} from "../config/giftCardProviderPolicy";
+import { GIFT_CARD_CATALOG_PATH, brandAllowsDeepLinkForItem } from "../config/giftCardProviderPolicy";
 
 export const slugify = (value = "") =>
   String(value)
@@ -13,13 +9,15 @@ export const slugify = (value = "") =>
     .replace(/^-+|-+$/g, "");
 
 export const buildGiftCardUrl = (item, fallbackType = "") => {
-  if (brandAllowsDeepLinkForItem(item, fallbackType)) {
-    return buildLegacyDeepLinkPath(item, fallbackType);
-  }
-
   const productId = item?.productId;
+  const productSlug = slugify(item?.productName || fallbackType || "");
+
   if (productId) {
-    return `${GIFT_CARD_CATALOG_PATH}?productId=${productId}`;
+    if (!brandAllowsDeepLinkForItem(item, fallbackType) || !productSlug) {
+      return `${GIFT_CARD_CATALOG_PATH}?productId=${productId}`;
+    }
+
+    return `${GIFT_CARD_CATALOG_PATH}/${productSlug}/${productId}`;
   }
 
   const brandName =

@@ -100,14 +100,27 @@ export const DEEP_LINK_ALLOWED_BRAND_SLUGS = new Set(
   ),
 );
 
+export const DEEP_LINK_DENY_BRAND_KEYWORDS = [
+  "visa",
+  "mastercard",
+  "soma",
+  "american-express",
+  "amex",
+];
+
 export function getBrandNameFromItem(item, fallbackType = "") {
   return (
-    item?.brand?.brandName || fallbackType || item?.productName || ""
+    item?.brand?.brandName || item?.productName || fallbackType || ""
   ).trim();
 }
 
 export function brandAllowsDeepLink(brandName = "") {
-  return DEEP_LINK_ALLOWED_BRAND_SLUGS.has(slugify(brandName));
+  const slug = slugify(brandName);
+  if (!slug) {
+    return false;
+  }
+
+  return !DEEP_LINK_DENY_BRAND_KEYWORDS.some((keyword) => slug.includes(keyword));
 }
 
 export function brandAllowsDeepLinkForItem(item, fallbackType = "") {

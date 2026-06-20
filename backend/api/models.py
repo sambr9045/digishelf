@@ -74,21 +74,22 @@ class Account(AbstractBaseUser, PermissionsMixin):
 
 
 class DigiShelfData(models.Model):
-        profit_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=5) 
-        processing_fee = models.DecimalField(max_digits=5, decimal_places=2, default=2)
-        giftcard_processing_fee = models.DecimalField(max_digits=5, decimal_places=2, default=5)
-        order_mode = models.CharField(
-            max_length=20,
-            choices=(("auto", "Automatic"), ("manual", "Manual")),
-            default="auto",
-        )
-        
-        class Meta:
-            verbose_name = "DigiShelf Configuration"
-            verbose_name_plural = "DigiShelf Configuration"
-        
-        def __str__(self):
-            return "DigiShelf Platform Configuration"
+    profit_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=5)
+    processing_fee = models.DecimalField(max_digits=5, decimal_places=2, default=2)
+    giftcard_processing_fee = models.DecimalField(max_digits=5, decimal_places=2, default=5)
+    include_restricted_in_sitemap = models.BooleanField(default=False)
+    order_mode = models.CharField(
+        max_length=20,
+        choices=(("auto", "Automatic"), ("manual", "Manual")),
+        default="auto",
+    )
+
+    class Meta:
+        verbose_name = "DigiShelf Configuration"
+        verbose_name_plural = "DigiShelf Configuration"
+
+    def __str__(self):
+        return "DigiShelf Platform Configuration"
         
 
 

@@ -143,6 +143,7 @@ SOCIAL_AUTH_PIPELINE = (
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    "digishelf.middleware.SeoPublicProxyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -275,7 +276,9 @@ CACHES = {
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
-SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", default=not DEBUG)
+# TLS terminates at nginx/frontend; Django receives plain HTTP internally.
+# Enabling this causes 301 redirects to https://backend/... when proxy headers are missing.
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", default=False)
 SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", default=not DEBUG)
 CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", default=not DEBUG)
 SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000" if not DEBUG else "0"))
