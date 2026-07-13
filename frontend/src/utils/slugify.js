@@ -1,4 +1,4 @@
-import { GIFT_CARD_CATALOG_PATH, brandAllowsDeepLinkForItem } from "../config/giftCardProviderPolicy";
+import { GIFT_CARD_CATALOG_PATH } from "../config/giftCardProviderPolicy";
 
 export const slugify = (value = "") =>
   String(value)
@@ -13,7 +13,7 @@ export const buildGiftCardUrl = (item, fallbackType = "") => {
   const productSlug = slugify(item?.productName || fallbackType || "");
 
   if (productId) {
-    if (!brandAllowsDeepLinkForItem(item, fallbackType) || !productSlug) {
+    if (!productSlug) {
       return `${GIFT_CARD_CATALOG_PATH}?productId=${productId}`;
     }
 

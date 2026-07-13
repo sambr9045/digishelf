@@ -105,12 +105,11 @@ export default function Search() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isLoading, paginationLoading, hasMore]);
   const searchPath = `/giftcard/search?country=${encodeURIComponent(searchCountry)}&name=${encodeURIComponent(searchName)}`;
-  const catalogUrl = buildAbsoluteUrl(GIFT_CARD_CATALOG_PATH);
   const schema = useMemo(() => {
     const items = giftCards.slice(0, 24).map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: catalogUrl,
+      url: buildAbsoluteUrl(buildGiftCardUrl(item, item.productName)),
       name: item.productName,
     }));
 

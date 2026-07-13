@@ -122,7 +122,20 @@ function buildPageMeta(requestPath = "/") {
     }
   }
 
-  
+  // Product deep-link: /gift-card/:productSlug/:productId
+  const giftCardProductMatch = pathname.match(/^\/gift-card\/([^/]+)\/([^/]+)$/);
+  if (giftCardProductMatch) {
+    const [, productSlug, productId] = giftCardProductMatch;
+    if (/^\d+$/.test(productId) && !["payment", "payment-complete"].includes(productSlug)) {
+      const productName = titleizeSlug(productSlug);
+      return {
+        title: `${productName} eGift Card | Digishelves`,
+        description: `Buy ${productName} gift card on Digishelves. Fast digital delivery and secure checkout with cryptocurrency.`,
+        canonicalPath: pathname,
+        robots: "index,follow,max-image-preview:large",
+      };
+    }
+  }
 
   return {
     title: "Digishelves",
@@ -231,6 +244,11 @@ function injectMetaTags(html, meta) {
   );
   out = replaceTag(
     out,
+    /<meta\s+property=["']og:image:alt["'][^>]*>/i,
+    `<meta property=\"og:image:alt\" content=\"${title}\" />`,
+  );
+  out = replaceTag(
+    out,
     /<meta\s+name=["']twitter:title["'][^>]*>/i,
     `<meta name=\"twitter:title\" content=\"${title}\" />`,
   );
@@ -243,6 +261,11 @@ function injectMetaTags(html, meta) {
     out,
     /<meta\s+name=["']twitter:image["'][^>]*>/i,
     `<meta name=\"twitter:image\" content=\"${image}\" />`,
+  );
+  out = replaceTag(
+    out,
+    /<meta\s+name=["']twitter:image:alt["'][^>]*>/i,
+    `<meta name=\"twitter:image:alt\" content=\"${title}\" />`,
   );
   out = replaceTag(
     out,
@@ -349,8 +372,25 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   const pathname = normalizePathname(req.path);
+
+  // Check blocked URLs before any redirect so blocked pages return 404, not a redirect
+  const requestUrl = `${SITE_ORIGIN}${req.originalUrl}`;
+  const blockedUrls = await getBlockedUrls();
+  if (blockedUrls.has(requestUrl) || blockedUrls.has(req.originalUrl)) {
+    const indexHtml = await readIndexHtml();
+    const html = injectMetaTags(indexHtml, {
+      title: "Page Not Found | Digishelves",
+      description: "The page you are looking for could not be found.",
+      image: DEFAULT_IMAGE,
+      url: toAbsoluteUrl("/404"),
+      robots: "noindex,nofollow",
+      canonicalPath: "/404",
+    });
+    res.status(404).type("html").send(html);
+    return;
+  }
 
   if (pathname === "/gift-cards") {
     res.redirect(301, toAbsoluteUrl("/gift-card"));
@@ -359,15 +399,6 @@ app.use((req, res, next) => {
 
   if (pathname === "/gift-card" && req.query.productId) {
     res.redirect(301, toAbsoluteUrl("/gift-card"));
-    return;
-  }
-  const giftCardTypeMatch = pathname.match(/^\/gift-card\/([^/]+)$/);
-  if (
-    giftCardTypeMatch &&
-    !["payment", "payment-complete"].includes(giftCardTypeMatch[1])
-  ) {
-    const brand = encodeURIComponent(giftCardTypeMatch[1]);
-    res.redirect(301, toAbsoluteUrl(`/gift-card?brand=${brand}`));
     return;
   }
 
@@ -455,23 +486,6 @@ app.get("/robots.txt", (req, res) => proxyBackendSeoPath(req, res, "/robots.txt"
 app.get("*", async (req, res) => {
   const indexHtml = await readIndexHtml();
   const pathname = normalizePathname(req.path);
-
-  // Check blocked URLs — return 404 for any active blocked entry matching this full URL
-  const requestUrl = `${SITE_ORIGIN}${req.originalUrl}`;
-  const blockedUrls = await getBlockedUrls();
-  if (blockedUrls.has(requestUrl) || blockedUrls.has(req.originalUrl)) {
-    const notFoundMeta = buildPageMeta("/404");
-    const html = injectMetaTags(indexHtml, {
-      title: "Page Not Found | Digishelves",
-      description: "The page you are looking for could not be found.",
-      image: DEFAULT_IMAGE,
-      url: toAbsoluteUrl("/404"),
-      robots: "noindex,nofollow",
-      canonicalPath: "/404",
-    });
-    res.status(404).type("html").send(html);
-    return;
-  }
 
   // Serve product detail pages with product-specific meta and JSON-LD for SEO
   const productId = extractProductId(pathname);

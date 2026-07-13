@@ -161,11 +161,13 @@ export function useSeo({
   description = DEFAULT_DESCRIPTION,
   keywords = DEFAULT_KEYWORDS,
   path = "/",
-  image = "/src/assets/images/fav/apple-touch-icon.png",
+  image = "/favicon.ico",
   type = "website",
   robots = "index,follow,max-image-preview:large",
   geo = DEFAULT_GEO,
   schema = [],
+  price = "",
+  priceCurrency = "",
 }) {
   useEffect(() => {
     const fullTitle = title?.includes(DEFAULT_SITE_NAME)
@@ -177,85 +179,36 @@ export function useSeo({
 
     document.title = fullTitle;
 
-    upsertMeta('meta[name="description"]', {
-      name: "description",
-      content: description,
-    });
-    upsertMeta('meta[name="keywords"]', {
-      name: "keywords",
-      content: keywordString,
-    });
-    upsertMeta('meta[name="robots"]', {
-      name: "robots",
-      content: robots,
-    });
-    upsertMeta('meta[property="og:site_name"]', {
-      property: "og:site_name",
-      content: DEFAULT_SITE_NAME,
-    });
-    upsertMeta('meta[property="og:type"]', {
-      property: "og:type",
-      content: type,
-    });
-    upsertMeta('meta[property="og:title"]', {
-      property: "og:title",
-      content: fullTitle,
-    });
-    upsertMeta('meta[property="og:description"]', {
-      property: "og:description",
-      content: description,
-    });
-    upsertMeta('meta[property="og:url"]', {
-      property: "og:url",
-      content: url,
-    });
-    upsertMeta('meta[property="og:image"]', {
-      property: "og:image",
-      content: imageUrl,
-    });
-    upsertMeta('meta[name="twitter:card"]', {
-      name: "twitter:card",
-      content: "summary_large_image",
-    });
-    upsertMeta('meta[name="twitter:title"]', {
-      name: "twitter:title",
-      content: fullTitle,
-    });
-    upsertMeta('meta[name="twitter:description"]', {
-      name: "twitter:description",
-      content: description,
-    });
-    upsertMeta('meta[name="twitter:image"]', {
-      name: "twitter:image",
-      content: imageUrl,
-    });
-    upsertMeta('meta[name="geo.region"]', {
-      name: "geo.region",
-      content: geo.region,
-    });
-    upsertMeta('meta[name="geo.placename"]', {
-      name: "geo.placename",
-      content: geo.placename,
-    });
-    upsertMeta('meta[name="geo.position"]', {
-      name: "geo.position",
-      content: geo.position,
-    });
-    upsertMeta('meta[name="ICBM"]', {
-      name: "ICBM",
-      content: geo.icbm,
-    });
-    upsertLink('link[rel="canonical"]', {
-      rel: "canonical",
-      href: url,
-    });
-    upsertLink('link[rel="sitemap"]', {
-      rel: "sitemap",
-      type: "application/xml",
-      href: buildAbsoluteUrl("/sitemap.xml"),
-    });
+    upsertMeta('meta[name="description"]', { name: "description", content: description });
+    upsertMeta('meta[name="keywords"]', { name: "keywords", content: keywordString });
+    upsertMeta('meta[name="robots"]', { name: "robots", content: robots });
+    upsertMeta('meta[property="og:site_name"]', { property: "og:site_name", content: DEFAULT_SITE_NAME });
+    upsertMeta('meta[property="og:type"]', { property: "og:type", content: type });
+    upsertMeta('meta[property="og:title"]', { property: "og:title", content: fullTitle });
+    upsertMeta('meta[property="og:description"]', { property: "og:description", content: description });
+    upsertMeta('meta[property="og:url"]', { property: "og:url", content: url });
+    upsertMeta('meta[property="og:image"]', { property: "og:image", content: imageUrl });
+    upsertMeta('meta[property="og:image:alt"]', { property: "og:image:alt", content: fullTitle });
+    upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
+    upsertMeta('meta[name="twitter:title"]', { name: "twitter:title", content: fullTitle });
+    upsertMeta('meta[name="twitter:description"]', { name: "twitter:description", content: description });
+    upsertMeta('meta[name="twitter:image"]', { name: "twitter:image", content: imageUrl });
+    upsertMeta('meta[name="twitter:image:alt"]', { name: "twitter:image:alt", content: fullTitle });
+    upsertMeta('meta[name="geo.region"]', { name: "geo.region", content: geo.region });
+    upsertMeta('meta[name="geo.placename"]', { name: "geo.placename", content: geo.placename });
+    upsertMeta('meta[name="geo.position"]', { name: "geo.position", content: geo.position });
+    upsertMeta('meta[name="ICBM"]', { name: "ICBM", content: geo.icbm });
+
+    // Product price meta — used by Facebook/Open Graph product scrapers
+    if (price) {
+      upsertMeta('meta[property="product:price:amount"]', { property: "product:price:amount", content: String(price) });
+      upsertMeta('meta[property="product:price:currency"]', { property: "product:price:currency", content: priceCurrency || "USD" });
+    }
+
+    upsertLink('link[rel="canonical"]', { rel: "canonical", href: url });
+    upsertLink('link[rel="sitemap"]', { rel: "sitemap", type: "application/xml", href: buildAbsoluteUrl("/sitemap.xml") });
 
     resetManagedJsonLd();
     renderJsonLd(schema);
-  }, [description, geo.icbm, geo.placename, geo.position, geo.region, image, keywords, path, robots, schema, title, type]);
+  }, [description, geo.icbm, geo.placename, geo.position, geo.region, image, keywords, path, price, priceCurrency, robots, schema, title, type]);
 }

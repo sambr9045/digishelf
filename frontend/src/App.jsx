@@ -28,7 +28,6 @@ import TopUpCheckout from "./pages/TopUpCheckout";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProfileSettings from "./components/accounts/ProfileSettings";
-import { brandAllowsDeepLink } from "./config/giftCardProviderPolicy";
 
 function RootEntry() {
   if (window.location.hostname.startsWith("admin.")) {
@@ -60,14 +59,9 @@ function GiftCardLegacyProductRedirect() {
 }
 
 function GiftCardProductRoute() {
-  const { productSlug, productId } = useParams();
-  const slug = productSlug || "";
+  const { productId } = useParams();
 
   if (!productId) {
-    return <Navigate to="/gift-card" replace />;
-  }
-
-  if (!brandAllowsDeepLink(slug)) {
     return <Navigate to="/gift-card" replace />;
   }
 

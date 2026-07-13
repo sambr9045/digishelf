@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer/Footer";
 import GiftCardBanner from "../components/GiftCardBanner";
 import GiftCardProductDetail from "../components/giftcards/GiftCardProductDetail";
@@ -9,6 +9,7 @@ import Seo from "../components/Seo";
 import GiftCardContentDisplau from "../components/includes/GiftCardContentDisplau";
 import { Gift, PanelLeft, X } from "lucide-react";
 import { GIFT_CARD_CATALOG_PATH } from "../config/giftCardProviderPolicy";
+import { buildGiftCardUrl } from "../utils/slugify";
 import {
   buildAbsoluteUrl,
   createBreadcrumbSchema,
@@ -86,6 +87,7 @@ const GIFTCARD = [
 ];
 
 export default function Giftcards() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [giftCards, setGiftCards] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -207,12 +209,7 @@ export default function Giftcards() {
     }
 
     const productUrl = buildGiftCardUrl(item, item.productName);
-    if (productUrl.includes("?productId=")) {
-      updateCatalogParams({ productId: item.productId });
-    } else {
-      navigate(productUrl);
-    }
-
+    navigate(productUrl);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -308,11 +305,10 @@ export default function Giftcards() {
   const catalogPath = GIFT_CARD_CATALOG_PATH;
   const giftCardSchema = useMemo(() => {
     const schemaCards = giftCards.slice(0, 24);
-    const catalogUrl = buildAbsoluteUrl(catalogPath);
     const items = schemaCards.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: catalogUrl,
+      url: buildAbsoluteUrl(buildGiftCardUrl(item, item.productName)),
       name: item.productName,
     }));
 

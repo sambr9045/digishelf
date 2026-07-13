@@ -195,7 +195,7 @@ function TrademarkSubtext() {
   );
 }
 
-export default function GiftCardProductDetail({ productId, onClose }) {
+export default function GiftCardProductDetail({ productId, onClose, onProductLoaded }) {
   const [productIdData, setProductIdData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedKey, setSelectedKey] = useState(null);
@@ -246,6 +246,7 @@ export default function GiftCardProductDetail({ productId, onClose }) {
     if (cachedProduct) {
       setProductIdData(cachedProduct);
       setIsLoading(false);
+      onProductLoaded?.(cachedProduct);
       return;
     }
 
@@ -262,6 +263,7 @@ export default function GiftCardProductDetail({ productId, onClose }) {
         setProductIdData(product);
         if (product) {
           setCachedGiftCardDetail(productId, product);
+          onProductLoaded?.(product);
         }
       } catch (error) {
         console.log(error);
