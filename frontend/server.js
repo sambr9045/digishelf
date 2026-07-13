@@ -376,9 +376,9 @@ app.use(async (req, res, next) => {
   const pathname = normalizePathname(req.path);
 
   // Check blocked URLs before any redirect so blocked pages return 404, not a redirect
-  const requestUrl = `${SITE_ORIGIN}${req.originalUrl}`;
+  const requestPath = req.path.replace(/\/+$/, "") || "/";
   const blockedUrls = await getBlockedUrls();
-  if (blockedUrls.has(requestUrl) || blockedUrls.has(req.originalUrl)) {
+  if (blockedUrls.has(requestPath) || blockedUrls.has(`${SITE_ORIGIN}${requestPath}`)) {
     const indexHtml = await readIndexHtml();
     const html = injectMetaTags(indexHtml, {
       title: "Page Not Found | Digishelves",
@@ -424,7 +424,15 @@ async function getBlockedUrls() {
       const urls = new Set(
         (Array.isArray(data) ? data : [])
           .filter((entry) => entry.is_active && entry.url)
-          .map((entry) => entry.url.trim()),
+          .flatMap((entry) => {
+            const raw = entry.url.trim().replace(/\/+$/, "");
+            try {
+              const path = new URL(raw).pathname.replace(/\/+$/, "") || "/";
+              return [raw, path];
+            } catch {
+              return [raw];
+            }
+          }),
       );
       blockedUrlsCache = { urls, fetchedAt: now };
       return urls;
