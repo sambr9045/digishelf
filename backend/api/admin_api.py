@@ -27,7 +27,7 @@ from payments.fulfillment import (
 from payments.models import Order as PaymentOrder
 from payments.views import serialize_payment_activity
 
-from .models import Account, AdminLoginAudit, AnalyticsEvent, Cart, Contact, DigiShelfData, GiftCardTransaction, TopupTransaction
+from .models import Account, AdminLoginAudit, AnalyticsEvent, BlockedUrl, Cart, Contact, DigiShelfData, GiftCardTransaction, TopupTransaction
 from . import serializers
 
 ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
@@ -1679,3 +1679,68 @@ def serialize_config(config):
         "giftcard_processing_fee": str(config.giftcard_processing_fee),
         "order_mode": config.order_mode,
     }
+
+
+def serialize_blocked_url(entry):
+    return {
+        "id": entry.id,
+        "url": entry.url,
+        "reason": entry.reason,
+        "is_active": entry.is_active,
+        "created_at": entry.created_at,
+        "updated_at": entry.updated_at,
+    }
+
+
+class AdminBlockedUrlListView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @require_admin
+    def get(self, request):
+        entries = BlockedUrl.objects.all()
+        return Response([serialize_blocked_url(e) for e in entries], status=status.HTTP_200_OK)
+
+    @require_admin
+    def post(self, request):
+        url = str(request.data.get("url") or "").strip()
+        reason = str(request.data.get("reason") or "").strip()
+        if not url:
+            return Response({"error": "url is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        entry, created = BlockedUrl.objects.get_or_create(url=url, defaults={"reason": reason, "is_active": True})
+        if not created:
+            entry.reason = reason
+            entry.is_active = True
+            entry.save(update_fields=["reason", "is_active", "updated_at"])
+
+        return Response(serialize_blocked_url(entry), status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+class AdminBlockedUrlDetailView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @require_admin
+    def patch(self, request, entry_id):
+        try:
+            entry = BlockedUrl.objects.get(id=entry_id)
+        except BlockedUrl.DoesNotExist:
+            return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if "is_active" in request.data:
+            entry.is_active = bool(request.data["is_active"])
+        if "reason" in request.data:
+            entry.reason = str(request.data["reason"] or "").strip()
+        entry.save(update_fields=["is_active", "reason", "updated_at"])
+        return Response(serialize_blocked_url(entry), status=status.HTTP_200_OK)
+
+    @require_admin
+    def delete(self, request, entry_id):
+        try:
+            entry = BlockedUrl.objects.get(id=entry_id)
+        except BlockedUrl.DoesNotExist:
+            return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        entry.delete()
+        return Response({"status": "deleted"}, status=status.HTTP_200_OK)

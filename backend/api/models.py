@@ -247,6 +247,20 @@ class AdminLoginAudit(models.Model):
     ip_address = models.CharField(max_length=64, blank=True, default="")
     user_agent = models.CharField(max_length=500, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class BlockedUrl(models.Model):
+    url = models.TextField(unique=True)
+    reason = models.CharField(max_length=500, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.url
     
 
     

@@ -26,6 +26,7 @@ import {
   Users,
   WalletCards,
   X,
+  ShieldOff,
 } from "lucide-react";
 import {
   Area,
@@ -131,6 +132,14 @@ const ADMIN_PAGES = [
     title: "All page traffic",
     description: "Review every tracked storefront route with pagination.",
     hidden: true,
+  },
+  {
+    key: "blocked-urls",
+    label: "Blocked URLs",
+    icon: ShieldOff,
+    eyebrow: "URL blocklist",
+    title: "Blocked URLs",
+    description: "Paste a reported URL to block it site-wide. Blocked URLs return 404 to all visitors.",
   },
 ];
 
@@ -312,6 +321,11 @@ export default function AdminDashboard() {
   const [isUserDetailLoading, setIsUserDetailLoading] = useState(false);
   const [pageTrafficDetail, setPageTrafficDetail] = useState(null);
   const [isPageTrafficLoading, setIsPageTrafficLoading] = useState(false);
+  const [blockedUrls, setBlockedUrls] = useState([]);
+  const [isBlockedUrlsLoading, setIsBlockedUrlsLoading] = useState(false);
+  const [blockedUrlInput, setBlockedUrlInput] = useState("");
+  const [blockedUrlReason, setBlockedUrlReason] = useState("");
+  const [isBlockingUrl, setIsBlockingUrl] = useState(false);
   const analytics = dashboard?.analytics || {};
   const analyticsSummary = analytics.summary || {};
   const trafficSeries = analytics.traffic_series || [];
@@ -541,6 +555,74 @@ export default function AdminDashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const fetchBlockedUrls = async () => {
+    setIsBlockedUrlsLoading(true);
+    try {
+      const response = await axios.get(`${api_endpoint}/api/admin/blocked-urls/`, {
+        headers: getAdminHeaders(),
+      });
+      setBlockedUrls(response.data || []);
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Could not load blocked URLs.");
+    } finally {
+      setIsBlockedUrlsLoading(false);
+    }
+  };
+
+  const addBlockedUrl = async () => {
+    const url = blockedUrlInput.trim();
+    if (!url) return;
+    setIsBlockingUrl(true);
+    try {
+      const response = await axios.post(
+        `${api_endpoint}/api/admin/blocked-urls/`,
+        { url, reason: blockedUrlReason.trim() },
+        { headers: getAdminHeaders() },
+      );
+      setBlockedUrls((current) => {
+        const exists = current.find((e) => e.id === response.data.id);
+        return exists
+          ? current.map((e) => (e.id === response.data.id ? response.data : e))
+          : [response.data, ...current];
+      });
+      setBlockedUrlInput("");
+      setBlockedUrlReason("");
+      toast.success("URL blocked.");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Could not block URL.");
+    } finally {
+      setIsBlockingUrl(false);
+    }
+  };
+
+  const toggleBlockedUrl = async (entry) => {
+    try {
+      const response = await axios.patch(
+        `${api_endpoint}/api/admin/blocked-urls/${entry.id}/`,
+        { is_active: !entry.is_active },
+        { headers: getAdminHeaders() },
+      );
+      setBlockedUrls((current) =>
+        current.map((e) => (e.id === entry.id ? response.data : e)),
+      );
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Could not update URL.");
+    }
+  };
+
+  const deleteBlockedUrl = async (entry) => {
+    if (!window.confirm(`Remove "${entry.url}" from the blocklist?`)) return;
+    try {
+      await axios.delete(`${api_endpoint}/api/admin/blocked-urls/${entry.id}/`, {
+        headers: getAdminHeaders(),
+      });
+      setBlockedUrls((current) => current.filter((e) => e.id !== entry.id));
+      toast.success("URL removed from blocklist.");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Could not remove URL.");
+    }
+  };
+
   const sendContactReply = async () => {
     if (!selectedContact || !replyDraft.trim()) {
       return;
@@ -644,6 +726,12 @@ export default function AdminDashboard() {
       active = false;
     };
   }, [currentPage.key, selectedUserId]);
+
+  useEffect(() => {
+    if (currentPage.key === "blocked-urls" && blockedUrls.length === 0 && !isBlockedUrlsLoading) {
+      fetchBlockedUrls();
+    }
+  }, [currentPage.key]);
 
   useEffect(() => {
     if (currentPage.key !== "page-traffic") {
@@ -1192,6 +1280,21 @@ export default function AdminDashboard() {
                 isLoading={isPageTrafficLoading}
                 onBack={closePageTraffic}
                 onPageChange={changeTrafficPage}
+              />
+            ) : null}
+
+            {currentPage.key === "blocked-urls" ? (
+              <BlockedUrlsSection
+                entries={blockedUrls}
+                isLoading={isBlockedUrlsLoading}
+                urlInput={blockedUrlInput}
+                reasonInput={blockedUrlReason}
+                isBlocking={isBlockingUrl}
+                onChangeUrl={setBlockedUrlInput}
+                onChangeReason={setBlockedUrlReason}
+                onAdd={addBlockedUrl}
+                onToggle={toggleBlockedUrl}
+                onDelete={deleteBlockedUrl}
               />
             ) : null}
           </div>
@@ -3948,6 +4051,113 @@ function PageTrafficSection({ detail, isLoading, onBack, onPageChange }) {
           </>
         ) : (
           <EmptyAnalyticsState label="No page-traffic rows yet." />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BlockedUrlsSection({
+  entries,
+  isLoading,
+  urlInput,
+  reasonInput,
+  isBlocking,
+  onChangeUrl,
+  onChangeReason,
+  onAdd,
+  onToggle,
+  onDelete,
+}) {
+  return (
+    <section className="space-y-6">
+      <div className="rounded-[2rem] border border-[#eadfe7] bg-white p-5 shadow-[0_20px_70px_rgba(33,23,34,0.08)] sm:p-6">
+        <SectionIntro
+          icon={ShieldOff}
+          title="Block a URL"
+          subtitle="Paste the full URL (e.g. https://digishelves.com/gift-card?productId=123). It will return 404 to all visitors within 60 seconds."
+        />
+        <div className="mt-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.5fr)_auto]">
+          <input
+            type="url"
+            value={urlInput}
+            onChange={(e) => onChangeUrl(e.target.value)}
+            placeholder="https://digishelves.com/gift-card?productId=18392"
+            className="h-14 w-full rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] px-4 font-black outline-none focus:border-[#551839]"
+          />
+          <input
+            type="text"
+            value={reasonInput}
+            onChange={(e) => onChangeReason(e.target.value)}
+            placeholder="Reason (optional)"
+            className="h-14 w-full rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] px-4 font-black outline-none focus:border-[#551839]"
+          />
+          <button
+            type="button"
+            onClick={onAdd}
+            disabled={isBlocking || !urlInput.trim()}
+            className="inline-flex h-14 items-center justify-center rounded-2xl bg-[#551839] px-6 text-sm font-black text-white disabled:opacity-60"
+          >
+            {isBlocking ? "Blocking..." : "Block URL"}
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-[2rem] border border-[#eadfe7] bg-white shadow-[0_20px_70px_rgba(33,23,34,0.08)]">
+        <SectionHeader
+          title="Blocklist"
+          subtitle="Active entries return 404. Disabled entries are kept for reference."
+        />
+        {isLoading ? (
+          <div className="p-5">
+            <SkeletonPanel />
+          </div>
+        ) : entries.length ? (
+          <div className="divide-y divide-[#eadfe7]">
+            {entries.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`break-all text-sm font-black ${
+                      entry.is_active ? "text-[#211722]" : "text-[#9a8b97] line-through"
+                    }`}
+                  >
+                    {entry.url}
+                  </p>
+                  {entry.reason ? (
+                    <p className="mt-1 text-xs font-bold text-[#665b67]">{entry.reason}</p>
+                  ) : null}
+                  <p className="mt-1 text-[11px] font-black uppercase tracking-[0.14em] text-[#9a8b97]">
+                    Added {formatDateTime(entry.created_at)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <StatusPill value={entry.is_active ? "blocking" : "disabled"} muted={!entry.is_active} />
+                  <button
+                    type="button"
+                    onClick={() => onToggle(entry)}
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-[#eadfe7] px-4 text-sm font-black text-[#551839]"
+                  >
+                    {entry.is_active ? "Disable" : "Enable"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(entry)}
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 text-sm font-black text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-5 py-8 text-sm font-bold text-[#665b67]">
+            No blocked URLs yet. Add one above.
+          </div>
         )}
       </div>
     </section>

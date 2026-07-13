@@ -356,6 +356,11 @@ app.use((req, res, next) => {
     res.redirect(301, toAbsoluteUrl("/gift-card"));
     return;
   }
+
+  if (pathname === "/gift-card" && req.query.productId) {
+    res.redirect(301, toAbsoluteUrl("/gift-card"));
+    return;
+  }
   const giftCardTypeMatch = pathname.match(/^\/gift-card\/([^/]+)$/);
   if (
     giftCardTypeMatch &&
@@ -370,6 +375,35 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(DIST_DIR, { index: false, maxAge: "1d" }));
+
+let blockedUrlsCache = { urls: new Set(), fetchedAt: 0 };
+
+async function getBlockedUrls() {
+  const now = Date.now();
+  if (now - blockedUrlsCache.fetchedAt < 60_000) {
+    return blockedUrlsCache.urls;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_ORIGIN}/api/admin/blocked-urls/`, {
+      headers: { Accept: "application/json" },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const urls = new Set(
+        (Array.isArray(data) ? data : [])
+          .filter((entry) => entry.is_active && entry.url)
+          .map((entry) => entry.url.trim()),
+      );
+      blockedUrlsCache = { urls, fetchedAt: now };
+      return urls;
+    }
+  } catch {
+    // fall through — use cached set
+  }
+
+  return blockedUrlsCache.urls;
+}
 
 async function proxyBackendSeoPath(req, res, backendPath) {
   const controller = new AbortController();
@@ -421,6 +455,23 @@ app.get("/robots.txt", (req, res) => proxyBackendSeoPath(req, res, "/robots.txt"
 app.get("*", async (req, res) => {
   const indexHtml = await readIndexHtml();
   const pathname = normalizePathname(req.path);
+
+  // Check blocked URLs — return 404 for any active blocked entry matching this full URL
+  const requestUrl = `${SITE_ORIGIN}${req.originalUrl}`;
+  const blockedUrls = await getBlockedUrls();
+  if (blockedUrls.has(requestUrl) || blockedUrls.has(req.originalUrl)) {
+    const notFoundMeta = buildPageMeta("/404");
+    const html = injectMetaTags(indexHtml, {
+      title: "Page Not Found | Digishelves",
+      description: "The page you are looking for could not be found.",
+      image: DEFAULT_IMAGE,
+      url: toAbsoluteUrl("/404"),
+      robots: "noindex,nofollow",
+      canonicalPath: "/404",
+    });
+    res.status(404).type("html").send(html);
+    return;
+  }
 
   // Serve product detail pages with product-specific meta and JSON-LD for SEO
   const productId = extractProductId(pathname);

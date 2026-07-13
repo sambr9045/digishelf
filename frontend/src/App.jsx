@@ -3,6 +3,7 @@ import {
   Outlet,
   createBrowserRouter,
   useParams,
+  useSearchParams,
 } from "react-router-dom";
 
 import AnalyticsTracker from "./components/AnalyticsTracker";
@@ -67,10 +68,18 @@ function GiftCardProductRoute() {
   }
 
   if (!brandAllowsDeepLink(slug)) {
-    return <Navigate to={`/gift-card?productId=${productId}`} replace />;
+    return <Navigate to="/gift-card" replace />;
   }
 
   return <Details />;
+}
+
+function GiftCardCatalogRoute() {
+  const [searchParams] = useSearchParams();
+  if (searchParams.has("productId")) {
+    return <Navigate to="/gift-card" replace />;
+  }
+  return <Giftcards />;
 }
 
 const router = createBrowserRouter([
@@ -120,7 +129,7 @@ const router = createBrowserRouter([
       },
       {
         path: "gift-card",
-        element: <Giftcards />,
+        element: <GiftCardCatalogRoute />,
       },
       {
         path: "gift-cards",
