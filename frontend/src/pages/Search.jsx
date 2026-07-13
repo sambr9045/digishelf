@@ -132,7 +132,7 @@ export default function Search() {
         itemListElement: items,
       },
     ];
-  }, [catalogUrl, giftCards, searchCountry, searchName, searchPath]);
+  }, [giftCards, searchCountry, searchName, searchPath]);
 
   const handleProductSelect = (item) => {
     if (!item?.productId) {

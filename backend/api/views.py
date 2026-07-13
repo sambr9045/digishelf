@@ -585,6 +585,15 @@ def _build_sitemap_xml(request):
         (GIFT_CARD_CATALOG_PATH, "daily", "0.95"),
     ]
 
+    # Load active blocked URLs once and use as a set for O(1) lookup
+    from .models import BlockedUrl as _BlockedUrl
+    blocked_urls = set(
+        _BlockedUrl.objects.filter(is_active=True).values_list("url", flat=True)
+    )
+
+    def _is_blocked(full_url):
+        return full_url in blocked_urls
+
     type_cache = {}
     giftcard_items = _build_giftcard_sitemap_entries()
     sitemap_urls = [
@@ -594,6 +603,7 @@ def _build_sitemap_xml(request):
             priority,
         )
         for path, changefreq, priority in core_pages
+        if not _is_blocked(_build_public_url(request, path))
     ]
 
     def _is_giftcard_restricted(item):
@@ -630,23 +640,15 @@ def _build_sitemap_xml(request):
 
         # Add a brand-level listing once per brand
         if brand_slug and brand_slug not in type_cache:
+            brand_url = _build_public_url(request, f"/gift-card/{brand_slug}")
             type_cache[brand_slug] = True
-            sitemap_urls.append(
-                (
-                    _build_public_url(request, f"/gift-card/{brand_slug}"),
-                    "weekly",
-                    "0.75",
-                )
-            )
+            if not _is_blocked(brand_url):
+                sitemap_urls.append((brand_url, "weekly", "0.75"))
 
-        # Add the product entry (deep link when allowed, fallback to catalog query)
-        sitemap_urls.append(
-            (
-                _build_public_url(request, _build_giftcard_path(item, brand_name)),
-                "weekly",
-                "0.85",
-            )
-        )
+        # Add the product entry — skip if blocked
+        product_url = _build_public_url(request, _build_giftcard_path(item, brand_name))
+        if not _is_blocked(product_url):
+            sitemap_urls.append((product_url, "weekly", "0.85"))
 
     # Cache restricted items for review/tuning and log count
     try:

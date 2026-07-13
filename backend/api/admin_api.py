@@ -29,6 +29,7 @@ from payments.views import serialize_payment_activity
 
 from .models import Account, AdminLoginAudit, AnalyticsEvent, BlockedUrl, Cart, Contact, DigiShelfData, GiftCardTransaction, TopupTransaction
 from . import serializers
+from .views import SITEMAP_GIFTCARD_MAX_PAGES
 
 ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
@@ -1692,6 +1693,10 @@ def serialize_blocked_url(entry):
     }
 
 
+def _bust_sitemap_cache():
+    cache.delete(f"seo_sitemap_giftcards:{SITEMAP_GIFTCARD_MAX_PAGES}")
+
+
 class AdminBlockedUrlListView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -1714,6 +1719,7 @@ class AdminBlockedUrlListView(APIView):
             entry.is_active = True
             entry.save(update_fields=["reason", "is_active", "updated_at"])
 
+        _bust_sitemap_cache()
         return Response(serialize_blocked_url(entry), status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -1733,6 +1739,7 @@ class AdminBlockedUrlDetailView(APIView):
         if "reason" in request.data:
             entry.reason = str(request.data["reason"] or "").strip()
         entry.save(update_fields=["is_active", "reason", "updated_at"])
+        _bust_sitemap_cache()
         return Response(serialize_blocked_url(entry), status=status.HTTP_200_OK)
 
     @require_admin
@@ -1743,4 +1750,5 @@ class AdminBlockedUrlDetailView(APIView):
             return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         entry.delete()
+        _bust_sitemap_cache()
         return Response({"status": "deleted"}, status=status.HTTP_200_OK)
