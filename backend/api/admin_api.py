@@ -1697,7 +1697,7 @@ def _bust_sitemap_cache():
     cache.delete(f"seo_sitemap_giftcards:{SITEMAP_GIFTCARD_MAX_PAGES}")
 
 
-class AdminBlockedUrlListView(APIView):
+class AdminBlockedUrlAdminListView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
@@ -1705,6 +1705,16 @@ class AdminBlockedUrlListView(APIView):
     def get(self, request):
         entries = BlockedUrl.objects.all()
         return Response([serialize_blocked_url(e) for e in entries], status=status.HTTP_200_OK)
+
+
+class AdminBlockedUrlListView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Public — used by server.js to enforce blocks. Returns only active URLs as plain strings.
+        entries = BlockedUrl.objects.filter(is_active=True).values_list("url", flat=True)
+        return Response(list(entries), status=status.HTTP_200_OK)
 
     @require_admin
     def post(self, request):

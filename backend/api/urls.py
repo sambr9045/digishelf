@@ -41,6 +41,7 @@ urlpatterns = [
     path("admin/payment-orders/<uuid:order_id>/complete/", admin_api.AdminCompletePaymentOrderView.as_view(), name="digishelf_admin_complete_order"),
     path("admin/payment-orders/<uuid:order_id>/", admin_api.AdminDeletePaymentOrderView.as_view(), name="digishelf_admin_delete_order"),
     path("admin/blocked-urls/", admin_api.AdminBlockedUrlListView.as_view(), name="digishelf_admin_blocked_urls"),
+    path("admin/blocked-urls/manage/", admin_api.AdminBlockedUrlAdminListView.as_view(), name="digishelf_admin_blocked_urls_manage"),
     path("admin/blocked-urls/<int:entry_id>/", admin_api.AdminBlockedUrlDetailView.as_view(), name="digishelf_admin_blocked_url_detail"),
 
 

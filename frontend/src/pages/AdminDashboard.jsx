@@ -558,7 +558,7 @@ export default function AdminDashboard() {
   const fetchBlockedUrls = async () => {
     setIsBlockedUrlsLoading(true);
     try {
-      const response = await axios.get(`${api_endpoint}/api/admin/blocked-urls/`, {
+      const response = await axios.get(`${api_endpoint}/api/admin/blocked-urls/manage/`, {
         headers: getAdminHeaders(),
       });
       setBlockedUrls(response.data || []);

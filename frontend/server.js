@@ -377,8 +377,13 @@ app.use(async (req, res, next) => {
 
   // Check blocked URLs before any redirect so blocked pages return 404, not a redirect
   const requestPath = req.path.replace(/\/+$/, "") || "/";
+  const fullRequestUrl = `${SITE_ORIGIN}${req.originalUrl}`;
   const blockedUrls = await getBlockedUrls();
-  if (blockedUrls.has(requestPath) || blockedUrls.has(`${SITE_ORIGIN}${requestPath}`)) {
+  if (
+    blockedUrls.has(fullRequestUrl) ||
+    blockedUrls.has(req.originalUrl) ||
+    blockedUrls.has(requestPath)
+  ) {
     const indexHtml = await readIndexHtml();
     const html = injectMetaTags(indexHtml, {
       title: "Page Not Found | Digishelves",
@@ -411,7 +416,7 @@ let blockedUrlsCache = { urls: new Set(), fetchedAt: 0 };
 
 async function getBlockedUrls() {
   const now = Date.now();
-  if (now - blockedUrlsCache.fetchedAt < 60_000) {
+  if (now - blockedUrlsCache.fetchedAt < 10_000) {
     return blockedUrlsCache.urls;
   }
 
@@ -423,14 +428,16 @@ async function getBlockedUrls() {
       const data = await response.json();
       const urls = new Set(
         (Array.isArray(data) ? data : [])
-          .filter((entry) => entry.is_active && entry.url)
-          .flatMap((entry) => {
-            const raw = entry.url.trim().replace(/\/+$/, "");
+          .filter((entry) => entry && typeof entry === "string")
+          .flatMap((raw) => {
+            const trimmed = raw.trim().replace(/\/+$/, "");
             try {
-              const path = new URL(raw).pathname.replace(/\/+$/, "") || "/";
-              return [raw, path];
+              const parsed = new URL(trimmed);
+              const pathname = parsed.pathname.replace(/\/+$/, "") || "/";
+              const pathWithQuery = pathname + parsed.search;
+              return [trimmed, pathWithQuery, pathname];
             } catch {
-              return [raw];
+              return [trimmed];
             }
           }),
       );
