@@ -384,16 +384,12 @@ app.use(async (req, res, next) => {
     blockedUrls.has(req.originalUrl) ||
     blockedUrls.has(requestPath)
   ) {
-    const indexHtml = await readIndexHtml();
-    const html = injectMetaTags(indexHtml, {
-      title: "Page Not Found | Digishelves",
-      description: "The page you are looking for could not be found.",
-      image: DEFAULT_IMAGE,
-      url: toAbsoluteUrl("/404"),
-      robots: "noindex,nofollow",
-      canonicalPath: "/404",
-    });
-    res.status(404).type("html").send(html);
+    res
+      .status(404)
+      .type("html")
+      .send(
+        `<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="robots" content="noindex,nofollow" /><title>Page Not Found | Digishelves</title></head><body><h1>404 – Page Not Found</h1><p>The page you are looking for could not be found.</p><a href="/">Go home</a></body></html>`,
+      );
     return;
   }
 
