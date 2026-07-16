@@ -1,11 +1,14 @@
+import { useEffect, useState } from "react";
 import {
   Navigate,
   Outlet,
   createBrowserRouter,
+  useLocation,
   useParams,
   useSearchParams,
 } from "react-router-dom";
 
+import { api_endpoint } from "./components/constant";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import MyAccount from "./components/accounts/MyAccount";
 import Checkout from "./components/payment/Checkout";
@@ -60,11 +63,31 @@ function GiftCardLegacyProductRedirect() {
 
 function GiftCardProductRoute() {
   const { productId } = useParams();
+  const { pathname } = useLocation();
+  const [blocked, setBlocked] = useState(null);
 
-  if (!productId) {
-    return <Navigate to="/gift-card" replace />;
-  }
+  useEffect(() => {
+    fetch(`${api_endpoint}/api/admin/blocked-urls/`, { headers: { Accept: "application/json" } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        const path = pathname.replace(/\/+$/, "");
+        const isBlocked = (Array.isArray(data) ? data : []).some((e) => {
+          if (!e.is_active || !e.url) return false;
+          const stored = e.url.trim().replace(/\/+$/, "");
+          try {
+            return new URL(stored).pathname.replace(/\/+$/, "") === path;
+          } catch {
+            return stored === path;
+          }
+        });
+        setBlocked(isBlocked);
+      })
+      .catch(() => setBlocked(false));
+  }, [pathname]);
 
+  if (!productId) return <Navigate to="/gift-card" replace />;
+  if (blocked === null) return null;
+  if (blocked) return <NotFound />;
   return <Details />;
 }
 
