@@ -1056,7 +1056,12 @@ class GetGistCard(APIView):
 
         cached = cache.get(cache_key)
         if cached is not None:
-            return Response({"data": cached, "cached": True}, status=200)
+            products_to_cache = [cached] if productId else cached.get("content", [])
+            for catalog_item in products_to_cache:
+                if isinstance(catalog_item, dict) and catalog_item.get("productId"):
+                    cache.set(f"giftcard:product:{catalog_item['productId']}", catalog_item, timeout=GIFT_CARD_CACHE_TIMEOUT_SECONDS)
+            from payments.product_seo import attach_product_pricing
+            return Response({"data": attach_product_pricing(cached) if productId else cached, "cached": True}, status=200)
 
         try:
             if productId:
@@ -1070,8 +1075,13 @@ class GetGistCard(APIView):
             audience = urls.giftcards_audience
 
             result = reloady_object.make_api_request(giftcard_url, "application/com.reloadly.giftcards-v1+json", audience)
+            products_to_cache = [result] if productId else result.get("content", [])
+            for catalog_item in products_to_cache:
+                if isinstance(catalog_item, dict) and catalog_item.get("productId"):
+                    cache.set(f"giftcard:product:{catalog_item['productId']}", catalog_item, timeout=GIFT_CARD_CACHE_TIMEOUT_SECONDS)
             cache.set(cache_key, result, timeout=GIFT_CARD_CACHE_TIMEOUT_SECONDS)
-            return Response({"data":result, "cached": False},status=200 )
+            from payments.product_seo import attach_product_pricing
+            return Response({"data": attach_product_pricing(result) if productId else result, "cached": False},status=200 )
 
         except Exception as e:
             print(e)

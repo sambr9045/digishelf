@@ -13,6 +13,7 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 import MyAccount from "./components/accounts/MyAccount";
 import Checkout from "./components/payment/Checkout";
 import CryptoTopUpPayment from "./components/payment/CryptoTopUpPayment";
+import PaystackPayment from "./components/payment/PaystackPayment";
 import PaymentSuccess from "./components/payment/PaymentSuccess";
 import TopUpSuccess from "./components/payment/TopUpSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -155,6 +156,10 @@ const router = createBrowserRouter([
       {
         path: "gift-card/payment-complete/:reference",
         element: <PaymentSuccess />,
+      },
+      {
+        path: "gift-card/paystack/:reference",
+        element: <PaystackPayment />,
       },
       {
         path: "gift-card/payment/:orderId",

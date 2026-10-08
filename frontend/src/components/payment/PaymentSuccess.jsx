@@ -68,20 +68,20 @@ function parseJson(value, fallback) {
 
 function SummaryCard({ icon: Icon, label, value, helper }) {
   return (
-    <article className="rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-5">
+    <article className="min-w-0 rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-4 sm:p-5">
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 items-center justify-center rounded-md bg-white">
           <Icon className="h-5 w-5 text-[#551839]" />
         </span>
-        <div className="min-w-0">
-          <p className="mb-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#9a8b97]">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#9a8b97]">
             {label}
           </p>
-          <p className="mb-0 break-words text-lg font-black text-[#211722]">
+          <p className="mb-0 break-words text-base font-semibold text-[#211722]">
             {value || "N/A"}
           </p>
           {helper ? (
-            <p className="mt-1 mb-0 text-sm font-bold text-[#665b67]">
+            <p className="mt-1 mb-0 text-sm font-medium text-[#665b67]">
               {helper}
             </p>
           ) : null}
@@ -174,7 +174,7 @@ export default function PaymentSuccess() {
     : "Gift cards processing";
   const title = hasReadyCards
     ? "Gift cards are ready"
-    : "Your order is being processed";
+    : "Your order is confirmed";
   const subtitle = hasReadyCards
     ? "Your payment was confirmed and your gift-card details are now available below."
     : "Your payment was confirmed. We are still processing the gift cards and will show the card details here once they are ready.";
@@ -196,33 +196,33 @@ export default function PaymentSuccess() {
       <Header />
       {isLoading ? <Loader /> : null}
 
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(85,24,57,0.08),_transparent_34%),linear-gradient(180deg,#fbf8f4_0%,#fffdfb_100%)] pt-28">
+      <main className="font-display min-h-screen bg-[radial-gradient(circle_at_top,_rgba(85,24,57,0.08),_transparent_34%),linear-gradient(180deg,#fbf8f4_0%,#fffdfb_100%)] pt-28">
         <section className="px-4 pb-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="overflow-hidden rounded-md border border-[#eadfe7] bg-white shadow-[0_28px_90px_rgba(33,23,34,0.12)]">
-              <div className="bg-[#211722] px-6 py-8 text-white sm:px-8 sm:py-10">
+              <div className="bg-[#211722] px-4 py-6 text-white sm:px-8 sm:py-10">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                   <div className="max-w-2xl">
-                    <p className="mb-3 text-xs font-black uppercase tracking-[0.24em] text-[#9ff1dd]">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#9ff1dd]">
                       {eyebrowLabel}
                     </p>
-                    <h1 className="mb-0 text-4xl font-black tracking-[-0.06em] sm:text-5xl">
+                    <h1 className="mb-0 text-3xl font-semibold leading-tight tracking-[-0.03em] !text-white sm:text-4xl">
                       {title}
                     </h1>
-                    <p className="mt-3 mb-0 max-w-2xl text-sm font-bold leading-6 text-white/72 sm:text-base">
+                    <p className="mt-3 mb-0 max-w-2xl text-sm font-medium leading-6 text-white/80 sm:text-base">
                       {subtitle}
                     </p>
                   </div>
 
                   <div className="inline-flex items-center gap-3 self-start rounded-full bg-white/10 px-4 py-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dff8ef]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dff8ef]">
                       <CheckCircle2 className="h-5 w-5 text-[#067a5f]" />
                     </span>
                     <div>
-                      <p className="mb-0 text-xs font-black uppercase tracking-[0.18em] text-white/60">
+                      <p className="mb-0 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
                         Status
                       </p>
-                      <p className="mb-0 text-sm font-black text-white">
+                      <p className="mb-0 text-sm font-semibold text-white">
                         {statusLabel}
                       </p>
                     </div>
@@ -230,8 +230,8 @@ export default function PaymentSuccess() {
                 </div>
               </div>
 
-              <div className="grid gap-6 p-5 sm:p-8 lg:grid-cols-[minmax(0,1.15fr)_340px]">
-                <div className="space-y-6">
+              <div className="grid min-w-0 gap-5 p-4 sm:p-8 lg:grid-cols-[minmax(0,1.15fr)_340px]">
+                <div className="min-w-0 space-y-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                   <SummaryCard
                       icon={Receipt}
@@ -241,7 +241,7 @@ export default function PaymentSuccess() {
                     />
                     <SummaryCard
                       icon={CalendarDays}
-                      label="Completed on"
+                      label="Order date"
                       value={formatDate(productData.created_at)}
                     />
                     <SummaryCard
@@ -263,14 +263,14 @@ export default function PaymentSuccess() {
 
                   <section className="overflow-hidden rounded-md border border-[#eadfe7] bg-white">
                     <div className="flex items-center gap-3 border-b border-[#eadfe7] bg-[#fbf8f4] px-5 py-4">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white">
                         <CreditCard className="h-5 w-5 text-[#551839]" />
                       </span>
                       <div>
-                        <p className="mb-1 text-[11px] font-black uppercase tracking-[0.2em] text-[#9a8b97]">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#9a8b97]">
                           Card delivery
                         </p>
-                        <h2 className="mb-0 text-lg font-black text-[#211722]">
+                        <h2 className="mb-0 text-lg font-semibold text-[#211722]">
                           {hasReadyCards
                             ? "Gift-card details"
                             : "Waiting for card details"}
@@ -280,17 +280,17 @@ export default function PaymentSuccess() {
 
                     {fetchError ? (
                       <div className="p-5">
-                        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+                        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
                           {fetchError}
                         </div>
                       </div>
                     ) : isProcessingCards ? (
                       <div className="p-5">
                         <div className="rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-6 text-center">
-                          <p className="mb-0 text-lg font-black text-[#211722]">
+                          <p className="mb-0 text-lg font-semibold text-[#211722]">
                             Processing gift cards...
                           </p>
-                          <p className="mt-2 mb-0 text-sm font-bold leading-6 text-[#665b67]">
+                          <p className="mt-2 mb-0 text-sm font-medium leading-6 text-[#665b67]">
                             Please wait while we complete your transaction.
                             Refresh this page shortly to check for the card
                             details.
@@ -302,25 +302,25 @@ export default function PaymentSuccess() {
                         {redeemEntries.map((item) => (
                           <article
                             key={item.id}
-                            className="rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-5"
+                            className="min-w-0 rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-4 sm:p-5"
                           >
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                               <div className="min-w-0">
-                                <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#9a8b97]">
                                   Product
                                 </p>
-                                <p className="mb-0 text-lg font-black text-[#211722]">
+                                <p className="mb-0 text-lg font-semibold text-[#211722]">
                                   {item.productName}
                                 </p>
                                 {item.unitPrice ? (
-                                  <p className="mt-1 mb-0 text-sm font-bold text-[#665b67]">
+                                  <p className="mt-1 mb-0 text-sm font-medium text-[#665b67]">
                                     {item.unitPrice} {item.currencyCode}
                                   </p>
                                 ) : null}
                               </div>
 
                               <span
-                                className={`inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.18em] ${
+                                className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
                                   item.pending
                                     ? "bg-[#fff4e5] text-[#b56a19]"
                                     : "bg-[#e8fbf4] text-[#067a5f]"
@@ -334,11 +334,11 @@ export default function PaymentSuccess() {
                               <div className="rounded-md bg-white p-4">
                                 <div className="mb-2 flex items-center gap-2">
                                   <CreditCard className="h-4 w-4 text-[#551839]" />
-                                  <p className="mb-0 text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                                  <p className="mb-0 text-xs font-semibold uppercase tracking-[0.18em] text-[#9a8b97]">
                                     Card number
                                   </p>
                                 </div>
-                                <p className="mb-0 break-all font-mono text-sm font-black text-[#211722]">
+                                <p className={`mb-0 text-sm text-[#211722] ${item.pending ? "font-medium leading-6" : "break-all font-mono font-semibold"}`}>
                                   {item.pending
                                     ? "Will appear once processing completes"
                                     : item.cardNumber}
@@ -348,11 +348,11 @@ export default function PaymentSuccess() {
                               <div className="rounded-md bg-white p-4">
                                 <div className="mb-2 flex items-center gap-2">
                                   <KeyRound className="h-4 w-4 text-[#551839]" />
-                                  <p className="mb-0 text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                                  <p className="mb-0 text-xs font-semibold uppercase tracking-[0.18em] text-[#9a8b97]">
                                     Pin code
                                   </p>
                                 </div>
-                                <p className="mb-0 break-all font-mono text-sm font-black text-[#211722]">
+                                <p className={`mb-0 text-sm text-[#211722] ${item.pending ? "font-medium leading-6" : "break-all font-mono font-semibold"}`}>
                                   {item.pending
                                     ? "Will appear once processing completes"
                                     : item.pinCode}
@@ -366,26 +366,26 @@ export default function PaymentSuccess() {
                   </section>
                 </div>
 
-                <aside className="rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-5">
-                  <p className="mb-2 text-[11px] font-black uppercase tracking-[0.24em] text-[#9a8b97]">
+                <aside className="min-w-0 rounded-md border border-[#eadfe7] bg-[#fbf8f4] p-4 sm:p-5">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#9a8b97]">
                     Completion summary
                   </p>
-                  <h2 className="mb-0 text-2xl font-black tracking-[-0.04em] text-[#211722]">
+                  <h2 className="mb-0 text-2xl font-semibold tracking-[-0.04em] text-[#211722]">
                     {hasReadyCards
                       ? "Gift-card order completed"
                       : "Gift-card order in progress"}
                   </h2>
-                  <p className="mt-3 text-sm font-bold leading-6 text-[#665b67]">
+                  <p className="mt-3 text-sm font-medium leading-6 text-[#665b67]">
                     {hasReadyCards
                       ? "Your order has been processed successfully. You can copy the transaction ID, review the card details, or start another gift-card purchase."
                       : "Your payment has been received. Refresh the order status shortly to load the gift-card details as soon as processing finishes."}
                   </p>
 
                   <div className="mt-6 rounded-md bg-white p-4">
-                    <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9a8b97]">
                       Reference
                     </p>
-                    <p className="mb-0 break-all text-base font-black text-[#211722]">
+                    <p className="mb-0 break-all text-base font-semibold text-[#211722]">
                       {productData.reference || completionToken}
                     </p>
                   </div>
@@ -394,7 +394,7 @@ export default function PaymentSuccess() {
                     <button
                       type="button"
                       onClick={copyReference}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#551839] px-5 text-sm font-black text-white disabled:opacity-60"
+                      className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#551839] px-5 text-sm font-semibold text-white disabled:opacity-60"
                     >
                       <Copy className="h-4 w-4" />
                       Copy transaction ID
@@ -403,7 +403,7 @@ export default function PaymentSuccess() {
                     <button
                       type="button"
                       onClick={fetchOrderData}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#eadfe7] bg-white px-5 text-sm font-black text-[#551839]"
+                      className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#eadfe7] bg-white px-5 text-sm font-semibold text-[#551839]"
                     >
                       <RefreshCw className="h-4 w-4" />
                       Refresh status
@@ -411,7 +411,7 @@ export default function PaymentSuccess() {
 
                     <Link
                       to="/gift-card"
-                      className="inline-flex h-12 items-center justify-center rounded-full border border-[#eadfe7] bg-transparent px-5 text-sm font-black text-[#665b67]"
+                      className="inline-flex h-12 items-center justify-center rounded-full border border-[#eadfe7] bg-transparent px-5 text-sm font-semibold text-[#665b67]"
                     >
                       Start another gift-card order
                     </Link>

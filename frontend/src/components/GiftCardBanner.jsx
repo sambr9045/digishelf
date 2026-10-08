@@ -208,7 +208,7 @@ export default function GiftCardBanner({
                   </button>
 
                   {countryMenuOpen ? (
-                    <div className="absolute left-0 top-[calc(100%+0.5rem)] z-[80] w-[calc(100%+0.75rem)] overflow-hidden rounded-2xl border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
+                    <div className="relative z-[80] mt-2 w-full overflow-hidden rounded-2xl border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
                       <div className="max-h-72 overflow-y-auto p-2">
                         <div className="mb-2">
                           <input
@@ -340,9 +340,14 @@ export default function GiftCardBanner({
               className="relative z-50 mt-8 grid gap-2 md:hidden"
             >
               <label className="block">
+                <span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-[#9a8b97]">
+                  Country
+                </span>
                 <div className="relative" ref={mobileInlineCountryMenuRef}>
                   <button
                     type="button"
+                    aria-label="Select gift card country"
+                    aria-expanded={countryMenuOpen}
                     onClick={() => setCountryMenuOpen((open) => !open)}
                     className="flex h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] px-4 text-left outline-none transition hover:border-[#d8c5d1] focus:border-[#551839] focus:bg-white focus:ring-4 focus:ring-[#551839]/10"
                   >
@@ -372,7 +377,7 @@ export default function GiftCardBanner({
                   </button>
 
                   {countryMenuOpen ? (
-                    <div className="absolute left-0 top-[calc(100%+0.5rem)] z-[130] w-full overflow-hidden rounded-2xl border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
+                    <div className="relative z-[130] mt-2 w-full overflow-hidden rounded-2xl border border-[#eadfe7] bg-white shadow-[0_24px_50px_rgba(33,23,34,0.16)]">
                       <div className="max-h-72 overflow-y-auto p-2">
                         <div className="mb-2">
                           <input

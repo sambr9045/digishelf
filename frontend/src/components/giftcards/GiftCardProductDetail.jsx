@@ -1,3 +1,4 @@
+import { sellingPrice } from "../../../seo/product.js";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -208,11 +209,12 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
   const navigate = useNavigate();
   const viewStartRef = useRef(0);
 
+  const supportsCustomAmount = productIdData?.denominationType === "RANGE";
   const denominationMap =
     productIdData?.fixedRecipientToSenderDenominationsMap || null;
   const denominationOptions = useMemo(
-    () => (denominationMap ? Object.keys(denominationMap) : []),
-    [denominationMap],
+    () => (denominationMap ? Object.keys(denominationMap) : (productIdData?.fixedRecipientDenominations || []).map(String)),
+    [denominationMap, productIdData],
   );
 
   const logoUrl = getLogoUrl(productIdData);
@@ -222,7 +224,9 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
     Boolean(productIdData) &&
     Boolean(selectedRecipientAmount) &&
     !customAmountError &&
-    parseFloat(selectedRecipientAmount) > 0;
+    Number.isFinite(Number(selectedRecipientAmount)) &&
+    Number(selectedRecipientAmount) > 0 &&
+    Number(selectedLocalAmount) > 0;
 
   const conciseInstructionBlocks = useMemo(
     () => buildInstructionBlocks(productIdData?.redeemInstruction?.concise),
@@ -243,7 +247,7 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
     }
 
     const cachedProduct = getCachedGiftCardDetail(productId);
-    if (cachedProduct) {
+    if (cachedProduct?.seo_pricing) {
       setProductIdData(cachedProduct);
       setIsLoading(false);
       onProductLoaded?.(cachedProduct);
@@ -277,6 +281,11 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
   }, [productId]);
 
   useEffect(() => {
+    setCustomAmount("");
+    setCustomAmountValue(0);
+    setCustomAmountError("");
+    setSelectedKey(null);
+    setSelectedValue(0);
     if (!productIdData || !denominationOptions.length) {
       return;
     }
@@ -355,14 +364,26 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
     const amount = event.target.value;
     const min = parseFloat(productIdData.minRecipientDenomination);
     const max = parseFloat(productIdData.maxRecipientDenomination);
-    const numericAmount = parseFloat(amount);
+    const numericAmount = Number(amount);
 
     setSelectedKey(null);
     setSelectedValue(0);
     setCustomAmount(amount);
 
-    if (!amount || Number.isNaN(numericAmount)) {
+    if (!amount || !Number.isFinite(numericAmount)) {
       setCustomAmountError("Please enter a valid amount.");
+      setCustomAmountValue(0);
+      return;
+    }
+
+    if (!supportsCustomAmount || !Number.isFinite(min) || !Number.isFinite(max)) {
+      setCustomAmountError("This gift card does not support custom amounts.");
+      setCustomAmountValue(0);
+      return;
+    }
+
+    if (Math.abs(numericAmount * 100 - Math.round(numericAmount * 100)) > 0.000001) {
+      setCustomAmountError("Enter an amount with up to two decimal places.");
       setCustomAmountValue(0);
       return;
     }
@@ -477,7 +498,7 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
             </p>
 
             <div className="mt-8">
-              {denominationOptions.length > 0 ? (
+              {denominationOptions.length > 0 && (
                 <>
                   <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-[#9a8b97]">
                     Choose amount
@@ -511,7 +532,7 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
                               isSelected ? "text-white/70" : "text-[#665b67]"
                             }`}
                           >
-                            {giftcardDetailsCalculation(
+                            {sellingPrice(productIdData, amount) || giftcardDetailsCalculation(
                               amount,
                               mainCurrency,
                               productIdData.recipientCurrencyCode,
@@ -523,14 +544,18 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
                     })}
                   </div>
                 </>
-              ) : (
-                <div>
+              )}
+              {supportsCustomAmount && (
+                <div className={denominationOptions.length > 0 ? "mt-5" : ""}>
                   <label
                     htmlFor="gift-card-amount"
                     className="mb-3 block text-sm font-black uppercase tracking-[0.16em] text-[#9a8b97]"
                   >
-                    Enter amount
+                    Enter custom amount
                   </label>
+                  <p id="gift-card-amount-limits" className="mb-3 text-sm font-bold text-[#665b67]">
+                    Choose any amount from {productIdData.minRecipientDenomination} to {productIdData.maxRecipientDenomination} {productIdData.recipientCurrencyCode}.
+                  </p>
                   <div className="flex max-w-md overflow-hidden rounded-2xl border border-[#eadfe7] bg-[#fbf8f4] focus-within:border-[#551839] focus-within:ring-4 focus-within:ring-[#551839]/10">
                     <span className="flex items-center border-r border-[#eadfe7] px-4 text-sm font-black text-[#551839]">
                       {productIdData.recipientCurrencyCode}
@@ -538,6 +563,12 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
                     <input
                       id="gift-card-amount"
                       type="number"
+                      inputMode="decimal"
+                      min={productIdData.minRecipientDenomination}
+                      max={productIdData.maxRecipientDenomination}
+                      step="0.01"
+                      aria-invalid={Boolean(customAmountError)}
+                      aria-describedby={customAmountError ? "gift-card-amount-limits gift-card-amount-error" : "gift-card-amount-limits"}
                       className="h-14 w-full bg-transparent px-4 text-lg font-black text-[#211722] outline-none"
                       value={customAmount}
                       placeholder={`Min ${productIdData.minRecipientDenomination} - Max ${productIdData.maxRecipientDenomination}`}
@@ -545,7 +576,7 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
                     />
                   </div>
                   {customAmountError && (
-                    <p className="mb-0 mt-2 text-sm font-bold text-red-600">
+                    <p id="gift-card-amount-error" className="mb-0 mt-2 text-sm font-bold text-red-600">
                       {customAmountError}
                     </p>
                   )}
@@ -558,8 +589,11 @@ export default function GiftCardProductDetail({ productId, onClose, onProductLoa
                 You pay
               </p>
               <p className="mb-0 text-3xl font-black tracking-[-0.05em] text-[#211722]">
-                {parseFloat(selectedLocalAmount || 0).toFixed(2)} {mainCurrency}
+                {sellingPrice(productIdData, selectedRecipientAmount) || parseFloat(selectedLocalAmount || 0).toFixed(2)} {mainCurrency}
               </p>
+              {productIdData.seo_pricing && selectedRecipientAmount && (
+                <p className="mb-0 mt-2 text-sm font-bold text-[#665b67]">Includes processing fees.</p>
+              )}
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

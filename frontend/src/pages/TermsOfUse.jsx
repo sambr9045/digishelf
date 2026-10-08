@@ -67,6 +67,7 @@ const sections = [
   {
     title: "6. Order Fulfillment",
     body: [
+      "Gift cards are delivered digitally to the email address supplied at checkout. No physical shipping or shipping charge applies. Delivery begins after payment verification; timing depends on product and provider availability.",
       "Order fulfillment depends on product availability, third-party provider availability, regional restrictions, payment verification, and the accuracy of information supplied by the customer.",
       "Digishelves may delay, reject, or cancel orders where payment verification fails, fraud is suspected, product availability changes, required information is incomplete, or provider restrictions apply.",
     ],
@@ -75,7 +76,9 @@ const sections = [
     title: "7. Refunds",
     body: [
       "Due to the digital nature of gift cards, airtime top-ups, and cryptocurrency transactions, completed and fulfilled transactions are generally non-refundable.",
-      "Refunds may be issued only where required by applicable law or where Digishelves determines, at its sole discretion, that a refund is appropriate.",
+      "Refund requests are accepted only when payment has been completed and the customer has not received the purchased gift card, airtime top-up, or other digital value.",
+      "Eligible refunds are processed within 24 to 78 hours of receiving the refund request.",
+      "This refund policy does not affect any refund rights required by applicable law.",
     ],
   },
   {
@@ -195,7 +198,7 @@ export default function TermsOfUse() {
           </h1>
 
           <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-[#665b67]">
-            Effective Date: June 17, 2026
+            Effective Date: October 7, 2026
           </p>
 
           <p className="mt-6 text-lg leading-8 text-[#5d505b]">
@@ -210,6 +213,7 @@ export default function TermsOfUse() {
         <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
           {sections.map((section) => (
             <article
+              id={section.title === "7. Refunds" ? "refunds" : section.title === "6. Order Fulfillment" ? "delivery" : undefined}
               key={section.title}
               className="rounded-3xl border border-[#efe7ed] bg-[#fbf8f4] p-6 sm:p-8"
             >

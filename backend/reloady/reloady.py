@@ -2,9 +2,9 @@ import requests
 from django.core.cache import cache
 from . import urls
 import os
+import hashlib
 
 class Reloady:
-    TOKEN_EXPIRATION = 24 * 60 * 60  # 24 hours in seconds
     REQUEST_TIMEOUT_SECONDS = int(os.getenv("RELOADLY_REQUEST_TIMEOUT_SECONDS", "5"))
 
     def __init__(self, public_key, secret_key, token_url):
@@ -34,16 +34,26 @@ class Reloady:
         response.raise_for_status()
         response_data = response.json()
         access_token = response_data.get('access_token')
+        if not isinstance(access_token, str) or not access_token:
+            raise ValueError("Provider authentication returned no access token.")
+        try:
+            expires_in = int(response_data.get('expires_in', 0))
+        except (TypeError, ValueError):
+            expires_in = 0
+        if expires_in > 0:
+            # Refresh before expiry; unknown lifetimes are never cached.
+            buffer = min(60, max(1, expires_in // 10))
+            cache.set(self.token_cache_key(audience), access_token, timeout=max(1, expires_in - buffer))
         return access_token
 
+    def token_cache_key(self, audience):
+        # Separate accounts/environments and invalidate legacy fixed-lifetime tokens.
+        identity = hashlib.sha256(f"{self.token_url}|{audience}|{self.public_key}|{self.secret_key}".encode()).hexdigest()
+        return f"reloadly:token:v2:{identity}"
+
     def get_token(self, audience):
-        token_cache_key = f"{audience}_access_token"
-        token = cache.get(token_cache_key)
-        if not token:
-            token = self.fetch_token(audience)
-            cache.set(token_cache_key, token, timeout=self.TOKEN_EXPIRATION)
-            
-        return token
+        token = cache.get(self.token_cache_key(audience))
+        return token or self.fetch_token(audience)
 
     def make_api_request(self, api_endpoint, accept_header, audience, method='GET', data=None):
         token = self.get_token(audience)
@@ -53,22 +63,25 @@ class Reloady:
             'Authorization': f'Bearer {token}'
         }
 
-        if method == 'GET':
-            response = requests.get(
-                api_endpoint,
-                headers=headers,
-                timeout=self.REQUEST_TIMEOUT_SECONDS,
-            )
-        elif method == 'POST':
-            response = requests.post(
-                api_endpoint,
-                headers=headers,
-                json=data,
-                timeout=self.REQUEST_TIMEOUT_SECONDS,
-            )
+        def send_request():
+            if method == 'GET':
+                return requests.get(api_endpoint, headers=headers, timeout=self.REQUEST_TIMEOUT_SECONDS)
+            if method == 'POST':
+                return requests.post(api_endpoint, headers=headers, json=data, timeout=self.REQUEST_TIMEOUT_SECONDS)
+            raise ValueError("Unsupported provider request method.")
+
+        response = send_request()
+        if response.status_code == 401:
+            # A rejected auth request is safe to retry once with a fresh token.
+            # Never retry rate limits, timeouts or other errors (especially purchases).
+            cache.delete(self.token_cache_key(audience))
+            headers['Authorization'] = f'Bearer {self.fetch_token(audience)}'
+            response = send_request()
+            if response.status_code == 401:
+                cache.delete(self.token_cache_key(audience))
         response.raise_for_status()
         return response.json()
-    
+
     def get_balance(self):
         balance = self.make_api_request(
             urls.balance_url,

@@ -139,6 +139,8 @@ class StablecoinTransferListener:
         return processed
 
     def scan_order(self, order):
+        if order.payment_provider != "crypto":
+            return False
         payment_token = next(
             (token for token in self.payment_tokens if token.symbol == order.token_symbol),
             None,
@@ -249,6 +251,7 @@ class StablecoinTransferListener:
     def resolve_order_for_transfer(self, to_address, token_symbol, amount):
         pending_orders = list(
             Order.objects.filter(
+                payment_provider="crypto",
                 wallet_address__iexact=to_address,
                 token_symbol=token_symbol,
                 status=Order.Status.PENDING,

@@ -156,6 +156,7 @@ export default function Search() {
           "digital gift cards",
           "Digishelves",
         ].filter(Boolean)}
+        robots="noindex,follow"
         path={searchPath}
         schema={schema}
       />

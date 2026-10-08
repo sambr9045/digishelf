@@ -1,3 +1,4 @@
+import { productOffers } from "../../seo/product.js";
 import { Navigate, useParams } from "react-router-dom";
 import { useState, useCallback } from "react";
 import GiftCardProductDetail from "../components/giftcards/GiftCardProductDetail";
@@ -32,53 +33,15 @@ function buildProductSeoProps(product, pathname) {
   const absoluteUrl = buildAbsoluteUrl(pathname);
 
   let priceText = "available values";
-  let sharePrice = "";
-  if (min > 0 && max > 0) { priceText = `${currency} ${min}–${max}`; sharePrice = String(min); }
-  else if (max > 0) { priceText = `${currency} ${max}`; sharePrice = String(max); }
-  else if (min > 0) { priceText = `${currency} ${min}`; sharePrice = String(min); }
+  if (min > 0 && max > 0) { priceText = `${currency} ${min}–${max}`; }
+  else if (max > 0) { priceText = `${currency} ${max}`; }
+  else if (min > 0) { priceText = `${currency} ${min}`; }
 
   const title = `${brand} eGift Card | Digishelves`;
-  const description = `Buy ${productName} gift card${country} on Digishelves. Price range: ${priceText}. Fast digital delivery and secure checkout.`;
+  const description = `Buy ${productName} gift card${country} on Digishelves. Card value: ${priceText}. Fast digital delivery and secure checkout.`;
   const image = getProductImage(product);
 
-  const seller = {
-    "@type": "Organization",
-    name: "Digishelves",
-    url: buildAbsoluteUrl("/"),
-  };
-
-  // One year from now as a reasonable priceValidUntil
-  const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-
-  const fixedDenominations = product.fixedRecipientToSenderDenominationsMap
-    ? Object.keys(product.fixedRecipientToSenderDenominationsMap)
-    : [];
-
-  const offers = fixedDenominations.length > 0
-    ? fixedDenominations.map((amount) => ({
-        "@type": "Offer",
-        price: String(amount),
-        priceCurrency: currency,
-        availability: "https://schema.org/InStock",
-        itemCondition: "https://schema.org/NewCondition",
-        priceValidUntil,
-        url: absoluteUrl,
-        seller,
-      }))
-    : {
-        "@type": "AggregateOffer",
-        lowPrice: min || undefined,
-        highPrice: max || undefined,
-        offerCount: 1,
-        priceCurrency: currency,
-        availability: "https://schema.org/InStock",
-        itemCondition: "https://schema.org/NewCondition",
-        priceValidUntil,
-        url: absoluteUrl,
-        seller,
-      };
+  const offers = productOffers(product, absoluteUrl, buildAbsoluteUrl("/").replace(/\/$/, ""));
 
   const schema = [
     {
@@ -100,7 +63,7 @@ function buildProductSeoProps(product, pathname) {
     ]),
   ];
 
-  return { title, description, image, schema, path: pathname, price: sharePrice, priceCurrency: currency };
+  return { title, description, image, schema, path: pathname, price: Array.isArray(offers) ? offers[0]?.price : offers?.lowPrice, priceCurrency: offers ? "USD" : undefined };
 }
 
 export default function Details() {

@@ -268,8 +268,9 @@ def serialize_payment_order(order):
     return {
         "order_id": str(order.public_id),
         "payment_code": order.payment_code,
-        "amount": str(order.amount),
-        "token_symbol": order.token_symbol,
+        "amount": str(Decimal(order.payment_amount_minor) / 100) if order.payment_provider == "paystack" else str(order.amount),
+        "token_symbol": order.payment_currency if order.payment_provider == "paystack" else order.token_symbol,
+        "payment_provider": order.payment_provider,
         "wallet_address": order.wallet_address,
         "status": order.status,
         "fulfillment_type": order.fulfillment_type,
@@ -458,7 +459,7 @@ def get_payment_order_profit(order):
 
         products = (order.fulfillment_payload or {}).get("transaction", {}).get("products") or []
         subtotal = get_giftcard_products_subtotal(products)
-        total_paid = decimal_or_zero(order.amount)
+        total_paid = Decimal(order.payment_amount_minor) / 100 if order.payment_provider == "paystack" else decimal_or_zero(order.amount)
         processing_fee = max(total_paid - subtotal, Decimal("0"))
         profit_currency = (
             (products[0].get("currencyToPayIn") if products else None)

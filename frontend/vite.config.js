@@ -16,7 +16,7 @@ export default defineConfig({
         target: backendTarget,
         changeOrigin: true,
       },
-      '/admin': {
+      '^/admin(?:/|$)': {
         target: backendTarget,
         changeOrigin: true,
       },

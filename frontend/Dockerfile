@@ -23,6 +23,7 @@ RUN npm install --omit=dev --legacy-peer-deps
 
 COPY --from=build /app/dist /app/dist
 COPY --from=build /app/server.js /app/server.js
+COPY --from=build /app/seo /app/seo
 
 EXPOSE 5179
 

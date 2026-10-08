@@ -1,3 +1,4 @@
+import { productOffers } from "./seo/product.js";
 import express from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -111,7 +112,7 @@ function buildPageMeta(requestPath = "/") {
   const giftCardTypeMatch = pathname.match(/^\/gift-card\/([^/]+)$/);
   if (giftCardTypeMatch) {
     const segment = giftCardTypeMatch[1];
-    if (!["payment", "payment-complete"].includes(segment)) {
+    if (!["payment", "payment-complete", "paystack"].includes(segment)) {
       return {
         title: "Buy Digital Gift Cards | Digishelves",
         description:
@@ -126,7 +127,7 @@ function buildPageMeta(requestPath = "/") {
   const giftCardProductMatch = pathname.match(/^\/gift-card\/([^/]+)\/([^/]+)$/);
   if (giftCardProductMatch) {
     const [, productSlug, productId] = giftCardProductMatch;
-    if (/^\d+$/.test(productId) && !["payment", "payment-complete"].includes(productSlug)) {
+    if (/^\d+$/.test(productId) && !["payment", "payment-complete", "paystack"].includes(productSlug)) {
       const productName = titleizeSlug(productSlug);
       return {
         title: `${productName} eGift Card | Digishelves`,
@@ -158,6 +159,8 @@ function buildRobotsValue(pathname = "/") {
     "/top-up/checkout",
   ]);
   const noindexPrefixes = [
+    "/gift-card/paystack/",
+    "/giftcard/search",
     "/gift-card/payment/",
     "/gift-card/payment-complete/",
     "/top-up/payment/",
@@ -181,7 +184,7 @@ function extractProductId(pathname) {
     return null;
   }
 
-  if (["payment", "payment-complete"].includes(parts[1])) {
+  if (["payment", "payment-complete", "paystack"].includes(parts[1])) {
     return null;
   }
 
@@ -293,34 +296,31 @@ function buildProductMeta(product, requestPath) {
   const max = Number(product?.maxRecipientDenomination || 0);
 
   let priceText = "available values";
-  let sharePrice = "0";
   if (min > 0 && max > 0) {
     priceText = `${currency} ${min} - ${max}`;
-    sharePrice = String(min);
   } else if (max > 0) {
     priceText = `${currency} ${max}`;
-    sharePrice = String(max);
   } else if (min > 0) {
     priceText = `${currency} ${min}`;
-    sharePrice = String(min);
   }
 
   const brand = product?.brand?.brandName || productName;
   const country = product?.country?.name ? ` in ${product.country.name}` : "";
-  const description = `Buy ${productName} gift card${country} on Digishelves. Price range: ${priceText}. Fast digital delivery and secure checkout.`;
+  const description = `Buy ${productName} gift card${country} on Digishelves. Card value: ${priceText}. Fast digital delivery and secure checkout.`;
   const title = `${brand} eGift Card | Digishelves`;
   const logo = Array.isArray(product?.logoUrls)
     ? product.logoUrls[0]
     : product?.logoUrls || "/BingSiteAuth.xml";
 
+  const offers = productOffers(product, toAbsoluteUrl(requestPath), SITE_ORIGIN);
   return {
     title,
     description,
     image: toAbsoluteUrl(logo),
     url: toAbsoluteUrl(requestPath),
     robots: "index,follow,max-image-preview:large",
-    price: sharePrice,
-    priceCurrency: currency,
+    price: Array.isArray(offers) ? offers[0]?.price : offers?.lowPrice,
+    priceCurrency: offers ? "USD" : "",
   };
 }
 
@@ -370,6 +370,23 @@ app.use((req, res, next) => {
   }
 
   next();
+});
+
+// Serve Apple's extensionless verification file before the SPA fallback.
+// Express ignores dot-directories by default, so allow this exact file only.
+app.get("/.well-known/apple-developer-merchantid-domain-association", (req, res, next) => {
+  res.type("text/plain").sendFile(
+    path.join(DIST_DIR, ".well-known", "apple-developer-merchantid-domain-association"),
+    { dotfiles: "allow" },
+    (error) => {
+      if (!error) return;
+      if (error.statusCode === 404 || error.code === "ENOENT") {
+        res.status(404).type("text/plain").send("Verification file not installed.");
+        return;
+      }
+      next(error);
+    },
+  );
 });
 
 app.use(async (req, res, next) => {
@@ -517,26 +534,7 @@ app.get("*", async (req, res) => {
           ? product.logoUrls[0]
           : product?.logoUrls || DEFAULT_IMAGE;
 
-        const offers =
-          product?.fixedRecipientToSenderDenominationsMap &&
-          Object.keys(product.fixedRecipientToSenderDenominationsMap).length
-            ? Object.keys(product.fixedRecipientToSenderDenominationsMap).map(
-                (amount) => ({
-                  "@type": "Offer",
-                  price: String(amount),
-                  priceCurrency: product.recipientCurrencyCode || "",
-                  availability: "https://schema.org/InStock",
-                  url: toAbsoluteUrl(pathname),
-                }),
-              )
-            : {
-                "@type": "AggregateOffer",
-                lowPrice: Number(product.minRecipientDenomination || 0),
-                highPrice: Number(product.maxRecipientDenomination || 0),
-                priceCurrency: product.recipientCurrencyCode || "",
-                availability: "https://schema.org/InStock",
-                url: toAbsoluteUrl(pathname),
-              };
+        const offers = productOffers(product, toAbsoluteUrl(pathname), SITE_ORIGIN);
 
         const schema = [
           {

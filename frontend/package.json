@@ -15,6 +15,7 @@
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
+    "@paystack/inline-js": "^2.22.2",
     "@popperjs/core": "^2.11.8",
     "@react-oauth/google": "^0.12.1",
     "axios": "^1.6.8",

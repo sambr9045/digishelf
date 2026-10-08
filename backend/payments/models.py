@@ -30,6 +30,10 @@ class Order(models.Model):
 
     public_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     payment_code = models.CharField(max_length=12, unique=True, editable=False, blank=True)
+    payment_provider = models.CharField(max_length=20, default="crypto", db_index=True)
+    provider_reference = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    payment_currency = models.CharField(max_length=3, default="USD")
+    payment_amount_minor = models.PositiveBigIntegerField(null=True, blank=True)
     amount = models.DecimalField(max_digits=20, decimal_places=6)
     token_symbol = models.CharField(
         max_length=8,

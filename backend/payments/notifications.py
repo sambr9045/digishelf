@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -23,7 +24,7 @@ def _send_admin_order_notification(*, order, summary, subject, heading, preheade
         {"label": "Order ID", "value": str(order.public_id)},
         {"label": "Type", "value": fulfillment_type},
         {"label": "Customer email", "value": order.customer_email or "Not provided"},
-        {"label": "Amount", "value": f"{order.amount} {order.token_symbol}"},
+        {"label": "Amount", "value": f"{Decimal(order.payment_amount_minor) / 100} {order.payment_currency}" if order.payment_provider == "paystack" else f"{order.amount} {order.token_symbol}"},
         {"label": "Recipient / Country", "value": summary.get("recipient") or summary.get("country") or "N/A"},
         {"label": "Reference", "value": summary.get("reference") or "N/A"},
     ]
@@ -60,24 +61,26 @@ def _send_admin_order_notification(*, order, summary, subject, heading, preheade
 
 def send_admin_new_order_notification(order, summary):
     fulfillment_type = (order.fulfillment_type or "order").replace("_", " ").title()
+    provider = "Paystack" if order.payment_provider == "paystack" else "crypto"
     return _send_admin_order_notification(
         order=order,
         summary=summary,
-        subject=f"New {fulfillment_type} crypto order received",
+        subject=f"New {fulfillment_type} {provider} order received",
         heading=f"New {fulfillment_type.lower()} order created",
-        preheader="A new crypto payment order is waiting in the admin dashboard.",
+        preheader=f"A new {provider} payment order is waiting in the admin dashboard.",
         status_label="New order",
     )
 
 
 def send_admin_order_paid_notification(order, summary):
     fulfillment_type = (order.fulfillment_type or "order").replace("_", " ").title()
+    provider = "Paystack" if order.payment_provider == "paystack" else "crypto"
     return _send_admin_order_notification(
         order=order,
         summary=summary,
         subject=f"Payment received for {fulfillment_type.lower()} order",
         heading=f"Payment received for {fulfillment_type.lower()} order",
-        preheader="The order has received the required blockchain confirmations and is now marked as paid.",
+        preheader="Paystack verified this payment." if provider == "Paystack" else "The order has received the required blockchain confirmations and is now marked as paid.",
         status_label="Paid",
         extra_rows=[
             {"label": "Paid at", "value": order.paid_at.isoformat() if order.paid_at else "N/A"},

@@ -658,7 +658,7 @@ def complete_giftcard_order(order, *, actor="auto"):
                 email=transaction_data.get("email"),
                 reference=reference,
                 paid_amount=transaction_data.get("amount"),
-                payment_currency="USD",
+                payment_currency=payload.get("payment_currency") or "USD",
                 card_entries=card_entries,
                 product_items=product_items,
             )

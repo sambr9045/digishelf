@@ -118,7 +118,9 @@ def serialize_completion_payload(order):
     from api import models as api_models
     from api import serializers as api_serializers
 
-    if order.fulfillment_status != Order.FulfillmentStatus.COMPLETED:
+    if order.status != Order.Status.PAID:
+        raise ValueError("Payment is not confirmed yet.")
+    if order.fulfillment_type != Order.FulfillmentType.GIFTCARD and order.fulfillment_status != Order.FulfillmentStatus.COMPLETED:
         raise ValueError("Order fulfillment is not complete yet.")
 
     summary = build_order_summary(order)
@@ -133,6 +135,32 @@ def serialize_completion_payload(order):
         "reference": reference,
         "completion_token": make_completion_token(order),
     }
+
+    if order.fulfillment_type == Order.FulfillmentType.GIFTCARD and order.fulfillment_status != Order.FulfillmentStatus.COMPLETED:
+        payload = order.fulfillment_payload or {}
+        transaction_data = payload.get("transaction") or {}
+        products = transaction_data.get("products") or []
+        return {
+            **base_payload,
+            "data": {
+                "fulfillment_status": order.fulfillment_status,
+                "product_data": {
+                    "reference": reference, "email": order.customer_email,
+                    "amount": transaction_data.get("amount") or str(order.amount),
+                    "payment_method": transaction_data.get("payment_method") or order.payment_provider,
+                    "created_at": order.created_at.isoformat(),
+                },
+                "transactionData": [
+                    {"id": f"pending-{index}-{sequence}", "product": {
+                        "productName": product.get("productName"),
+                        "unitPrice": product.get("recipientAmount"),
+                        "currencyCode": product.get("recipientCurrency"),
+                    }, "redeem_data": []}
+                    for index, product in enumerate(products)
+                    for sequence in range(int(product.get("quantity") or 1))
+                ],
+            },
+        }
 
     if order.fulfillment_type == Order.FulfillmentType.GIFTCARD:
         transaction = api_models.GiftCardTransaction.objects.filter(reference=reference).first()
@@ -278,7 +306,7 @@ class OrderStatusView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if order.status == Order.Status.PENDING:
+        if order.status == Order.Status.PENDING and order.payment_provider == "crypto":
             throttle_key = f"payments:order-status-sync:{order.pk}"
             should_sync = cache.get(throttle_key) is None
             if should_sync:

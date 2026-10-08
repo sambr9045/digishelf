@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   BadgeCheck,
+  CreditCard,
   Loader2,
   Mail,
   PackageCheck,
@@ -38,6 +39,10 @@ import { ProcessingFeeCalculation } from "../Functions";
 export default function GiftCardPaymentSteps2({ onStepChange }) {
   const PAYMENT_CURRENCY = "USD";
   const [paymentMethodSelect, setPaymentMethodSelect] = useState("crypto");
+  const [paystackQuote, setPaystackQuote] = useState(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
+  const [quoteAttempt, setQuoteAttempt] = useState(0);
   const [userEmail, setUserEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [isLading, setIsLoading] = useState(false);
@@ -49,6 +54,74 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
   const [reference] = useState(() => `DSG-${nanoid(14)}`);
   const currentUserId = session?.user?.id || null;
   const normalizedUserType = currentUserId ? "user" : "guest";
+  const paystackOptions = {
+    country: "GH",
+    currency: "GHS",
+    channels: ["card", "mobile_money"],
+  };
+
+
+
+  useEffect(() => {
+    setPaystackQuote(null);
+    setQuoteError("");
+    if (paymentMethodSelect === "crypto") {
+      setQuoteLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setQuoteLoading(true);
+    axios.post(`${api_endpoint}/api/payments/paystack/quote/`, {
+      products: cart || [], channel: paymentMethodSelect,
+      visitor_ip: localStorage.getItem("ip") || "",
+    }, { signal: controller.signal })
+      .then(({ data }) => setPaystackQuote(data))
+      .catch((error) => {
+        if (!controller.signal.aborted) setQuoteError(error?.response?.data?.error || "Could not load the Paystack total. Please select the payment method again.");
+      })
+      .finally(() => { if (!controller.signal.aborted) setQuoteLoading(false); });
+    return () => controller.abort();
+  }, [paymentMethodSelect, cart, quoteAttempt]);
+
+  const createPaystackOrder = async () => {
+    if (!paystackQuote || !paystackOptions.channels.length) return;
+    setIsLoading(true);
+    try {
+      const { data } = await axios.post(`${api_endpoint}/api/payments/paystack/initialize/`, {
+        email: userEmail, products: cartItems, channel: paymentMethodSelect,
+        expected_amount: paystackQuote.amount, expected_currency: paystackQuote.currency,
+        quote_token: paystackQuote.quote_token,
+        visitor_ip: localStorage.getItem("ip") || "",
+      }, session?.accessToken ? { headers: { Authorization: `Bearer ${session.accessToken}` } } : undefined);
+      try {
+        const { default: PaystackPop } = await import("@paystack/inline-js");
+        if (!data.access_code) throw new Error("Popup access code unavailable");
+        const popup = new PaystackPop();
+        popup.resumeTransaction(data.access_code, {
+          onSuccess: () => {
+            // The status page verifies with the backend before confirming delivery.
+            navigate(`/gift-card/paystack/${data.reference}`);
+          },
+          onCancel: () => {
+            setIsLoading(false);
+          },
+          onError: () => {
+            window.location.assign(data.authorization_url);
+          },
+        });
+      } catch {
+        window.location.assign(data.authorization_url);
+      }
+    } catch (error) {
+      const message = error?.response?.data?.error || "Could not start Paystack payment. Please try again.";
+      toast.error(message);
+      if (message.toLowerCase().includes("quote")) {
+        setPaystackQuote(null);
+        setQuoteError(message);
+      }
+      setIsLoading(false);
+    }
+  };
 
   const buildCryptoFulfillmentPayload = () => ({
     transaction: {
@@ -134,7 +207,7 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
     if (paymentMethodSelect === "crypto") {
       await createCryptoOrder();
     } else {
-      toast.error("Only crypto payments are available right now.");
+      await createPaystackOrder();
     }
   };
 
@@ -201,6 +274,16 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
       acc + Number(item.AmountToPay || 0) * Number(item.quantity || 1),
     0,
   );
+  const payingWithPaystack = steps === 2 && paymentMethodSelect === "paystack";
+  const summaryCurrency = payingWithPaystack ? "GHS" : PAYMENT_CURRENCY;
+  const summaryTotal = payingWithPaystack ? paystackQuote?.amount : cartTotal;
+  const summarySubtotal = payingWithPaystack ? paystackQuote?.subtotal : orderSubtotal;
+  const summaryFees = payingWithPaystack ? paystackQuote?.fees : processingFee;
+  const totalsLoading = payingWithPaystack && !paystackQuote && !quoteError;
+  const amountSkeleton = (
+    <span role="status" aria-label="Loading payment total" className="inline-block h-[1em] w-28 animate-pulse rounded-md bg-[#eadfe7] align-middle motion-reduce:animate-none" />
+  );
+  const summaryMoney = (value) => totalsLoading ? amountSkeleton : value == null ? "—" : formatMoney(value, summaryCurrency);
   const canContinueToPayment = cartItems.length > 0;
   const hasAccountEmail = Boolean(session?.user?.email);
   const getItemFee = (item) =>
@@ -225,7 +308,7 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                     <h2 className="mb-0 text-xl font-black tracking-[-0.04em] !text-white sm:text-3xl">
                       {steps === 1
                         ? "Confirm your gift cards"
-                        : "Where should we send the cards?"}
+                        : "Complete your purchase"}
                     </h2>
                   </div>
 
@@ -314,16 +397,6 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                         );
                       })}
                     </div>
-
-                    <button
-                      type="button"
-                      className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 py-4 text-base font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d] disabled:opacity-60"
-                      disabled={!canContinueToPayment}
-                      onClick={() => setSteps(2)}
-                    >
-                      Continue to payment
-                      <PackageCheck className="h-5 w-5" />
-                    </button>
                   </>
                 )}
 
@@ -407,7 +480,7 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                             </span>
                             <span>
                               <span className="block font-black text-[#211722]">
-                                Crypto currency
+                                Crypto
                               </span>
                               <span className="mt-1 flex items-center gap-2 text-sm font-bold text-[#665b67]">
                                 <img
@@ -420,7 +493,7 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                                   alt=""
                                   className="h-4 w-auto"
                                 />
-                                Pay with digital assets
+                                Pay using your crypto wallet
                               </span>
                             </span>
                           </span>
@@ -428,61 +501,48 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                             <BadgeCheck className="h-5 w-5 shrink-0 text-[#10ac84]" />
                           )}
                         </button>
+                        {paystackOptions.channels.length > 0 && (
+                            <button
+                              type="button"
+                              aria-pressed={paymentMethodSelect === "paystack"}
+                              onClick={() => handlePaymentChange("paystack")}
+                              className={`flex w-full items-center justify-between gap-4 rounded-md border p-4 text-left transition ${paymentMethodSelect === "paystack" ? "border-[#551839] bg-[#fff7fb]" : "border-[#eadfe7] bg-[#fbf8f4] hover:border-[#551839]/30"}`}
+                            >
+                              <span className="flex items-center gap-3">
+                                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#551839]"><CreditCard className="h-5 w-5" /></span>
+                                <span>
+                                  <span className="block font-black text-[#211722]">Visa / Mastercard</span>
+                                  <span className="mt-1 block text-sm font-bold text-[#665b67]">Paystack</span>
+                                </span>
+                              </span>
+                              {paymentMethodSelect === "paystack" && <BadgeCheck className="h-5 w-5 shrink-0 text-[#10ac84]" />}
+                            </button>
+                        )}
                       </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 py-4 text-base font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d] disabled:cursor-not-allowed disabled:opacity-70"
-                      disabled={isLading}
-                      onClick={HandlePayment}
-                    >
-                      {isLading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          Preparing payment...
-                        </>
-                      ) : (
-                        <>
-                          Pay {formatMoney(cartTotal, PAYMENT_CURRENCY)}
-                          <ShieldCheck className="h-5 w-5" />
-                        </>
+                      {paymentMethodSelect !== "crypto" && quoteError && (
+                        <button type="button" onClick={() => setQuoteAttempt((value) => value + 1)} className="mt-3 text-sm font-bold text-[#551839] underline">
+                          Try again
+                        </button>
                       )}
-                    </button>
+                      {paymentMethodSelect !== "crypto" && (
+                        <p role="status" className="mb-0 mt-3 text-sm font-bold text-[#665b67]">
+                          {totalsLoading ? (
+                            <span aria-label="Loading payment details" className="block space-y-2 animate-pulse motion-reduce:animate-none">
+                              <span className="block h-3 w-3/4 rounded bg-[#eadfe7]" />
+                              <span className="block h-3 w-1/2 rounded bg-[#eadfe7]" />
+                            </span>
+                          ) : quoteError || (paystackQuote ? "Pay securely with Paystack." : "")}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <aside className="order-first rounded-md border border-[#eadfe7] bg-white p-5 shadow-[0_22px_70px_rgba(33,23,34,0.08)] sm:p-6 lg:order-none lg:sticky lg:top-28">
-              <p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
-                Order total
-              </p>
-              <div className="text-3xl font-black tracking-[-0.05em] text-[#211722] sm:text-4xl">
-                {formatMoney(cartTotal, PAYMENT_CURRENCY)}
-              </div>
-
-              <div className="mt-6 grid gap-3 border-t border-[#eadfe7] pt-6">
-                <div className="flex items-center justify-between gap-4 text-sm font-bold text-[#665b67]">
-                  <span>Subtotal</span>
-                  <span className="text-[#211722]">
-                    {formatMoney(orderSubtotal, PAYMENT_CURRENCY)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4 text-sm font-bold text-[#665b67]">
-                  <span>Processing fees</span>
-                  <span className="text-[#211722]">
-                    {formatMoney(processingFee, PAYMENT_CURRENCY)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4 rounded-md bg-[#fbf8f4] p-4 text-base font-black text-[#211722]">
-                  <span>Total due</span>
-                  <span>{formatMoney(cartTotal, PAYMENT_CURRENCY)}</span>
-                </div>
-              </div>
-
+            <aside className="rounded-md border border-[#eadfe7] bg-white p-5 shadow-[0_22px_70px_rgba(33,23,34,0.08)] sm:p-6 lg:sticky lg:top-28">
               {steps === 2 ? (
-                <div className="mt-6 overflow-hidden rounded-md border border-[#eadfe7]">
+                <div className="mb-6 overflow-hidden rounded-md border border-[#eadfe7]">
                   <div className="flex items-center gap-3 bg-[#211722] px-5 py-4 text-white">
                     <span className="flex h-10 w-10 items-center justify-center rounded-md bg-white/10">
                       <Receipt className="h-5 w-5 text-[#9ff1dd]" />
@@ -504,7 +564,15 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                         key={item.id || item.productId}
                         className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                       >
-                        <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#eadfe7] bg-[#fbf8f4]">
+                            {(Array.isArray(item.img) ? item.img[0] : item.img) ? (
+                              <img src={Array.isArray(item.img) ? item.img[0] : item.img} alt={item.productName} className="h-full w-full object-cover" />
+                            ) : (
+                              <ShoppingBag className="h-6 w-6 text-[#551839]" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
                           <p className="mb-1 text-sm font-black text-[#211722]">
                             {item.productName}
                           </p>
@@ -515,8 +583,9 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                               item.recipientCurrency,
                             )}
                           </p>
+                          </div>
                         </div>
-                        <div className="text-left sm:text-right">
+                        {!payingWithPaystack && <div className="text-left sm:text-right">
                           <p className="mb-1 text-sm font-black text-[#211722]">
                             {formatMoney(
                               item.AmountToPay * item.quantity,
@@ -527,18 +596,84 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                             Fee{" "}
                             {formatMoney(getItemFee(item), PAYMENT_CURRENCY)}
                           </p>
-                        </div>
+                        </div>}
                       </div>
                     ))}
                   </div>
                 </div>
               ) : null}
 
+              <p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-[#551839]">
+                Order total
+              </p>
+              <div className="text-3xl font-black tracking-[-0.05em] text-[#211722] sm:text-4xl">
+                {summaryMoney(summaryTotal)}
+              </div>
+
+              <div className="mt-6 grid gap-3 border-t border-[#eadfe7] pt-6">
+                <div className="flex items-center justify-between gap-4 text-sm font-bold text-[#665b67]">
+                  <span>Subtotal</span>
+                  <span className="text-[#211722]">
+                    {summaryMoney(summarySubtotal)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 text-sm font-bold text-[#665b67]">
+                  <span>Processing fees</span>
+                  <span className="text-[#211722]">
+                    {summaryMoney(summaryFees)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 rounded-md bg-[#fbf8f4] p-4 text-base font-black text-[#211722]">
+                  <span>Total due</span>
+                  <span>{summaryMoney(summaryTotal)}</span>
+                </div>
+              </div>
+
+              {payingWithPaystack && paystackQuote && (
+                <p className="mb-0 mt-3 text-sm text-[#665b67]">Charged in Ghana cedis. Your bank may apply currency conversion fees.</p>
+              )}
+
+
+              <div className="mt-6">
+                {steps === 1 ? (
+                  <button
+                    type="button"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 py-4 text-base font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d] disabled:opacity-60"
+                    disabled={!canContinueToPayment}
+                    onClick={() => setSteps(2)}
+                  >
+                    Continue to payment
+                    <PackageCheck className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#551839] px-6 py-4 text-base font-black text-white shadow-xl shadow-[#551839]/15 transition hover:bg-[#44122d] disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={isLading || (paymentMethodSelect !== "crypto" && (quoteLoading || !paystackQuote))}
+                    onClick={HandlePayment}
+                  >
+                    {isLading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Preparing payment...
+                      </>
+                    ) : (
+                      <>
+                        {totalsLoading ? (
+                          <span role="status" aria-label="Loading payment amount" className="h-5 w-32 animate-pulse rounded bg-white/25 motion-reduce:animate-none" />
+                        ) : payingWithPaystack && !paystackQuote ? "Pay" : <>Pay {summaryMoney(summaryTotal)}</>}
+                        <ShieldCheck className="h-5 w-5" />
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
               <div className="mt-6 rounded-md bg-[#211722] p-5 text-white">
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#9ff1dd]" />
                   <div>
-                    <h3 className="mb-1 text-base font-black">
+                    <h3 className="mb-1 text-base font-black !text-white">
                       Secure checkout
                     </h3>
                     <p className="mb-0 text-sm font-medium leading-6 text-white/70">
@@ -548,6 +683,9 @@ export default function GiftCardPaymentSteps2({ onStepChange }) {
                   </div>
                 </div>
               </div>
+              {payingWithPaystack && paystackQuote && (
+                <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer" className="mt-4 block text-center text-[11px] text-[#665b67] underline">Currency rates by ExchangeRate-API</a>
+              )}
             </aside>
           </div>
         </>
